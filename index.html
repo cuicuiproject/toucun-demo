@@ -1,0 +1,4693 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>头寸管理系统</title>
+<style>
+  :root {
+    --primary: #1A3C6D;
+    --primary-light: #2B5EA7;
+    --danger: #D93025;
+    --success: #0F766E;
+    --warning: #F9AB00;
+    --purple: #6D1786;
+    --bg: #F5F6FA;
+    --card-bg: #FFFFFF;
+    --border: #E0E4EA;
+    --text: #1F2937;
+    --text-secondary: #6B7280;
+    --text-muted: #9CA3AF;
+    --input-bg: #F9FAFB;
+    --hover-bg: #F0F4FF;
+    --shadow: 0 1px 3px rgba(0,0,0,0.08);
+    --shadow-md: 0 4px 12px rgba(0,0,0,0.10);
+    --radius: 8px;
+    --radius-sm: 6px;
+    --sidebar-w: 260px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; min-height: 100vh; }
+
+  /* ============ HEADER ============ */
+  .header {
+    background: var(--primary);
+    color: #fff;
+    padding: 14px 28px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 2px 8px rgba(26,60,109,0.15);
+    position: sticky; top: 0; z-index: 100;
+  }
+  .header-left { display: flex; align-items: center; gap: 16px; }
+  .header h1 { font-size: 18px; font-weight: 600; }
+  .header-badge {
+    font-size: 12px;
+    background: rgba(255,255,255,0.18);
+    padding: 3px 10px;
+    border-radius: 12px;
+  }
+  .nav-tabs { display: flex; gap: 0; }
+  .nav-tab {
+    padding: 10px 20px;
+    font-size: 14px;
+    color: rgba(255,255,255,0.65);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+  }
+  .nav-tab.active { color: #fff; border-bottom-color: #fff; font-weight: 600; }
+  .nav-tab:hover { color: rgba(255,255,255,0.9); }
+
+  /* ============ LAYOUT ============ */
+  .layout {
+    max-width: 1500px;
+    margin: 0 auto;
+    display: flex;
+    min-height: calc(100vh - 130px);
+  }
+
+  /* ============ SIDEBAR ============ */
+  .sidebar {
+    width: var(--sidebar-w);
+    min-width: var(--sidebar-w);
+    background: #fff;
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    position: sticky;
+    top: 58px;
+    height: calc(100vh - 58px);
+    overflow: hidden;
+  }
+  .sidebar-search {
+    padding: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  .sidebar-search input {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-size: 13px;
+    background: var(--input-bg);
+    outline: none;
+  }
+  .sidebar-search input:focus { border-color: var(--primary); }
+  .sidebar-stats {
+    display: flex;
+    padding: 10px 14px;
+    gap: 16px;
+    border-bottom: 1px solid var(--border);
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+  .sidebar-stats span { white-space: nowrap; }
+  .sidebar-stats strong { color: var(--text); }
+
+  .sidebar-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 4px 0;
+  }
+  .sidebar-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    cursor: pointer;
+    transition: background 0.15s;
+    border-left: 3px solid transparent;
+    font-size: 13px;
+    position: relative;
+  }
+  .sidebar-item:hover { background: var(--hover-bg); }
+  .sidebar-item.active {
+    background: #F0F4FF;
+    border-left-color: var(--primary);
+    font-weight: 600;
+  }
+  .sidebar-item .status-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .status-dot.done { background: var(--success); }
+  .status-dot.progress { background: var(--warning); animation: pulse 1.5s infinite; }
+  .status-dot.pending { background: #D1D5DB; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+  .sidebar-item .item-name {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    margin-right: 4px;
+  }
+  .sidebar-item .item-remove {
+    display: none;
+    cursor: pointer;
+    color: var(--text-muted);
+    font-size: 15px;
+    line-height: 1;
+    padding: 2px 4px;
+    border-radius: 4px;
+    transition: all 0.15s;
+    flex-shrink: 0;
+  }
+  .sidebar-item .item-remove:hover { color: var(--danger); background: rgba(217,48,37,0.08); }
+  .sidebar-item:hover .item-remove { display: block; }
+  .item-badge {
+    font-size: 11px;
+    padding: 1px 6px;
+    border-radius: 3px;
+    flex-shrink: 0;
+  }
+  .item-badge.profit { background: #685BE7; color: #fff; }
+  .item-badge.loss { background: #1A8353; color: #fff; }
+
+  /* ============ MAIN CONTENT ============ */
+  .content {
+    flex: 1;
+    min-width: 0;
+    padding: 16px 20px 24px;
+    overflow-y: auto;
+    height: calc(100vh - 58px);
+    position: sticky;
+    top: 58px;
+  }
+
+  .top-bar {
+    background: var(--card-bg);
+    border-radius: var(--radius);
+    padding: 8px 16px;
+    margin-bottom: 12px;
+    box-shadow: var(--shadow);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+  }
+  .top-bar label { font-size: 12px; font-weight: 600; color: var(--text-secondary); white-space: nowrap; }
+  .top-bar select, .top-bar input {
+    padding: 6px 10px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-size: 13px;
+    background: var(--input-bg);
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .top-bar select:focus, .top-bar input:focus { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(26,60,109,0.1); }
+
+  .mode-selector {
+    display: flex; gap: 0;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+  }
+  .mode-btn {
+    padding: 8px 16px;
+    font-size: 13px;
+    cursor: pointer;
+    background: var(--input-bg);
+    color: var(--text-secondary);
+    border: none;
+    border-right: 1px solid var(--border);
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+  .mode-btn:last-child { border-right: none; }
+  .mode-btn.active { background: var(--primary); color: #fff; font-weight: 600; }
+  .mode-btn:hover:not(.active) { background: var(--hover-bg); }
+
+  .section-card {
+    background: var(--card-bg);
+    border-radius: var(--radius);
+    margin-bottom: 12px;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+  .section-header {
+    padding: 6px 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+  }
+  .section-title {
+    font-size: 13px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .section-title .icon { font-size: 14px; }
+  .section-subtitle { font-size: 11px; color: var(--text-muted); font-weight: 400; }
+  .section-actions { display: flex; gap: 8px; align-items: center; }
+  .section-body { padding: 12px 16px; }
+
+  .table-container {
+    max-height: 500px;
+    overflow: auto;
+    position: relative;
+  }
+  .table-container table {
+    min-width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    white-space: nowrap;
+  }
+  .table-container thead {
+    position: sticky;
+    top: 0;
+    z-index: 3;
+  }
+  .table-container thead th {
+    padding: 6px 8px;
+    text-align: left;
+    font-weight: 600;
+    color: var(--text-secondary);
+    background: #F8F9FB;
+    border-bottom: 2px solid var(--border);
+    white-space: nowrap;
+    font-size: 11px;
+  }
+  .table-container tbody td {
+    padding: 6px 8px;
+    border-bottom: 1px solid #F0F1F5;
+    vertical-align: middle;
+    font-size: 12px;
+  }
+  .table-container tbody tr:hover { background: #FAFBFC; }
+  .table-container tbody tr.selected { background: #F0F4FF; }
+
+  .table-input {
+    width: 120px;
+    padding: 4px 8px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-size: 12px;
+    text-align: right;
+    background: var(--input-bg);
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .table-input:focus { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(26,60,109,0.1); }
+  .table-input.readonly { background: #F3F4F6; color: var(--text-muted); cursor: default; }
+
+  .num { text-align: right; font-variant-numeric: tabular-nums; }
+  .num.pos { color: var(--danger); }
+  .num.neg { color: var(--success); }
+
+  .chk-cell { text-align: center; width: 48px; }
+  .chk-cell input[type="checkbox"] {
+    width: 16px; height: 16px;
+    cursor: pointer;
+    accent-color: var(--primary);
+  }
+
+  .btn {
+    padding: 7px 16px;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-size: 13px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .btn-primary { background: var(--primary); color: #fff; }
+  .btn-primary:hover { background: var(--primary-light); }
+  .btn-outline { background: #fff; color: var(--primary); border: 1px solid var(--primary); }
+  .btn-outline:hover { background: var(--hover-bg); }
+  .btn-sm { padding: 4px 10px; font-size: 12px; }
+
+  .summary-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 5px 16px;
+    background: var(--card-bg);
+    border-top: 1px solid var(--border);
+    box-shadow: 0 -1px 4px rgba(0,0,0,0.05);
+    position: sticky;
+    bottom: 0;
+    z-index: 4;
+  }
+  .summary-item { display: flex; align-items: baseline; gap: 4px; flex: 1; }
+  .summary-label { font-size: 11px; color: var(--text-muted); white-space: nowrap; }
+  .summary-value { font-size: 14px; font-weight: 700; white-space: nowrap; }
+
+  .config-row {
+    display: flex;
+    gap: 10px;
+    align-items: flex-end;
+    margin-bottom: 6px;
+    flex-wrap: wrap;
+  }
+  .config-group {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+  .config-group label { font-size: 12px; color: var(--text); font-weight: 600; }
+  .config-group input {
+    width: 150px;
+    padding: 6px 10px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-size: 13px;
+    text-align: right;
+    background: #fff;
+    outline: none;
+    font-weight: 600;
+  }
+  .config-group input:focus { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(26,60,109,0.12); }
+  .config-group select {
+    padding: 6px 10px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-size: 13px;
+    background: #fff;
+    outline: none;
+    font-weight: 500;
+  }
+  .config-group select:focus { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(26,60,109,0.12); }
+
+  /* 赎回来源专户复选框组 */
+  .red-source-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    font-size: 12px;
+    padding: 4px 0;
+  }
+  .red-source-group .empty-hint {
+    color: var(--text-muted);
+    font-style: italic;
+    padding: 4px 0;
+  }
+  .red-source-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    color: var(--text);
+    font-weight: 400;
+    padding: 6px 10px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    background: #fff;
+    transition: background 0.15s, border-color 0.15s;
+    min-width: 180px;
+    flex: 0 0 220px;
+  }
+  .red-source-item:hover {
+    background: var(--hover-bg);
+    border-color: var(--primary);
+  }
+  .red-source-item input[type="checkbox"] {
+    width: 14px;
+    height: 14px;
+    cursor: pointer;
+    accent-color: var(--primary);
+    flex-shrink: 0;
+  }
+  .red-source-item .spv-code {
+    color: var(--text-muted);
+    font-size: 11px;
+    margin-left: auto;
+    font-variant-numeric: tabular-nums;
+  }
+  .red-source-item.current-spv {
+    color: var(--text-muted);
+    cursor: not-allowed;
+    background: #f3f4f6;
+    border-color: var(--border);
+  }
+  .red-source-item.current-spv input[type="checkbox"] {
+    cursor: not-allowed;
+    accent-color: #9ca3af;
+  }
+  .red-source-row, .profit-target-row {
+    background: var(--card-bg);
+    border-radius: var(--radius);
+    padding: 10px 16px;
+    margin-bottom: 12px;
+    box-shadow: var(--shadow);
+  }
+  .red-source-row label.section-label, .profit-target-row label.section-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    display: block;
+    margin-bottom: 8px;
+  }
+  /* 拉壳产品回笼资金申购目标专户多选（复用 red-source 横向卡片） */
+  .profit-target-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    font-size: 12px;
+    padding: 4px 0;
+  }
+  .profit-target-group .empty-hint {
+    color: var(--text-muted);
+    font-style: italic;
+    padding: 4px 0;
+  }
+  .profit-target-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    color: var(--text);
+    font-weight: 400;
+    padding: 6px 10px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    background: #fff;
+    transition: background 0.15s, border-color 0.15s;
+    min-width: 180px;
+    flex: 0 0 220px;
+  }
+  .profit-target-item:hover {
+    background: var(--hover-bg);
+    border-color: var(--primary);
+  }
+  .profit-target-item input[type="checkbox"] {
+    width: 14px;
+    height: 14px;
+    cursor: pointer;
+    accent-color: var(--primary);
+    flex-shrink: 0;
+  }
+  .profit-target-item .spv-code {
+    color: var(--text-muted);
+    font-size: 11px;
+    margin-left: auto;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .config-card {
+    border-left: 4px solid var(--primary);
+  }
+  .config-card .section-body {
+    padding: 10px 16px;
+  }
+
+  .col-bp input { width: 90px; }
+  .col-ratio input { width: 100px; }
+
+  tr.not-selected td { color: var(--text-muted); }
+  tr.not-selected .table-input { background: #F3F4F6; color: var(--text-muted); }
+
+  /* empty sidebar state */
+  .sidebar-empty {
+    padding: 32px 14px;
+    text-align: center;
+    font-size: 13px;
+    color: var(--text-muted);
+  }
+
+  @media (max-width: 1100px) {
+    .layout { flex-direction: column; }
+    .sidebar {
+      width: 100%; min-width: 100%;
+      height: auto; max-height: 300px;
+      position: static;
+    }
+    .content {
+      height: auto;
+      position: static;
+    }
+  }
+  /* Modal */
+  .modal-overlay {
+    display: none;
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.45);
+    z-index: 999;
+    align-items: center; justify-content: center;
+  }
+  .modal-overlay.show { display: flex; }
+  .modal {
+    background: var(--card-bg);
+    border-radius: 10px;
+    box-shadow: var(--shadow-md);
+    width: 520px; max-width: 90vw; max-height: 80vh;
+    display: flex; flex-direction: column;
+    animation: modalIn 0.2s ease;
+  }
+  @keyframes modalIn { from { opacity: 0; transform: translateY(-16px); } to { opacity: 1; transform: translateY(0); } }
+  .modal-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .modal-header h3 { font-size: 15px; font-weight: 600; color: var(--primary); }
+  .modal-close {
+    width: 28px; height: 28px; border: none; background: none; font-size: 18px;
+    cursor: pointer; color: var(--text-muted); border-radius: 4px; display: flex; align-items: center; justify-content: center;
+  }
+  .modal-close:hover { background: var(--hover-bg); }
+  .modal-body { padding: 16px 20px; overflow-y: auto; font-size: 13px; line-height: 1.8; flex: 1; }
+  .modal-body .info-line { display: flex; gap: 8px; margin-bottom: 4px; }
+  .modal-body .info-label { color: var(--text-muted); min-width: 80px; flex-shrink: 0; }
+  .modal-body .info-value { color: var(--text); font-weight: 500; }
+  .modal-body .divider { border-top: 1px dashed var(--border); margin: 10px 0; }
+  .modal-body .detail-item {
+    padding: 4px 8px; background: var(--input-bg); border-radius: 4px; margin-bottom: 3px;
+    font-family: "SF Mono", "Consolas", monospace; font-size: 12px; color: var(--text-secondary);
+  }
+  .modal-footer {
+    padding: 12px 20px; border-top: 1px solid var(--border);
+    display: flex; gap: 8px; justify-content: flex-end;
+  }
+  .modal-footer .btn { padding: 7px 20px; font-size: 13px; }
+
+  /* Form elements in modal */
+  .form-row { margin-bottom: 14px; }
+  .form-row:last-child { margin-bottom: 0; }
+  .form-label {
+    display: block; font-size: 12px; color: var(--text-secondary);
+    margin-bottom: 5px; font-weight: 500;
+  }
+  .form-input, .form-select {
+    width: 100%; padding: 9px 12px; border: 1px solid var(--border);
+    border-radius: var(--radius-sm); font-size: 13px; background: var(--input-bg);
+    color: var(--text); outline: none; box-sizing: border-box;
+  }
+  .form-input:focus, .form-select:focus {
+    border-color: var(--primary); box-shadow: 0 0 0 2px rgba(26,60,109,0.1);
+  }
+  .form-select { appearance: auto; cursor: pointer; }
+
+  /* 头寸管理页面 - 顶部操作栏 */
+  .position-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    background: var(--card-bg);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .position-toolbar-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .position-toolbar-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .toolbar-btn {
+    padding: 7px 16px;
+    font-size: 13px;
+    border: none;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .toolbar-btn.primary { background: var(--primary); color: #fff; }
+  .toolbar-btn.primary:hover { background: var(--primary-light); }
+  .toolbar-btn.success { background: #2563EB; color: #fff; }
+  .toolbar-btn.success:hover { background: #1D4ED8; }
+  .toolbar-btn.warning { background: #E6A23C; color: #fff; }
+  .toolbar-btn.warning:hover { background: #D4922B; }
+  .toolbar-info {
+    font-size: 12px;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .toolbar-info .info-tag {
+    background: #F0F4FF;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    color: var(--primary);
+  }
+
+  /* 展开字段按钮 */
+  .expand-fields-btn {
+    padding: 6px 14px;
+    font-size: 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    background: #fff;
+    color: var(--text-secondary);
+    transition: all 0.2s;
+  }
+  .expand-fields-btn:hover { background: var(--hover-bg); border-color: var(--primary); color: var(--primary); }
+  .expand-fields-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+
+  /* 列切换区域的展开/收起按钮 */
+  .col-toggle-toggle-btn {
+    padding: 4px 12px; border-radius: 6px; font-size: 12px; cursor: pointer;
+    border: 1px solid var(--border); background: var(--card-bg); color: var(--text-secondary);
+    white-space: nowrap; transition: all 0.15s;
+  }
+  .col-toggle-toggle-btn:hover { border-color: var(--primary); color: var(--primary); }
+  .col-toggle-area { padding-top: 6px; padding-bottom: 8px; }
+  .col-toggle-area .col-toggle-group { flex-wrap: wrap; }
+
+  /* 分页控件 */
+  .pagination-bar {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+    padding: 8px 16px;
+    font-size: 12px;
+    color: var(--text-secondary);
+  }
+  .pagination-bar button {
+    padding: 4px 12px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    background: #fff;
+    cursor: pointer;
+    font-size: 12px;
+    color: var(--text-secondary);
+  }
+  .pagination-bar button:hover:not(:disabled) { background: var(--hover-bg); border-color: var(--primary); color: var(--primary); }
+  .pagination-bar button:disabled { opacity: 0.5; cursor: not-allowed; }
+  .pagination-bar .page-info { font-size: 12px; }
+  .pagination-bar .page-size-select {
+    padding: 4px 8px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    font-size: 12px;
+    background: #fff;
+  }
+
+  /* 头寸表格 - 专户动态列 */
+  .position-table .spv-group-header {
+    background: #F8F9FB;
+    text-align: center;
+    font-weight: 600;
+    color: var(--text-secondary);
+    border-bottom: 2px solid var(--border);
+  }
+  .position-table .spv-group-header .spv-name {
+    font-size: 12px;
+    color: var(--text);
+    font-weight: 600;
+  }
+  .position-table .spv-sub-col { background: #FFF7ED; }
+  .position-table .spv-red-col { background: #F0FDFA; }
+  .position-table th.spv-sub-col,
+  .position-table th.spv-red-col {
+    font-size: 11px;
+    color: var(--text-secondary);
+    font-weight: 500;
+  }
+
+  /* 固定列 */
+  .position-table th.fixed-col,
+  .position-table td.fixed-col {
+    position: sticky;
+    left: 0;
+    z-index: 2;
+    background: #fff;
+  }
+  .position-table th.fixed-col:nth-child(1),
+  .position-table td.fixed-col:nth-child(1) { left: 0; }
+  .position-table th.fixed-col:nth-child(2),
+  .position-table td.fixed-col:nth-child(2) { left: 100px; }
+  .position-table thead th.fixed-col {
+    z-index: 4;
+    background: #F8F9FB;
+  }
+
+  /* 列显示切换按钮组 */
+  .col-toggle-group { display: flex; gap: 6px; flex-wrap: wrap; }
+  .col-toggle-btn {
+    padding: 4px 10px; font-size: 11px; border: 1px solid var(--border);
+    border-radius: 3px; cursor: pointer; background: #fff; color: var(--text-secondary);
+    transition: all 0.15s; white-space: nowrap;
+  }
+  .col-toggle-btn.show { background: #EDE9FE; border-color: #7C3AED; color: #7C3AED; }
+  .col-toggle-btn.hide { background: #F3F4F6; color: var(--text-muted); }
+
+  /* 可点击的专户金额单元格 */
+  .clickable-amount {
+    color: var(--primary-light); cursor: pointer; text-decoration: underline;
+    text-decoration-style: dotted; text-underline-offset: 3px;
+  }
+  .clickable-amount:hover { color: var(--primary); }
+
+  /* 红色预警行 */
+  .position-table tbody tr.warn-row { background: #FEF2F2 !important; }
+  .position-table tbody tr.warn-row:hover { background: #FEE2E2 !important; }
+
+  /* 已确认行（灰色淡化） */
+  .position-table tbody tr.confirmed-row { background: #F0F0F0 !important; opacity: 0.65; }
+  .position-table tbody tr.confirmed-row:hover { background: #E8E8E8 !important; }
+  .position-table tbody tr.confirmed-row td { text-decoration: line-through; text-decoration-color: var(--text-muted); }
+  .position-table tbody tr.confirmed-row td.pos-status-cell,
+  .position-table tbody tr.confirmed-row td.action-cell { text-decoration: none; }
+
+  /* 头寸状态标签 */
+  .pos-status-tag {
+    display: inline-flex; align-items: center; gap: 3px;
+    padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; white-space: nowrap;
+  }
+  .pos-status-tag.balanced { background: #CCFBF1; color: #115E59; }
+  .pos-status-tag.unbalanced { background: #FED7AA; color: #9A3412; }
+  .pos-status-tag.pending { background: #E5E7EB; color: #6B7280; }
+  .pos-status-tag.confirmed { background: #E5E7EB; color: #9CA3AF; }
+
+  /* 确认/取消确认按钮 */
+  .confirm-btn {
+    padding: 5px 14px; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer;
+    border: 1.5px solid #0084ff; background: #0084ff; color: #fff; white-space: nowrap;
+    transition: all 0.15s; box-shadow: 0 1px 3px rgba(0,132,255,0.25);
+  }
+  .confirm-btn:hover { background: #006cd6; box-shadow: 0 2px 6px rgba(0,132,255,0.35); }
+  .confirm-btn.confirmed {
+    background: #9CA3AF; border-color: #9CA3AF; color: #fff; box-shadow: none;
+  }
+  .confirm-btn.confirmed:hover { background: #6B7280; box-shadow: 0 1px 3px rgba(107,114,128,0.3); }
+
+  /* 进度条 */
+  .position-progress-bar {
+    display: flex; align-items: center; gap: 10px; padding: 6px 16px; flex-wrap: wrap;
+    background: linear-gradient(90deg, #F0FDFA 0%, #F8F9FB 100%);
+    border-radius: var(--radius) var(--radius) 0 0; border-bottom: 1px solid var(--border);
+  }
+  .progress-track { flex: 1; height: 8px; background: #E5E7EB; border-radius: 4px; overflow: hidden; max-width: 200px; min-width: 80px; }
+  .progress-fill { height: 100%; background: linear-gradient(90deg, #60A5FA, #2563EB); border-radius: 4px; transition: width 0.3s; }
+  .progress-text { font-size: 12px; color: var(--text); white-space: nowrap; }
+  .progress-text strong { color: #2563EB; }
+
+  /* 状态筛选按钮组 */
+  .status-filter-group { display: flex; gap: 4px; }
+  .status-filter-btn {
+    padding: 4px 12px; border-radius: 6px; font-size: 12px; cursor: pointer;
+    border: 1px solid var(--border); background: var(--card-bg); color: var(--text-secondary);
+    transition: all 0.15s; white-space: nowrap;
+  }
+  .status-filter-btn:hover { border-color: var(--primary); }
+  .status-filter-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+  .status-filter-btn .filter-count { font-size: 10px; margin-left: 3px; opacity: 0.85; }
+
+  /* 跳转待处理按钮 */
+  .jump-btn {
+    padding: 4px 12px; border-radius: 6px; font-size: 12px; cursor: pointer;
+    border: 1px solid #FED7AA; background: #FFF7ED; color: #9A3412; white-space: nowrap;
+    transition: all 0.15s;
+  }
+  .jump-btn:hover { background: #FFEDD5; }
+  .pos-status-cell, .action-cell { white-space: nowrap; text-align: center; }
+  .position-table tbody tr.position-summary-row { background: #F8F9FB !important; font-weight: 600; border-top: 2px solid var(--border); }
+  .position-table tbody tr.position-summary-row td { padding: 10px 8px; font-size: 13px; color: var(--text); }
+
+  /* 专户弹窗 - 大弹窗 */
+  .modal-wide { width: 1100px; max-width: 95vw; }
+  .modal-wide .modal-body { max-height: 60vh; }
+
+  /* 专户弹窗内的表格 */
+  .spv-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .spv-table thead th {
+    padding: 8px 10px; text-align: left; font-weight: 600;
+    color: var(--text-secondary); background: #F8F9FB; border-bottom: 2px solid var(--border);
+    white-space: nowrap; font-size: 11px;
+  }
+  .spv-table tbody td {
+    padding: 8px 10px; border-bottom: 1px solid #F0F1F5; vertical-align: middle;
+  }
+  .spv-table tbody tr:hover { background: #FAFBFC; }
+  .spv-table tbody tr.warn-row { background: #FEF2F2 !important; }
+  .spv-table .spv-input {
+    width: 100px; padding: 5px 8px; border: 1px solid var(--border);
+    border-radius: 3px; font-size: 12px; text-align: right; background: #fff; outline: none;
+  }
+  .spv-table .spv-input:focus { border-color: var(--primary); }
+  .spv-table .spv-summary-row td {
+    font-weight: 600; background: #F8F9FB; border-top: 2px solid var(--border);
+    font-size: 12px;
+  }
+
+  /* 筛选区 */
+  .filter-bar {
+    display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
+    padding: 8px 16px; background: var(--card-bg); border-radius: 0 0 var(--radius) var(--radius);
+    box-shadow: var(--shadow); margin-bottom: 12px;
+  }
+  .filter-bar label { font-size: 12px; font-weight: 600; color: var(--text-secondary); white-space: nowrap; }
+  .filter-bar input, .filter-bar select {
+    padding: 6px 10px; border: 1px solid var(--border); border-radius: var(--radius-sm);
+    font-size: 13px; background: var(--input-bg); outline: none;
+  }
+  .filter-bar input:focus, .filter-bar select:focus { border-color: var(--primary); }
+
+  /* 理财产品维护 Tab */
+  .product-maint-page { padding: 16px 20px 24px; }
+  .product-maint-page h2 { font-size: 16px; margin-bottom: 12px; color: var(--text); }
+  .product-maint-toolbar {
+    display: flex; gap: 10px; align-items: center; margin-bottom: 12px; flex-wrap: wrap;
+  }
+  .product-maint-toolbar .toolbar-divider {
+    width: 1px; height: 24px; background: var(--border); margin: 0 4px;
+  }
+  .product-maint-table {
+    width: 100%; border-collapse: collapse; font-size: 13px; background: #fff;
+    border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow);
+  }
+  .product-maint-table th {
+    background: #F8F9FB; text-align: left; padding: 10px 12px;
+    font-weight: 600; color: var(--text-secondary); font-size: 12px;
+    border-bottom: 2px solid var(--border); white-space: nowrap;
+  }
+  .product-maint-table td { padding: 8px 12px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+  .product-maint-table tbody tr:hover { background: #FAFBFC; }
+  .product-maint-table tbody tr.offline { background: #F9FAFB; color: var(--text-muted); }
+  .product-maint-table tbody tr.offline:hover { background: #F3F4F6; }
+  .product-maint-table tbody tr.drag-over { border-top: 3px solid var(--primary); }
+  /* 拖拽手柄 */
+  .drag-handle {
+    cursor: grab; color: var(--text-muted); font-size: 18px; line-height: 1;
+    padding: 2px 4px; user-select: none; display: inline-flex; align-items: center;
+  }
+  .drag-handle:active { cursor: grabbing; color: var(--primary); }
+  .drag-handle:hover { color: var(--text-secondary); }
+  /* 排序序号输入 */
+  .sort-input {
+    width: 52px; padding: 5px 8px; border: 1px solid var(--border);
+    border-radius: var(--radius-sm); font-size: 13px; text-align: center;
+    background: var(--input-bg); outline: none;
+  }
+  .sort-input:focus { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(26,60,109,0.1); }
+  /* 开关 */
+  .product-maint-table .switch-label {
+    display: flex; align-items: center; gap: 8px; cursor: pointer;
+  }
+  .product-maint-table .switch-track {
+    width: 40px; height: 22px; border-radius: 11px; background: #D1D5DB;
+    position: relative; transition: background 0.2s; flex-shrink: 0;
+  }
+  .product-maint-table .switch-track.on { background: #0F766E; }
+  .product-maint-table .switch-thumb {
+    width: 18px; height: 18px; border-radius: 50%; background: #fff;
+    position: absolute; top: 2px; left: 2px; transition: left 0.2s;
+    box-shadow: 0 1px 3px rgba(0,0,0,.15);
+  }
+  .product-maint-table .switch-track.on .switch-thumb { left: 20px; }
+  /* 标签 */
+  .product-maint-table .tag {
+    display: inline-block; padding: 2px 8px; border-radius: 3px; font-size: 11px;
+    font-weight: 500;
+  }
+  .product-maint-table .tag.online { background: #F0FDFA; color: #115E59; }
+  .product-maint-table .tag.offline { background: #F3F4F6; color: #6B7280; }
+  .product-maint-table .tag.live-yes { background: #F0FDFA; color: #115E59; }
+  .product-maint-table .tag.live-no { background: #FEF2F2; color: #991B1B; }
+  /* 头寸管理表格 - 不计算活期标记 */
+  .tag-live-skip {
+    display: inline-block; padding: 2px 8px; border-radius: 3px; font-size: 11px;
+    font-weight: 500; background: #FFF7ED; color: #C2410C; border: 1px solid #FED7AA;
+    cursor: default;
+  }
+  /* 上线/下线按钮 */
+  .toggle-online-btn {
+    padding: 3px 10px; font-size: 11px; border-radius: 4px; border: 1px solid;
+    cursor: pointer; font-weight: 500; transition: all 0.15s;
+  }
+  .toggle-online-btn.on {
+    background: #F0FDFA; color: #115E59; border-color: #5EEAD4;
+  }
+  .toggle-online-btn.on:hover { background: #CCFBF1; }
+  .toggle-online-btn.off {
+    background: #F9FAFB; color: #6B7280; border-color: #D1D5DB;
+  }
+  .toggle-online-btn.off:hover { background: #F3F4F6; color: #374151; }
+  /* Tab 切换 */
+  .maint-tabs {
+    display: flex; gap: 0; border-bottom: 1px solid var(--border); margin-bottom: 12px;
+  }
+  .maint-tab {
+    padding: 10px 18px; font-size: 14px; color: var(--text-secondary); cursor: pointer;
+    border-bottom: 2px solid transparent; margin-bottom: -1px; transition: all 0.2s;
+    user-select: none;
+  }
+  .maint-tab:hover { color: var(--text); }
+  .maint-tab.active { color: var(--primary); border-bottom-color: var(--primary); font-weight: 600; }
+  .maint-tab .tab-count { font-size: 13px; color: var(--text-muted); margin-left: 4px; }
+  .maint-tab.active .tab-count { color: var(--primary-light); }
+  /* 维护页说明条 */
+  .product-maint-notice {
+    background: #F0F9FF; border: 1px solid #BAE6FD; border-radius: var(--radius-sm);
+    padding: 10px 14px; font-size: 12px; color: #0369A1; margin-bottom: 12px;
+    display: flex; align-items: flex-start; gap: 8px; line-height: 1.6;
+  }
+  .product-maint-notice .notice-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+
+  /* 汇总栏 */
+  .position-summary {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 16px; background: var(--card-bg);
+    border-top: 2px solid var(--border); font-size: 13px; flex-wrap: wrap; gap: 8px;
+  }
+  .position-summary .ps-item { display: flex; align-items: center; gap: 6px; }
+  .position-summary .ps-label { color: var(--text-muted); font-size: 12px; }
+  .position-summary .ps-value { font-weight: 600; }
+  .position-summary .ps-value.positive { color: var(--danger); }
+  .position-summary .ps-value.negative { color: var(--success); }
+
+  /* 头寸管理页面 */
+  .position-page { padding: 0; }
+  .position-page .top-bar { margin-bottom: 12px; }
+
+  /* 产品链接样式 */
+  .product-link {
+    color: #2563EB;
+    text-decoration: none;
+    cursor: pointer;
+  }
+  .product-link:hover {
+    color: #1D4ED8;
+    text-decoration: underline;
+  }
+
+  /* 信息提示条 */
+  .info-tip-bar {
+    background: #F0F9FF;
+    border: 1px solid #BAE6FD;
+    border-radius: var(--radius-sm);
+    padding: 8px 12px;
+    font-size: 12px;
+    color: #0369A1;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .info-tip-bar .tip-num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    background: #0369A1;
+    color: #fff;
+    border-radius: 50%;
+    font-size: 11px;
+    font-weight: 600;
+  }
+
+  /* 产品统计栏 */
+  .product-stats-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 16px;
+    background: var(--card-bg);
+    border-radius: var(--radius) var(--radius) 0 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .product-stats-bar .stats-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .product-stats-bar .stats-right {
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+
+  /* 日期标签 */
+  .date-tag {
+    font-size: 12px;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .date-tag strong {
+    color: var(--primary);
+    font-weight: 600;
+  }
+  /* 专户申购/赎回弹窗 - 优化版（调仓模式：产品申购/赎回专户） */
+  .spv-trade-modal {
+    width: 780px;
+    max-width: 95vw;
+    max-height: 85vh;
+    display: flex;
+    flex-direction: column;
+  }
+  .spv-trade-modal .modal-header {
+    padding: 14px 24px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .spv-trade-modal .modal-header .header-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .spv-trade-modal .modal-header h3 {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text);
+    margin: 0;
+  }
+  .spv-trade-modal .modal-header .时效 {
+    font-size: 13px;
+    color: var(--primary-light);
+    font-weight: 500;
+  }
+  .spv-trade-modal .modal-header .nav-date-hint {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-left: 6px;
+    font-weight: 400;
+  }
+  /* 产品信息副标题 */
+  .spv-product-info {
+    padding: 8px 24px;
+    background: var(--hover-bg);
+    border-bottom: 1px solid var(--border);
+    font-size: 12px;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .spv-product-info .prod-tag {
+    display: inline-block;
+    padding: 2px 8px;
+    background: var(--primary);
+    color: #fff;
+    border-radius: 3px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+  .spv-trade-modal .modal-body {
+    padding: 20px 24px;
+    overflow-y: auto;
+    flex: 1;
+  }
+  .spv-trade-modal .modal-footer {
+    padding: 14px 24px;
+    border-top: 1px solid var(--border);
+    background: #fafbfc;
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    align-items: center;
+  }
+
+  /* 操作区卡片（申购/赎回各一张） */
+  .spv-trade-card {
+    background: #f8f9fb;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px 18px;
+    margin-bottom: 14px;
+  }
+  .spv-trade-card.card-sub {
+    background: #FFF5F5;
+    border-color: #fecaca;
+  }
+  .spv-trade-card.card-red {
+    background: #F0FDFA;
+    border-color: #5EEAD4;
+  }
+  .spv-trade-card .card-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .spv-trade-card .card-label .card-icon {
+    width: 20px;
+    height: 20px;
+    border-radius: 4px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 700;
+    color: #fff;
+  }
+  .spv-trade-card .card-label .card-icon.sub { background: #e74c3c; }
+  .spv-trade-card .card-label .card-icon.red { background: #27ae60; }
+
+  /* 输入区域 */
+  .spv-input-group {
+    margin-bottom: 12px;
+  }
+  .spv-input-group .input-label {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+    display: block;
+  }
+  .spv-input-group .input-row {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+    background: #fff;
+  }
+  .spv-input-group .input-row:focus-within {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px rgba(26,60,109,0.1);
+  }
+  .spv-input-group .input-row input {
+    flex: 1;
+    padding: 9px 12px;
+    border: none;
+    outline: none;
+    font-size: 14px;
+    font-weight: 500;
+    text-align: left;
+    background: transparent;
+    font-variant-numeric: tabular-nums;
+  }
+  .spv-input-group .input-row input::placeholder { color: #bfbfbf; font-weight: 400; }
+  .spv-input-group .input-row .unit {
+    padding: 9px 12px;
+    font-size: 13px;
+    color: var(--text-muted);
+    background: #f0f1f3;
+    border-left: 1px solid var(--border);
+    white-space: nowrap;
+    font-weight: 500;
+  }
+  .spv-input-group .input-hint {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 5px;
+  }
+
+  /* 快捷按钮行 — 两段式：按钮组(左) + 指标(右) */
+  .spv-action-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+  .spv-action-row:last-child { margin-bottom: 0; }
+  .spv-action-btn {
+    padding: 5px 12px;
+    font-size: 12px;
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    cursor: pointer;
+    background: #fff;
+    color: var(--text-secondary);
+    transition: all 0.15s;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .spv-action-btn:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+    background: #eef2f8;
+  }
+  .spv-action-btn.primary {
+    border-color: var(--primary);
+    color: var(--primary);
+    font-weight: 500;
+  }
+  .spv-action-btn.primary:hover {
+    background: var(--primary);
+    color: #fff;
+  }
+  .spv-action-btn.danger {
+    border-color: #e74c3c;
+    color: #e74c3c;
+    font-weight: 500;
+  }
+  .spv-action-btn.danger:hover {
+    background: #e74c3c;
+    color: #fff;
+  }
+  .spv-action-info {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-left: auto;
+    white-space: nowrap;
+  }
+  .spv-action-info .info-value {
+    color: var(--text);
+    font-weight: 600;
+  }
+
+  /* 预估赎回份额（嵌在赎回卡片底部） */
+  .spv-est-row {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px dashed var(--border);
+  }
+  .spv-est-row .est-label {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+    display: block;
+  }
+  .spv-est-row .est-box {
+    border: 1px solid #e8e8e8;
+    border-radius: 6px;
+    padding: 8px 12px;
+    background: #fff;
+  }
+  .spv-est-row .est-main {
+    font-size: 15px;
+    color: var(--text);
+    font-weight: 600;
+  }
+  .spv-est-row .est-sub {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 3px;
+  }
+
+  /* 头寸概览（默认可见） */
+  .spv-headroom-expand {
+  .spv-trade-modal .modal-footer .spv-btn-cancel {
+    padding: 9px 28px;
+    font-size: 13px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    background: #fff;
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.18s;
+    letter-spacing: 0.5px;
+  }
+  .spv-trade-modal .modal-footer .spv-btn-cancel:hover {
+    border-color: #9ca3af;
+    color: var(--text);
+    background: #f3f4f6;
+  }
+  .spv-trade-modal .modal-footer .spv-btn-confirm {
+    padding: 9px 32px;
+    font-size: 13px;
+    border: none;
+    border-radius: 6px;
+    background: var(--primary);
+    color: #fff;
+    cursor: pointer;
+    font-weight: 600;
+    letter-spacing: 1px;
+    transition: all 0.18s;
+    box-shadow: 0 2px 6px rgba(26,60,109,0.25);
+  }
+  .spv-trade-modal .modal-footer .spv-btn-confirm:hover {
+    background: var(--primary-light);
+    box-shadow: 0 3px 10px rgba(26,60,109,0.35);
+    transform: translateY(-1px);
+  }
+  .spv-trade-modal .modal-footer .spv-btn-confirm:active {
+    transform: translateY(0);
+    box-shadow: 0 1px 4px rgba(26,60,109,0.2);
+  }
+
+  /* 头寸概览 */
+  .spv-headroom-expand {
+    margin-top: 12px;
+    background: #f4f6fa;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    display: block;
+    font-size: 13px;
+  }
+  .spv-headroom-expand .hr-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-muted);
+    padding: 8px 16px 6px;
+    border-bottom: 1px solid var(--border);
+    background: #edf0f5;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+  .spv-headroom-expand .hr-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 7px 16px;
+    border-bottom: 1px solid #eef0f4;
+  }
+  .spv-headroom-expand .hr-row:last-child {
+    border-bottom: none;
+  }
+  .spv-headroom-expand .hr-row .hr-label {
+    color: var(--text-secondary);
+    font-size: 12px;
+  }
+  .spv-headroom-expand .hr-row .hr-val {
+    font-weight: 600;
+    font-size: 13px;
+    color: var(--text);
+    font-variant-numeric: tabular-nums;
+  }
+  .spv-headroom-expand .hr-row.hr-total {
+    background: #fff;
+    font-size: 13px;
+  }
+  .spv-headroom-expand .hr-row.hr-total .hr-label {
+    font-weight: 600;
+    color: var(--text);
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <h1>头寸管理系统</h1>
+    <span class="header-badge" id="headerBadge">头寸管理</span>
+  </div>
+  <div class="nav-tabs">
+    <div class="nav-tab active" data-tab="position" onclick="switchTab('position')">头寸管理</div>
+    <div class="nav-tab" data-tab="adjust" onclick="switchTab('adjust')">专户调仓</div>
+    <div class="nav-tab" data-tab="product" onclick="switchTab('product')">理财产品维护</div>
+    <div class="nav-tab" data-tab="spv" onclick="switchTab('spv')">专户产品维护</div>
+  </div>
+</div>
+
+<!-- ============ 头寸管理 Tab 页面 ============ -->
+<div class="layout" id="tabPosition" style="display:flex;">
+  <div class="content position-page" style="max-width:100%;padding:16px 20px 24px;" id="positionContent">
+    <!-- 动态渲染 -->
+  </div>
+</div>
+
+<!-- ============ 专户调仓 Tab 页面 ============ -->
+<div class="layout" id="tabAdjust" style="display:none;">
+  <!-- 左侧专户导航 -->
+  <div class="sidebar" id="sidebar">
+    <div class="sidebar-search">
+      <input type="text" id="sidebarSearch" placeholder="搜索专户..." oninput="renderSidebar()">
+    </div>
+    <div class="sidebar-stats">
+      <span>✓ 已调 <strong id="sidebarDone">0</strong></span>
+      <span>⏳ 进行中 <strong id="sidebarProgress">0</strong></span>
+      <span>○ 待调 <strong id="sidebarPending">0</strong></span>
+    </div>
+    <div class="sidebar-list" id="sidebarList"></div>
+  </div>
+
+  <!-- 右侧主操作区 -->
+  <div class="content" id="mainContent">
+    <!-- 动态渲染 -->
+  </div>
+</div>
+
+<!-- ============ 理财产品维护 Tab 页面 ============ -->
+<div class="layout" id="tabProduct" style="display:none;">
+  <div class="content product-maint-page" id="productMaintContent">
+    <!-- 动态渲染 -->
+  </div>
+</div>
+
+<!-- ============ 专户产品维护 Tab 页面 ============ -->
+<div class="layout" id="tabSpv" style="display:none;">
+  <div class="content product-maint-page" id="spvMaintContent">
+    <!-- 动态渲染 -->
+  </div>
+</div>
+
+<script>
+// ==================== ALL ACCOUNTS DATA ====================
+
+// 所有专户定义
+const allAccounts = [
+  {
+    id: 'ningju5',
+    code: 'JS08ZG',
+    name: '宁聚5号',
+    tVal: 'T+0',
+    totalBP: 29,
+    accountSize: 113183068.08,
+    defaultMode: 'profit',
+    holdings: [
+      { code: 'EW7746', name: '阳光金增利稳健天天购46号（14天最低持有）',       size: 9797057.22,       defaultBP: 5,  defaultSelected: true,  feeRatio: 1.0034389 },
+      { code: 'EW7748', name: '阳光金增利稳健天天购52号（30天最低持有）',       size: 10015358.74,      defaultBP: 5,  defaultSelected: true,  feeRatio: 1.0033613 },
+      { code: 'EW4659', name: '阳光金增利稳健天天购16号（90天最低持有）',       size: 855921676.42,     defaultBP: 2,  defaultSelected: true,  feeRatio: 1.0033613 },
+      { code: 'EW6287', name: '阳光金增利稳健乐享天天购49号（14天最低持有）',    size: 4610569677.94,    defaultBP: 1,  defaultSelected: true,  feeRatio: 1.0033613 },
+      { code: 'EW5208', name: '阳光金增利稳健天天购27号（7天最低持有）',        size: 333548165.24,     defaultBP: 2,  defaultSelected: true,  feeRatio: 1.0033613 },
+      { code: 'EW0599', name: '阳光金私享增利稳健天天购（300天最低持有）',       size: 650000000,        defaultBP: 0,  defaultSelected: false, feeRatio: 1.0033613 },
+      { code: 'EW3517', name: '阳光金增利稳健天天购13号（7天最低持有）',        size: 330000000,        defaultBP: 0,  defaultSelected: false, feeRatio: 1.0033613 },
+      { code: 'EW4217', name: '阳光金丰利617期',                                size: 290000000,        defaultBP: 0,  defaultSelected: false, feeRatio: 1.0033613 },
+      { code: 'EW2911', name: '阳光金增利稳健乐享天天购9号（30天最低持有）',    size: 150000000,        defaultBP: 0,  defaultSelected: false, feeRatio: 1.0033613 },
+      { code: 'EW1390', name: '阳光金安心计划-存单存款策略（60天最低持有）',     size: 220000000,        defaultBP: 0,  defaultSelected: false, feeRatio: 1.0033613 },
+      { code: 'EW5322', name: '阳光金增利稳健天天购22号（90天最低持有）',       size: 310000000,        defaultBP: 0,  defaultSelected: false, feeRatio: 1.0033613 },
+      { code: 'EW0767', name: '阳光金增利稳健天天购定制(100天最低持有)',         size: 270000000,        defaultBP: 0,  defaultSelected: false, feeRatio: 1.0033613 },
+      { code: 'EW2847', name: '阳光金增利稳健天天购定制（7天最低持有）2号',      size: 120000000,        defaultBP: 0,  defaultSelected: false, feeRatio: 1.0033613 },
+      { code: 'EW4512', name: '阳光金丰利682期',                                size: 600000000,        defaultBP: 0,  defaultSelected: false, feeRatio: 1.0033613 },
+      { code: 'EW6075', name: '阳光金丰利874期',                                size: 200000000,        defaultBP: 0,  defaultSelected: false, feeRatio: 1.0033613 },
+      { code: 'EW2923', name: '阳光金丰利臻享C083期',                            size: 100000000,        defaultBP: 0,  defaultSelected: false, feeRatio: 1.0033613 },
+      { code: 'EW5231', name: '颐享阳光金安享如意日开1号（180天最低持有）',      size: 770000000,        defaultBP: 0,  defaultSelected: false, feeRatio: 1.0033613 },
+      { code: 'EW5218', name: '阳光金增利稳健天天购15号（180天最低持有）',       size: 170000000,        defaultBP: 0,  defaultSelected: false, feeRatio: 1.0033613 },
+    ]
+  },
+  {
+    id: 'xinhe14',
+    code: 'SGT2024001',
+    name: '陕国投·鑫和14号',
+    tVal: 'T+0',
+    totalBP: 50,
+    accountSize: 200000000,
+    defaultMode: 'loss',
+    holdings: [
+      { code: 'EW3517', name: '阳光金增利稳健天天购13号（7天最低持有）', size: 330000000, defaultBP: 33, defaultSelected: true, feeRatio: 1.0033613 },
+      { code: 'EW0599', name: '阳光金私享增利稳健天天购（300天最低持有）', size: 650000000, defaultBP: 29, defaultSelected: true, feeRatio: 1.0033613 },
+      { code: 'EW4217', name: '阳光金丰利617期', size: 290000000, defaultBP: 29, defaultSelected: true, feeRatio: 1.0033613 },
+      { code: 'EW2911', name: '阳光金增利稳健乐享天天购9号（30天最低持有）', size: 150000000, defaultBP: 8, defaultSelected: true, feeRatio: 1.0033613 },
+      { code: 'EW1390', name: '阳光金安心计划-存单存款策略（60天最低持有）', size: 220000000, defaultBP: 12, defaultSelected: true, feeRatio: 1.0033613 },
+      { code: 'EW5322', name: '阳光金增利稳健天天购22号（90天最低持有）', size: 310000000, defaultBP: 17, defaultSelected: true, feeRatio: 1.0033613 },
+      { code: 'EW0767', name: '阳光金增利稳健天天购定制(100天最低持有)', size: 270000000, defaultBP: 15, defaultSelected: true, feeRatio: 1.0033613 },
+      { code: 'EW2847', name: '阳光金增利稳健天天购定制（7天最低持有）2号', size: 120000000, defaultBP: 6, defaultSelected: true, feeRatio: 1.0033613 },
+    ]
+  },
+  {
+    id: 'xinhe7',
+    code: 'SGT2024002',
+    name: '陕国投·鑫和7号',
+    tVal: 'T+1',
+    totalBP: 35,
+    accountSize: 150000000,
+    defaultMode: 'profit',
+    holdings: [
+      { code: 'EW7746', name: '阳光金增利稳健天天购46号（14天最低持有）', size: 8000000, defaultBP: 10, defaultSelected: true, feeRatio: 1.0034389 },
+      { code: 'EW4659', name: '阳光金增利稳健天天购16号（90天最低持有）', size: 600000000, defaultBP: 8, defaultSelected: true, feeRatio: 1.0033613 },
+      { code: 'EW6287', name: '阳光金增利稳健乐享天天购49号（14天最低持有）', size: 3500000000, defaultBP: 5, defaultSelected: true, feeRatio: 1.0033613 },
+      { code: 'EW5208', name: '阳光金增利稳健天天购27号（7天最低持有）', size: 250000000, defaultBP: 7, defaultSelected: true, feeRatio: 1.0033613 },
+      { code: 'EW4512', name: '阳光金丰利682期', size: 500000000, defaultBP: 3, defaultSelected: true, feeRatio: 1.0033613 },
+      { code: 'EW6075', name: '阳光金丰利874期', size: 150000000, defaultBP: 2, defaultSelected: true, feeRatio: 1.0033613 },
+      { code: 'EW0599', name: '阳光金私享增利稳健天天购（300天最低持有）', size: 500000000, defaultBP: 0, defaultSelected: false, feeRatio: 1.0033613 },
+      { code: 'EW5231', name: '颐享阳光金安享如意日开1号（180天最低持有）', size: 600000000, defaultBP: 0, defaultSelected: false, feeRatio: 1.0033613 },
+    ]
+  },
+  {
+    id: 'zhongxin',
+    code: 'ZX2024001',
+    name: '中信信托·融4号',
+    tVal: 'T+0',
+    totalBP: 42,
+    accountSize: 180000000,
+    defaultMode: 'profit',
+    holdings: [
+      { code: 'EW4659', name: '阳光金增利稳健天天购16号（90天最低持有）', size: 700000000, defaultBP: 12, defaultSelected: true, feeRatio: 1.0033613 },
+      { code: 'EW6287', name: '阳光金增利稳健乐享天天购49号（14天最低持有）', size: 4000000000, defaultBP: 10, defaultSelected: true, feeRatio: 1.0033613 },
+      { code: 'EW5208', name: '阳光金增利稳健天天购27号（7天最低持有）', size: 280000000, defaultBP: 8, defaultSelected: true, feeRatio: 1.0033613 },
+      { code: 'EW7746', name: '阳光金增利稳健天天购46号（14天最低持有）', size: 6000000, defaultBP: 5, defaultSelected: true, feeRatio: 1.0034389 },
+      { code: 'EW7748', name: '阳光金增利稳健天天购52号（30天最低持有）', size: 8000000, defaultBP: 4, defaultSelected: true, feeRatio: 1.0033613 },
+      { code: 'EW4512', name: '阳光金丰利682期', size: 450000000, defaultBP: 3, defaultSelected: true, feeRatio: 1.0033613 },
+      { code: 'EW0599', name: '阳光金私享增利稳健天天购（300天最低持有）', size: 400000000, defaultBP: 0, defaultSelected: false, feeRatio: 1.0033613 },
+      { code: 'EW5231', name: '颐享阳光金安享如意日开1号（180天最低持有）', size: 550000000, defaultBP: 0, defaultSelected: false, feeRatio: 1.0033613 },
+    ]
+  },
+  {
+    id: 'jxin15',
+    code: 'ZT2024001',
+    name: '中铁信托·锦信15号',
+    tVal: 'T+0',
+    totalBP: 20,
+    accountSize: 95000000,
+    defaultMode: 'profit',
+    holdings: [
+      { code: 'EW6287', name: '阳光金增利稳健乐享天天购49号（14天最低持有）', size: 3800000000, defaultBP: 8, defaultSelected: true, feeRatio: 1.0033613 },
+      { code: 'EW4659', name: '阳光金增利稳健天天购16号（90天最低持有）', size: 500000000, defaultBP: 6, defaultSelected: true, feeRatio: 1.0033613 },
+      { code: 'EW5208', name: '阳光金增利稳健天天购27号（7天最低持有）', size: 200000000, defaultBP: 4, defaultSelected: true, feeRatio: 1.0033613 },
+      { code: 'EW7746', name: '阳光金增利稳健天天购46号（14天最低持有）', size: 5000000, defaultBP: 2, defaultSelected: true, feeRatio: 1.0034389 },
+      { code: 'EW0599', name: '阳光金私享增利稳健天天购（300天最低持有）', size: 300000000, defaultBP: 0, defaultSelected: false, feeRatio: 1.0033613 },
+      { code: 'EW5231', name: '颐享阳光金安享如意日开1号（180天最低持有）', size: 400000000, defaultBP: 0, defaultSelected: false, feeRatio: 1.0033613 },
+    ]
+  },
+  {
+    id: 'other1',
+    code: 'SGT2024003',
+    name: '陕国投·鑫和18号',
+    tVal: 'T+1',
+    totalBP: 15,
+    accountSize: 80000000,
+    defaultMode: 'profit',
+    holdings: [
+      { code: 'EW6287', name: '阳光金增利稳健乐享天天购49号（14天最低持有）', size: 2500000000, defaultBP: 7, defaultSelected: true, feeRatio: 1.0033613 },
+      { code: 'EW4659', name: '阳光金增利稳健天天购16号（90天最低持有）', size: 350000000, defaultBP: 5, defaultSelected: true, feeRatio: 1.0033613 },
+      { code: 'EW5208', name: '阳光金增利稳健天天购27号（7天最低持有）', size: 150000000, defaultBP: 3, defaultSelected: true, feeRatio: 1.0033613 },
+      { code: 'EW0599', name: '阳光金私享增利稳健天天购（300天最低持有）', size: 200000000, defaultBP: 0, defaultSelected: false, feeRatio: 1.0033613 },
+    ]
+  },
+  {
+    id: 'other2',
+    code: 'WK2024001',
+    name: '五矿信托·恒信12号',
+    tVal: 'T+0',
+    totalBP: 25,
+    accountSize: 120000000,
+    defaultMode: 'loss',
+    holdings: [
+      { code: 'EW4217', name: '阳光金丰利617期', size: 250000000, defaultBP: 12, defaultSelected: true, feeRatio: 1.0033613 },
+      { code: 'EW4512', name: '阳光金丰利682期', size: 400000000, defaultBP: 8, defaultSelected: true, feeRatio: 1.0033613 },
+      { code: 'EW6075', name: '阳光金丰利874期', size: 150000000, defaultBP: 5, defaultSelected: true, feeRatio: 1.0033613 },
+      { code: 'EW0599', name: '阳光金私享增利稳健天天购（300天最低持有）', size: 350000000, defaultBP: 0, defaultSelected: false, feeRatio: 1.0033613 },
+    ]
+  },
+  {
+    id: 'other3',
+    code: 'PA2024001',
+    name: '平安信托·丰盈9号',
+    tVal: 'T+0',
+    totalBP: 18,
+    accountSize: 65000000,
+    defaultMode: 'profit',
+    holdings: [
+      { code: 'EW6287', name: '阳光金增利稳健乐享天天购49号（14天最低持有）', size: 1800000000, defaultBP: 9, defaultSelected: true, feeRatio: 1.0033613 },
+      { code: 'EW4659', name: '阳光金增利稳健天天购16号（90天最低持有）', size: 280000000, defaultBP: 6, defaultSelected: true, feeRatio: 1.0033613 },
+      { code: 'EW5208', name: '阳光金增利稳健天天购27号（7天最低持有）', size: 100000000, defaultBP: 3, defaultSelected: true, feeRatio: 1.0033613 },
+    ]
+  },
+];
+
+// ==================== 理财产品全量库 ====================
+const productLibrary = [
+  { code:'EW0599', name:'阳光金私享增利稳健天天购（300天最低持有）', type:'开放式', status:'存续' },
+  { code:'EW0580', name:'阳光金私享增利周开（182天最低持有）2号', type:'开放式', status:'存续' },
+  { code:'EW1340', name:'阳光金私享增利周开（9个月最低持有）2号', type:'开放式', status:'存续' },
+  { code:'EW0515', name:'阳光金私享增利周开（182天最低持有）', type:'开放式', status:'存续' },
+  { code:'EW7746', name:'阳光金增利稳健天天购46号（14天最低持有）', type:'开放式', status:'存续' },
+  { code:'EW7748', name:'阳光金增利稳健天天购52号（30天最低持有）', type:'开放式', status:'存续' },
+  { code:'EW4659', name:'阳光金增利稳健天天购16号（90天最低持有）', type:'开放式', status:'存续' },
+  { code:'EW6287', name:'阳光金增利稳健乐享天天购49号（14天最低持有）', type:'开放式', status:'存续' },
+  { code:'EW5208', name:'阳光金增利稳健天天购27号（7天最低持有）', type:'开放式', status:'存续' },
+  { code:'EW3517', name:'阳光金增利稳健天天购13号（7天最低持有）', type:'开放式', status:'存续' },
+  { code:'EW4217', name:'阳光金丰利617期', type:'封闭式', status:'存续' },
+  { code:'EW2911', name:'阳光金增利稳健乐享天天购9号（30天最低持有）', type:'开放式', status:'存续' },
+  { code:'EW1390', name:'阳光金安心计划-存单存款策略（60天最低持有）', type:'开放式', status:'存续' },
+  { code:'EW5322', name:'阳光金增利稳健天天购22号（90天最低持有）', type:'开放式', status:'存续' },
+  { code:'EW0767', name:'阳光金增利稳健天天购定制（100天最低持有）', type:'开放式', status:'存续' },
+  { code:'EW2847', name:'阳光金增利稳健天天购定制（7天最低持有）2号', type:'开放式', status:'存续' },
+  { code:'EW4512', name:'阳光金丰利682期', type:'封闭式', status:'存续' },
+  { code:'EW6075', name:'阳光金丰利874期', type:'封闭式', status:'存续' },
+  { code:'EW2923', name:'阳光金丰利臻享C083期', type:'封闭式', status:'存续' },
+  { code:'EW5231', name:'颐享阳光金安享如意日开1号（180天最低持有）', type:'开放式', status:'存续' },
+  { code:'EW5218', name:'阳光金增利稳健天天购15号（180天最低持有）', type:'开放式', status:'存续' },
+];
+
+// ==================== GLOBAL STATE ====================
+// accountState: { accountId: { mode, bpData, feeRatioData, selectedMap, status, feeRateN, bpLoss, totalLoss, baseSize, bpGrowth, accountSize, targetAccount, sourceAccount, lossAdjData, spvHoldingAdj, spvRedSources } }
+let accountState = {};
+let currentAccountId = null;
+let sidebarFilter = '';
+
+function getState(accountId) {
+  if (!accountState[accountId]) {
+    const acc = allAccounts.find(a => a.id === accountId);
+    if (!acc) return null;
+    const state = {
+      mode: acc.defaultMode,
+      bpData: {},
+      feeRatioData: {},
+      selectedMap: {},
+      status: 'pending',  // pending | progress | done
+      feeRateN: 0.0066,
+      bpLoss: 149,
+      totalLoss: 149,
+      baseSize: 26400,
+      lossAdjData: {},
+      lossRedSourceMap: {},        // 调仓逐产品赎回来源专户 { productCode: spvCode }
+      bpGrowth: acc.totalBP,
+      accountSize: acc.accountSize,
+      targetAccount: allAccounts.find(a => a.id !== acc.id)?.id || allAccounts[0]?.id,
+      sourceAccount: allAccounts.find(a => a.id !== acc.id)?.id || allAccounts[0]?.id,
+
+      profitTargetMap: {},          // 拉壳逐产品目标专户 { productCode: spvId }
+      spvHoldingAdj: {},           // SPV持仓调减金额 { productCode: { spvId: amount } }
+      spvRedSources: {             // 多专户赎回归集
+        _all: [allAccounts.find(a => a.id !== acc.id)?.id || allAccounts[0]?.id]
+      },
+    };
+    acc.holdings.forEach(p => {
+      state.selectedMap[p.code] = p.defaultSelected;
+      state.bpData[p.code] = p.defaultBP;
+      state.feeRatioData[p.code] = p.feeRatio;
+      // 初始化调减金额（模拟从SPV持仓自动回填）
+      state.spvHoldingAdj[p.code] = Math.round(p.size * 0.02 / 10000) * 10000;
+    });
+    accountState[accountId] = state;
+  }
+
+  return accountState[accountId];
+}
+
+function getAccount(accountId) {
+  return allAccounts.find(a => a.id === accountId);
+}
+
+// ==================== SIDEBAR ====================
+
+function getSidebarItems() {
+  const q = sidebarFilter.trim().toLowerCase();
+  // 从 spvMaintList 中取上线专户，按 sortOrder 排序
+  const onlineIds = spvMaintList
+    .filter(p => p.online)
+    .sort((a, b) => a.sortOrder - b.sortOrder)
+    .map(p => p.id);
+  const onlineAccounts = onlineIds.map(id => allAccounts.find(a => a.id === id)).filter(Boolean);
+  return onlineAccounts.filter(acc => {
+    if (!q) return true;
+    return acc.name.toLowerCase().includes(q) || acc.code.toLowerCase().includes(q);
+  });
+}
+
+function renderSidebar() {
+  const items = getSidebarItems();
+  const list = document.getElementById('sidebarList');
+
+  if (items.length === 0) {
+    list.innerHTML = '<div class="sidebar-empty">未找到匹配的专户</div>';
+  } else {
+    list.innerHTML = items.map(acc => {
+      const st = getState(acc.id);
+      const status = st.status;
+      let dotClass = 'pending';
+      if (status === 'done') dotClass = 'done';
+      else if (status === 'progress') dotClass = 'progress';
+      const active = acc.id === currentAccountId ? ' active' : '';
+      const modeLabel = st.mode === 'profit' ? '拉壳' : '调仓';
+      const badgeClass = st.mode === 'profit' ? 'profit' : 'loss';
+      const canRemove = status !== 'done';
+      return `
+        <div class="sidebar-item${active}" data-account="${acc.id}" onclick="switchAccount('${acc.id}')">
+          <span class="status-dot ${dotClass}"></span>
+          <span class="item-name" title="${acc.name}（${acc.code}）">${acc.name}<span style="color:var(--text-muted);font-size:11px;margin-left:6px;">${acc.code}</span></span>
+          <span class="item-badge ${badgeClass}">${modeLabel}</span>
+          <span class="item-remove" title="${canRemove ? '移除该专户' : '已同步，需先撤销同步才能移除'}" onclick="event.stopPropagation();removeAccount('${acc.id}')">×</span>
+        </div>
+      `;
+    }).join('');
+  }
+
+  // stats
+  const allSt = allAccounts.map(a => getState(a.id));
+  document.getElementById('sidebarDone').textContent = allSt.filter(s => s.status === 'done').length;
+  document.getElementById('sidebarProgress').textContent = allSt.filter(s => s.status === 'progress').length;
+  document.getElementById('sidebarPending').textContent = allSt.filter(s => s.status === 'pending').length;
+}
+
+// ==================== ACCOUNT SWITCH ====================
+
+function switchAccount(accountId) {
+  // save current before switching
+  if (currentAccountId && currentAccountId !== accountId) {
+    saveCurrentState();
+  }
+
+  currentAccountId = accountId;
+  const acc = getAccount(accountId);
+  const st = getState(accountId);
+
+  // mark as in-progress when opened
+  if (st.status === 'pending') {
+    st.status = 'progress';
+  }
+
+  renderSidebar();
+  renderContent(acc, st);
+}
+
+function saveCurrentState() {
+  if (!currentAccountId) return;
+  const st = getState(currentAccountId);
+  // read current form values
+  const bpGrowthEl = document.getElementById('bpGrowth');
+  const accountSizeEl = document.getElementById('accountSize');
+  const feeRateNEl = document.getElementById('feeRateN');
+  const targetAccountEl = document.getElementById('targetAccount');
+  const bpLossEl = document.getElementById('bpLoss');
+  const totalLossEl = document.getElementById('totalLoss');
+
+  if (bpGrowthEl) st.bpGrowth = parseFloat(bpGrowthEl.value) || st.bpGrowth;
+  if (accountSizeEl) st.accountSize = parseFloat(accountSizeEl.value) || st.accountSize;
+  if (feeRateNEl) st.feeRateN = parseFloat(feeRateNEl.value) || st.feeRateN;
+  if (targetAccountEl) st.targetAccount = targetAccountEl.value;
+  // 拉壳逐产品目标专户：从表格行内下拉框收集
+  const targetSpvSelects = document.querySelectorAll('select[id^="targetSpv_"]');
+  targetSpvSelects.forEach(sel => {
+    const code = sel.id.replace('targetSpv_', '');
+    if (sel.value) {
+      st.profitTargetMap[code] = sel.value;
+    } else {
+      delete st.profitTargetMap[code];
+    }
+  });
+  // 赎回来源专户：收集所有勾选的checkbox
+  const redSourceChecks = document.querySelectorAll('input[name="redSource"]:checked');
+  const redSources = Array.from(redSourceChecks).map(cb => cb.value);
+  st.spvRedSources._all = redSources;
+  const fallbackSource = allAccounts.find(a => a.id !== currentAccountId)?.id || allAccounts[0]?.id;
+  st.sourceAccount = redSources.length > 0 ? redSources[0] : fallbackSource;
+  if (bpLossEl) st.bpLoss = parseFloat(bpLossEl.value) || st.bpLoss;
+  if (totalLossEl) st.totalLoss = parseFloat(totalLossEl.value) || st.totalLoss;
+}
+
+// ==================== RENDER CONTENT ====================
+
+function renderContent(acc, st) {
+  const container = document.getElementById('mainContent');
+
+  const isProfit = st.mode === 'profit';
+  const isLoss = st.mode === 'loss';
+  const isLocked = st.status === 'done';
+  const disabled = isLocked ? 'disabled' : '';
+
+  // build table rows
+  let tableRows = '';
+  if (isProfit) {
+    const selectedList = acc.holdings.filter(p => st.selectedMap[p.code]);
+    const unselectedList = acc.holdings.filter(p => !st.selectedMap[p.code]);
+    const ordered = [...selectedList, ...unselectedList];
+    tableRows = ordered.map(p => {
+      const sel = st.selectedMap[p.code];
+      const bp = st.bpData[p.code] ?? 0;
+      const sizeYi = (p.size / 100000000).toFixed(4);
+      const rowClass = sel ? 'selected' : 'not-selected';
+      return `
+        <tr data-code="${p.code}" class="${rowClass}">
+          <td class="chk-cell">
+            <input type="checkbox" ${sel ? 'checked' : ''} ${disabled} onchange="onToggleSelect('${p.code}', this.checked)">
+          </td>
+          <td style="font-weight:500;">${p.code}</td>
+          <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${p.name}">${p.name}</td>
+          <td class="num">${sizeYi}</td>
+          <td class="col-bp">
+            <input type="number" class="table-input" value="${bp}" step="0.5" min="0"
+              ${sel && !isLocked ? '' : 'disabled'}
+              oninput="onBPChange('${p.code}', this.value)" onfocus="this.select()">
+          </td>
+          <td class="num" id="ratio_${p.code}">${sel ? '--' : ''}</td>
+          <td class="num" style="font-weight:600;" id="F_${p.code}">${sel ? '--' : ''}</td>
+          <td>
+            <select class="table-input" id="targetSpv_${p.code}"
+              ${sel && !isLocked ? '' : 'disabled'}
+              onchange="onTargetSpvChange('${p.code}', this.value)" style="width:160px;font-size:12px;">
+              <option value="">请选择目标专户</option>
+              ${allAccounts.filter(a => a.id !== acc.id).map(a => {
+                const selected = (st.profitTargetMap[p.code] === a.id) ? 'selected' : '';
+                return `<option value="${a.id}" ${selected}>${a.name}（${a.code}）</option>`;
+              }).join('')}
+            </select>
+          </td>
+          <td class="num" id="nav_${p.code}" style="color:var(--primary);">${sel ? '--' : ''}</td>
+          <td class="num" id="L_${p.code}">${sel ? '--' : ''}</td>
+        </tr>`;
+    }).join('');
+  } else if (isLoss) {
+    tableRows = acc.holdings.map(p => {
+      const bp = st.bpData[p.code] ?? p.defaultBP;
+      const adj = st.lossAdjData[p.code] ?? 0;
+      const sizeYi = (p.size / 100000000).toFixed(4);
+      return `
+        <tr data-code="${p.code}">
+          <td class="chk-cell">--</td>
+          <td style="font-weight:500;">${p.code}</td>
+          <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${p.name}">${p.name}</td>
+          <td class="num">${sizeYi}</td>
+          <td class="col-bp">
+            <input type="number" class="table-input" value="${bp}" step="1" min="0"
+              ${disabled ? 'disabled' : ''}
+              oninput="onBPChange('${p.code}', this.value)" onfocus="this.select()">
+          </td>
+          <td class="num" id="ratio_${p.code}">--</td>
+          <td class="num" style="font-weight:600;" id="F_${p.code}">--</td>
+          <td>
+            <input type="text" inputmode="numeric" class="table-input" value="${adj ? adj.toLocaleString('zh-CN') : ''}"
+              ${disabled ? 'disabled' : ''}
+              oninput="onLossAdjChange('${p.code}', this.value)" onfocus="onLossAdjFocus(this)" onblur="onLossAdjBlur(this)" style="width:120px;">
+          </td>
+          <td>
+            <select class="table-input" id="lossRedSource_${p.code}"
+              ${disabled ? 'disabled' : ''}
+              onchange="onLossRedSourceChange('${p.code}', this.value)" style="width:140px;font-size:11px;text-align:left;">
+              <option value="">选择赎回来源</option>
+              ${getSPVData(p.code).map(s => {
+                const sel = (st.lossRedSourceMap[p.code] === s.spvCode) ? 'selected' : '';
+                return `<option value="${s.spvCode}" ${sel}>${s.spvName.substring(0,12)}（${s.spvCode}）</option>`;
+              }).join('')}
+            </select>
+          </td>
+          <td class="num" style="font-weight:600;" id="I_${p.code}">--</td>
+          <td class="num" id="lossRedQty_${p.code}" style="color:var(--success);">--</td>
+        </tr>`;
+    }).join('');
+  }
+
+  const selCount = isProfit ? acc.holdings.filter(p => st.selectedMap[p.code]).length : acc.holdings.length;
+  const totalCount = acc.holdings.length;
+  const tableTitle = `持有${acc.name}的理财产品 & ${isLoss ? '亏损分摊' : '收益分配'}`;
+
+  container.innerHTML = `
+    ${isLocked ? `<div style="background:#FFF3CD;border:1px solid #FFC107;color:#856404;padding:8px 16px;border-radius:4px;margin-bottom:12px;font-size:13px;">该专户已同步至头寸管理计算，当前为<strong>只读</strong>状态。</div>` : ''}
+    <!-- Mode selector & key params -->
+    <div class="top-bar" style="align-items:center;gap:12px;padding:8px 16px;">
+      <span style="font-weight:700;font-size:14px;color:var(--primary);white-space:nowrap;">${acc.name}</span>
+      <span style="font-size:11px;color:var(--text-muted);">${acc.code}</span>
+      <span style="color:var(--border);margin:0 4px;">|</span>
+      <span style="font-size:12px;color:var(--text-muted);">规模</span>
+      <span style="font-weight:700;font-size:14px;color:var(--text);">${(acc.accountSize / 100000000).toFixed(2)}亿</span>
+      ${isProfit ? `
+      <span style="color:var(--border);margin:0 4px;">|</span>
+      <span style="font-size:12px;color:var(--text-muted);">净值增长</span>
+      <input type="number" id="bpGrowth" value="${st.bpGrowth}" step="1" ${disabled} oninput="recalcCurrent()"
+        style="width:90px;padding:8px 12px;font-size:18px;font-weight:800;text-align:center;color:#1A3C6D;background:linear-gradient(135deg,#EFF6FF,#DBEAFE);border:2px solid #93C5FD;border-radius:8px;outline:none;">
+      <span style="font-size:12px;font-weight:600;color:#1A3C6D;">BP</span>
+      ` : isLoss ? `
+      <span style="color:var(--border);margin:0 4px;">|</span>
+      <span style="font-size:12px;color:var(--text-muted);">总目标亏损</span>
+      <input type="number" id="totalLoss" value="${st.totalLoss}" step="1" ${disabled} oninput="recalcCurrent()"
+        style="width:110px;padding:6px 10px;font-size:14px;font-weight:700;text-align:center;border:1px solid var(--border);border-radius:6px;">
+      <span style="font-size:12px;color:var(--text-muted);">万元</span>
+      ` : ''}
+      <div style="flex:1;"></div>
+      <div class="mode-selector" id="modeSelector">
+        <button class="mode-btn ${isProfit ? 'active' : ''}" data-mode="profit" ${disabled}>收益分配型（拉壳）</button>
+        <button class="mode-btn ${isLoss ? 'active' : ''}" data-mode="loss" ${disabled}>亏损分摊型（调仓）</button>
+      </div>
+    </div>
+
+    <!-- Main Table -->
+    <div class="section-card">
+      <div class="section-header">
+        <div class="section-title">
+          <span class="icon">📊</span> ${tableTitle}
+          <span class="section-subtitle">— ${isLoss ? '按产品BP比例分摊亏损金额' : '勾选参与分配的产品，填写目标BP，逐行选择申购目标专户'}</span>
+        </div>
+        <div class="section-actions">
+          <span style="font-size:12px;color:var(--text-muted);">${isLoss ? '产品' : '已选'} <strong id="selectedCount">${selCount}</strong> / <strong id="totalProductCount">${totalCount}</strong> 只</span>
+          <span style="font-size:12px;color:var(--text-muted);margin-left:8px;">${isLoss ? '总目标亏损' : '总BP'} <strong id="totalBPDisplay">${isLoss ? (st.totalLoss || acc.totalBP) : acc.totalBP}</strong></span>
+          <button class="btn" onclick="exportData()" style="background:#E6A23C;color:#fff;border:none;font-size:12px;padding:5px 14px;border-radius:4px;cursor:pointer;margin-left:12px;">导出 Excel</button>
+        </div>
+      </div>
+      <div class="section-body" style="padding:0;">
+
+        ${isLoss ? '' : `
+        <!-- 产品搜索添加区 -->
+        <div style="padding:5px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+          <span style="font-size:11px;color:var(--text-muted);">搜索添加：</span>
+          <input type="text" id="productSearchInput" placeholder="产品代码/名称..."
+            style="width:200px;padding:4px 8px;font-size:11px;border:1px solid var(--border);border-radius:4px;"
+            oninput="onProductSearch(this.value)" onfocus="this.select()">
+          <div id="productSearchDropdown" style="display:none;position:absolute;top:100%;left:0;z-index:100;background:#fff;border:1px solid var(--border);border-radius:6px;max-height:200px;overflow-y:auto;width:200px;box-shadow:0 4px 12px rgba(0,0,0,.1);"></div>
+          <button onclick="addCustomProduct()" style="padding:4px 10px;font-size:11px;border:1px dashed var(--border);border-radius:4px;background:var(--bg);color:var(--primary);cursor:pointer;">+ 添加理财产品</button>
+          <span style="font-size:10px;color:var(--text-muted);margin-left:auto;">产品库 <strong id="libTotalCount">${productLibrary.length}</strong> 只</span>
+        </div>`}
+
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th class="chk-cell">${isLoss ? '' : '<input type="checkbox" id="headerChk" title="全选/取消全选" onchange="onHeaderCheck(this.checked)">'}</th>
+                <th>产品代码</th>
+                <th>产品名称</th>
+                <th>最新规模（亿）</th>
+                <th>${isLoss ? '目标承担亏损（BP）' : '目标净值增长（BP）'}</th>
+                <th>占比</th>
+                <th>${isLoss ? '分摊金额（元）' : '应分配收益金额（元）'}</th>
+                ${isLoss ? '<th>调减金额（元）</th><th>赎回来源专户</th><th>实际金额（元）</th><th>赎回份额（份）</th>' : ''}
+                ${isLoss ? '' : '<th>申购目标专户</th>'}
+                ${isLoss ? '' : '<th>最新净值</th>'}
+                ${isLoss ? '' : '<th>申购份额（份）</th>'}
+              </tr>
+            </thead>
+            <tbody id="mainTbody">${tableRows}</tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="summary-row" id="summaryRow">
+          <div class="summary-item">
+            <div class="summary-label">选中产品</div>
+            <div class="summary-value" id="productCount" style="color:var(--text);">${selCount}</div>
+          </div>
+          <div class="summary-item">
+            <div class="summary-label">${isLoss ? '目标亏损合计' : 'BP 合计'}</div>
+            <div class="summary-value" id="bpTotal" style="color:var(--primary);">0</div>
+          </div>
+          <div class="summary-item">
+            <div class="summary-label">${isLoss ? '分摊合计' : '应分配收益合计'}</div>
+            <div class="summary-value" id="totalF" style="color:var(--text);">0 万</div>
+          </div>
+          ${isLoss ? `
+          <div class="summary-item">
+            <div class="summary-label">实际偿付合计</div>
+            <div class="summary-value" id="totalI" style="color:var(--success);">0 万</div>
+          </div>` : ''}
+          <div class="summary-item" style="flex:0 0 auto;">
+            <button class="btn btn-outline" onclick="resetAll()" style="font-size:12px;padding:6px 16px;">
+              重置
+            </button>
+            ${isLocked ? '' : `<button class="btn btn-primary" onclick="syncToSystem()" style="font-size:12px;padding:6px 16px;">
+              同步至头寸管理计算
+            </button>`}
+          </div>
+        </div>
+  `;
+
+  // bind mode selector
+  document.getElementById('modeSelector').addEventListener('click', function(e) {
+    if (!e.target.classList.contains('mode-btn')) return;
+    if (e.target.disabled) return;
+    saveCurrentState();
+    st.mode = e.target.dataset.mode;
+    renderContent(acc, st);
+    recalcCurrent();
+  });
+
+  updateHeaderCheckbox();
+  recalcCurrent();
+}
+
+function getAccountName(sel) {
+  const acc = allAccounts.find(a => a.id === sel);
+  return acc ? acc.name : (allAccounts[0] ? allAccounts[0].name : '');
+}
+
+function getTargetName(st) {
+  return getAccountName(st.targetAccount);
+}
+
+// ==================== CALC ====================
+
+function recalcCurrent() {
+  const acc = getAccount(currentAccountId);
+  const st = getState(currentAccountId);
+  if (!acc || !st) return;
+
+  // save top-bar params to state before recalc
+  const bpGrowthEl = document.getElementById('bpGrowth');
+  const bpLossEl = document.getElementById('bpLoss');
+  const totalLossEl = document.getElementById('totalLoss');
+  if (bpGrowthEl) st.bpGrowth = parseFloat(bpGrowthEl.value) || st.bpGrowth;
+  if (bpLossEl) st.bpLoss = parseFloat(bpLossEl.value) || st.bpLoss;
+  if (totalLossEl) st.totalLoss = parseFloat(totalLossEl.value) || st.totalLoss;
+
+  if (st.mode === 'profit') {
+    recalcProfitMode(acc, st);
+  } else if (st.mode === 'loss') {
+    recalcLossMode(acc, st);
+  }
+}
+
+function recalcProfitMode(acc, st) {
+  let totalBP = 0;
+  acc.holdings.forEach(p => {
+    if (st.selectedMap[p.code]) totalBP += st.bpData[p.code] ?? 0;
+  });
+
+  let sumF = 0, sumL = 0;
+  const TOTAL_BP = acc.totalBP;
+
+  acc.holdings.forEach(p => {
+    const sel = st.selectedMap[p.code];
+    if (!sel) {
+      ['ratio','F','L','nav'].forEach(col => setCell(col + '_' + p.code, ''));
+      return;
+    }
+    const bp = st.bpData[p.code] ?? 0;
+    const ratio = TOTAL_BP > 0 ? bp / TOTAL_BP : 0;
+    // 应分配收益 = CEIL(产品规模 × BP/总BP / 10000) × 10000
+    const F = Math.ceil(ratio * p.size / 10000) * 10000;
+    // 最新净值：从头寸管理"上传SPV持仓"获取，只读展示
+    const spvData = getSPVData(p.code);
+    const nav = spvData.length > 0 ? (spvData[0].nav || 0) : 0;
+    // 申购份额 = 申购金额 ÷ 单位净值（专户无认购费）
+    const L = nav > 0 ? Math.round(F / nav) : 0;
+
+    // 占比 = F ÷ 产品规模（以客户手工文档为准）
+    setCell('ratio_' + p.code, p.size > 0 ? ((F / p.size) * 100).toFixed(2) + '%' : '--');
+    setCell('F_' + p.code, fmtNum(F));
+    setCell('nav_' + p.code, nav > 0 ? nav.toFixed(4) : '--');
+    setCell('L_' + p.code, fmtNum(L));
+
+
+    sumF += F; sumL += L;
+  });
+
+  const selCount = acc.holdings.filter(p => st.selectedMap[p.code]).length;
+  const bpEl = document.getElementById('bpTotal');
+  const totalBPDisplayEl = document.getElementById('totalBPDisplay');
+  if (bpEl) bpEl.textContent = totalBP;
+  if (totalBPDisplayEl) totalBPDisplayEl.textContent = TOTAL_BP;
+  const scEl = document.getElementById('selectedCount');
+  if (scEl) scEl.textContent = selCount;
+  const pcEl = document.getElementById('productCount');
+  if (pcEl) pcEl.textContent = selCount;
+  const tfEl = document.getElementById('totalF');
+  if (tfEl) tfEl.textContent = (sumF / 10000).toLocaleString('zh-CN', {minimumFractionDigits: 2}) + ' 万';
+
+}
+
+function recalcLossMode(acc, st) {
+  const totalLoss = parseFloat(document.getElementById('totalLoss')?.value) || st.totalLoss || 1;
+  const baseSize = parseFloat(document.getElementById('baseSize')?.value) || st.baseSize;
+
+  let totalBP = 0;
+  const rows = document.querySelectorAll('#mainTbody tr[data-code]');
+  rows.forEach(row => {
+    const code = row.dataset.code;
+    totalBP += st.bpData[code] || 0;
+  });
+
+  let sumF = 0, sumI = 0;
+  rows.forEach(row => {
+    const code = row.dataset.code;
+    const bp = st.bpData[code] || 0;
+    const adj = st.lossAdjData[code] || 0;
+
+    // 占比 = BP / 总目标亏损 × 100（自动计算，与拉壳页面规则一致）
+    const ratio = totalLoss > 0 ? bp / totalLoss : 0;
+    const ratioPct = totalLoss > 0 ? (bp / totalLoss) * 100 : 0;
+
+    // F列：分摊金额 = ROUND(占比 × 基准规模(万元)) × 10000
+    const F = totalLoss > 0 ? Math.round(ratio * baseSize) * 10000 : 0;
+    // I列 = F - 调减金额
+    const I_val = F - adj;
+
+    setCell('ratio_' + code, ratioPct.toFixed(2) + '%');
+    setCell('F_' + code, fmtNum(F));
+    setCell('I_' + code, fmtNum(I_val));
+
+    // 赎回份额 = 实际金额 ÷ 所选赎回来源专户的单位净值，超持标红预警
+    const redSpvCode = st.lossRedSourceMap[code];
+    if (redSpvCode && I_val > 0) {
+      const spvHolding = getSPVData(code).find(s => s.spvCode === redSpvCode);
+      const nav = spvHolding ? spvHolding.nav : 0;
+      const availableQty = spvHolding ? spvHolding.qty : 0;
+      const redQty = nav > 0 ? Math.round(I_val / nav) : 0;
+      const overLimit = availableQty > 0 && redQty > availableQty;
+      const qtyEl = document.getElementById('lossRedQty_' + code);
+      if (qtyEl && overLimit) {
+        qtyEl.innerHTML = '<span style="display:inline-flex;align-items:center;gap:3px;background:#FEF2F2;border:1px solid #FECACA;border-radius:4px;padding:2px 6px;font-weight:700;color:#DC2626;">⚠️ ' + redQty.toLocaleString('zh-CN') + '</span>';
+        qtyEl.title = '赎回份额超过专户持仓 ' + availableQty.toLocaleString('zh-CN') + ' 份';
+      } else {
+        setCell('lossRedQty_' + code, redQty.toLocaleString('zh-CN'));
+      }
+    } else {
+      setCell('lossRedQty_' + code, '--');
+    }
+
+    sumF += F; sumI += I_val;
+  });
+
+  const bpEl = document.getElementById('bpTotal');
+  if (bpEl) bpEl.textContent = totalBP;
+  const tfEl = document.getElementById('totalF');
+  if (tfEl) tfEl.textContent = (sumF / 10000).toLocaleString('zh-CN', {minimumFractionDigits: 2}) + ' 万';
+  const tiEl = document.getElementById('totalI');
+  if (tiEl) tiEl.textContent = (sumI / 10000).toLocaleString('zh-CN', {minimumFractionDigits: 2}) + ' 万';
+}
+
+// ==================== HELPERS ====================
+
+function setCell(id, value) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = value;
+}
+
+function fmtNum(v) {
+  if (v === undefined || v === null || isNaN(v)) return '--';
+  return v.toLocaleString('zh-CN', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+}
+
+// ==================== ACTIONS ====================
+
+function onToggleSelect(code, checked) {
+  const st = getState(currentAccountId);
+  if (!st) return;
+  st.selectedMap[code] = checked;
+  updateHeaderCheckbox();
+  saveCurrentState();
+  const acc = getAccount(currentAccountId);
+  renderContent(acc, st);
+  recalcCurrent();
+}
+
+function onBPChange(code, value) {
+  const st = getState(currentAccountId);
+  if (!st) return;
+  st.bpData[code] = parseFloat(value) || 0;
+  recalcCurrent();
+}
+
+
+
+function onLossAdjChange(code, value) {
+  const st = getState(currentAccountId);
+  if (!st) return;
+  // 去掉千分位逗号后解析
+  const raw = String(value).replace(/,/g, '');
+  st.lossAdjData[code] = parseFloat(raw) || 0;
+  recalcCurrent();
+}
+
+// 调仓模式逐产品赎回来源专户选择
+function onLossRedSourceChange(code, spvCode) {
+  const st = getState(currentAccountId);
+  if (!st) return;
+  if (spvCode) {
+    st.lossRedSourceMap[code] = spvCode;
+  } else {
+    delete st.lossRedSourceMap[code];
+  }
+  recalcCurrent();
+}
+
+// 拉壳模式调减金额变更（SPV持仓调减）
+function onAdjChange(code, value) {
+  const st = getState(currentAccountId);
+  if (!st) return;
+  const raw = String(value).replace(/,/g, '');
+  st.spvHoldingAdj[code] = parseFloat(raw) || 0;
+  recalcCurrent();
+}
+
+// 拉壳模式逐产品目标专户选择
+function onTargetSpvChange(code, spvId) {
+  const st = getState(currentAccountId);
+  if (!st) return;
+  if (spvId) {
+    st.profitTargetMap[code] = spvId;
+  } else {
+    delete st.profitTargetMap[code];
+  }
+  recalcCurrent();
+}
+
+function onLossAdjFocus(el) {
+  // 聚焦时去掉千分位，方便编辑
+  const raw = el.value.replace(/,/g, '');
+  el.value = raw;
+  el.select();
+}
+
+function onLossAdjBlur(el) {
+  // 失焦时加回千分位
+  const raw = el.value.replace(/,/g, '');
+  const num = parseFloat(raw);
+  if (!isNaN(num) && num !== 0) {
+    el.value = num.toLocaleString('zh-CN');
+  } else {
+    el.value = raw === '0' ? '0' : '';
+  }
+}
+
+function onHeaderCheck(checked) {
+  const acc = getAccount(currentAccountId);
+  const st = getState(currentAccountId);
+  if (!acc || !st) return;
+  acc.holdings.forEach(p => { st.selectedMap[p.code] = checked; });
+  updateHeaderCheckbox();
+  saveCurrentState();
+  renderContent(acc, st);
+  recalcCurrent();
+}
+
+function updateHeaderCheckbox() {
+  const hdr = document.getElementById('headerChk');
+  if (!hdr) return;
+  const acc = getAccount(currentAccountId);
+  const st = getState(currentAccountId);
+  if (!acc || !st) return;
+  const total = acc.holdings.length;
+  const selCount = acc.holdings.filter(p => st.selectedMap[p.code]).length;
+  hdr.checked = (total > 0 && selCount === total);
+  hdr.indeterminate = (selCount > 0 && selCount < total);
+}
+
+function markAccountDone() {
+  const st = getState(currentAccountId);
+  if (!st) return;
+  st.status = 'done';
+  renderSidebar();
+}
+
+// ==================== REMOVE ACCOUNT ====================
+
+let pendingRevokeId = null;
+
+function removeAccount(accountId) {
+  const st = getState(accountId);
+  if (!st) return;
+
+  // 已同步（done）：需要先撤销同步
+  if (st.status === 'done') {
+    pendingRevokeId = accountId;
+    showRevokeModal(accountId);
+    return;
+  }
+
+  // 未同步：直接从列表中移除
+  const idx = allAccounts.findIndex(a => a.id === accountId);
+  if (idx === -1) return;
+
+  // 如果移除的是当前选中项，切换到第一个剩余项
+  if (accountId === currentAccountId) {
+    allAccounts.splice(idx, 1);
+    delete accountState[accountId];
+    if (allAccounts.length > 0) {
+      currentAccountId = allAccounts[Math.min(idx, allAccounts.length - 1)].id;
+    } else {
+      currentAccountId = null;
+    }
+  } else {
+    allAccounts.splice(idx, 1);
+    delete accountState[accountId];
+  }
+
+  renderSidebar();
+  if (currentAccountId) {
+    const acc = getAccount(currentAccountId);
+    const st2 = getState(currentAccountId);
+    if (acc && st2) renderContent(acc, st2);
+  } else {
+    document.getElementById('content').innerHTML = '<div class="empty-state"><div class="empty-icon">📂</div><div>暂无专户，请点击顶部「+ 新建调仓」添加</div></div>';
+  }
+}
+
+function showRevokeModal(accountId) {
+  const acc = getAccount(accountId);
+  const st = getState(accountId);
+  if (!acc || !st) return;
+
+  const modeLabel = st.mode === 'profit' ? '收益分配型（拉壳）' : '亏损分摊型（调仓）';
+  document.getElementById('revokeModalBody').innerHTML = `
+    <div class="info-line"><span class="info-label">专户</span><span class="info-value">${acc.name}（${acc.code}）</span></div>
+    <div class="info-line"><span class="info-label">模式</span><span class="info-value">${modeLabel}</span></div>
+    <div class="info-line"><span class="info-label">状态</span><span class="info-value" style="color:var(--success);">已同步至头寸管理计算</span></div>
+    <div style="margin-top:12px;padding:10px;background:#FEF2F2;border-radius:6px;color:#991B1B;font-size:13px;">
+      ⚠️ 该专户已同步至头寸管理计算，移除前必须先撤销同步，以释放头寸额度。<br>确认撤销后，头寸系统中的调仓指令将被撤销。
+    </div>
+  `;
+  document.getElementById('revokeModal').classList.add('show');
+}
+
+function closeRevokeModal() {
+  document.getElementById('revokeModal').classList.remove('show');
+  pendingRevokeId = null;
+}
+
+function confirmRevoke() {
+  if (!pendingRevokeId) return;
+  // Demo中模拟撤销同步：将状态改回progress，然后移除
+  const st = getState(pendingRevokeId);
+  if (st) {
+    st.status = 'progress';
+    console.log('已撤销头寸系统中的调仓指令：' + pendingRevokeId);
+  }
+  closeRevokeModal();
+  // 现在可以移除了（状态已不是done）
+  const id = pendingRevokeId;
+  pendingRevokeId = null;
+  // 直接调用移除逻辑（状态已改回progress）
+  const idx = allAccounts.findIndex(a => a.id === id);
+  if (idx === -1) return;
+  if (id === currentAccountId) {
+    allAccounts.splice(idx, 1);
+    delete accountState[id];
+    if (allAccounts.length > 0) {
+      currentAccountId = allAccounts[Math.min(idx, allAccounts.length - 1)].id;
+    } else {
+      currentAccountId = null;
+    }
+  } else {
+    allAccounts.splice(idx, 1);
+    delete accountState[id];
+  }
+  renderSidebar();
+  if (currentAccountId) {
+    const acc = getAccount(currentAccountId);
+    const st2 = getState(currentAccountId);
+    if (acc && st2) renderContent(acc, st2);
+  } else {
+    document.getElementById('content').innerHTML = '<div class="empty-state"><div class="empty-icon">📂</div><div>暂无专户，请点击顶部「+ 新建调仓」添加</div></div>';
+  }
+}
+
+function resetAll() {
+  const acc = getAccount(currentAccountId);
+  if (!acc) return;
+  // reset state for current account
+  accountState[currentAccountId] = null;
+  const st = getState(currentAccountId);
+  st.status = 'progress';
+  renderSidebar();
+  renderContent(acc, st);
+  recalcCurrent();
+}
+
+// ==================== 合规风控校验 ====================
+
+// 同日反向交易拦截：同一专户同一自然日，单产品同时存在申购+赎回
+function validateReverseTrade(acc, st) {
+  const reverseProducts = [];
+  const today = new Date().toISOString().split('T')[0];
+
+  acc.holdings.forEach(p => {
+    const sel = st.selectedMap[p.code];
+    if (!sel) return;
+
+    // 拉壳模式：检查净赎回金额是否为负（负=追加申购方向，与赎回方向冲突）
+    if (st.mode === 'profit') {
+      const adj = st.spvHoldingAdj[p.code] ?? 0;
+      const bp = st.bpData[p.code] ?? 0;
+      const TOTAL_BP = acc.totalBP;
+      const ratio = TOTAL_BP > 0 ? bp / TOTAL_BP : 0;
+      const F = TOTAL_BP > 0 ? Math.ceil(ratio * p.size / 10000) * 10000 : 0;
+      const J = F - adj;
+      // 净赎回为负 = 追加申购方向，但赎回金额为正 = 赎回方向 → 同日反向交易
+      if (J < 0) {
+        reverseProducts.push({
+          code: p.code,
+          name: p.name,
+          spv: acc.name,
+          spvCode: acc.code,
+          date: today,
+          reason: '净赎回金额为负（' + fmtNum(J) + '），产品同时存在赎回和追加申购，属于同日反向交易'
+        });
+      }
+    }
+  });
+
+  return {
+    hasReverse: reverseProducts.length > 0,
+    products: reverseProducts
+  };
+}
+
+// 反向交易拦截弹窗
+function showReverseTradeModal(checkResult) {
+  const itemsHTML = checkResult.products.map(p => `
+    <div style="padding:10px 12px;margin:6px 0;background:#FFF5F5;border:1px solid #FECACA;border-radius:6px;font-size:13px;">
+      <strong style="color:#DC2626;">${p.code}</strong> ${p.name.split('（')[0]}
+      <div style="color:#9CA3AF;font-size:11px;margin-top:4px;">${p.reason}</div>
+    </div>
+  `).join('');
+
+  const modalHTML = `
+    <div class="modal-overlay show" id="reverseTradeModal" onclick="closeReverseTradeModal(event)">
+      <div class="modal" style="max-width:520px;" onclick="event.stopPropagation()">
+        <div class="modal-header">
+          <div class="header-left">
+            <h3 style="color:#DC2626;">⚠️ 同日反向交易拦截</h3>
+          </div>
+          <span class="modal-close" onclick="closeReverseTradeModal()" style="cursor:pointer;font-size:20px;color:var(--text-muted);">×</span>
+        </div>
+        <div class="modal-body">
+          <p style="font-size:13px;color:var(--text-secondary);margin-bottom:12px;">
+            同一专户、同一自然日内，以下产品同时存在赎回和追加申购操作，属于<strong style="color:#DC2626;">合规禁止操作</strong>，已阻止同步。
+          </p>
+          ${itemsHTML}
+          <div style="margin-top:16px;font-size:12px;color:var(--text-muted);">
+            请调整以下产品的调减金额或BP配置，确保净赎回金额 ≥ 0。
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button onclick="closeReverseTradeModal()" style="padding:9px 28px;font-size:13px;border:1px solid #d1d5db;border-radius:6px;background:#fff;color:#6B7280;cursor:pointer;">关闭</button>
+        </div>
+      </div>
+    </div>`;
+  const old = document.getElementById('reverseTradeModal');
+  if (old) old.remove();
+  document.body.insertAdjacentHTML('beforeend', modalHTML);
+}
+
+function closeReverseTradeModal(e) {
+  if (e && e.target !== document.getElementById('reverseTradeModal')) return;
+  const modal = document.getElementById('reverseTradeModal');
+  if (modal) modal.remove();
+}
+
+let pendingSyncData = null; // 待确认的同步数据
+
+function syncToSystem() {
+  const acc = getAccount(currentAccountId);
+  const st = getState(currentAccountId);
+  if (!acc || !st) return;
+  if (st.mode !== 'profit' && st.mode !== 'loss') {
+    alert('当前仅支持"收益分配型（拉壳）"和"亏损分摊型（调仓）"模式同步。');
+    return;
+  }
+
+  // ========== 同步前校验（收集全部问题，一次性提示） ==========
+  const errors = [];
+
+  if (st.mode === 'profit') {
+    const selected = acc.holdings.filter(p => st.selectedMap[p.code]);
+    if (selected.length === 0) {
+      errors.push('未勾选任何产品，请至少勾选一只参与收益分配。');
+    } else {
+      const zeroBp = selected.filter(p => (st.bpData[p.code] ?? 0) <= 0);
+      if (zeroBp.length > 0) {
+        errors.push('以下产品目标 BP 为 0：' + zeroBp.map(p => p.code).join('、'));
+      }
+      const missingTarget = selected.filter(p => !st.profitTargetMap[p.code]);
+      if (missingTarget.length > 0) {
+        errors.push('以下产品未指定申购目标专户：' + missingTarget.map(p => p.code).join('、'));
+      }
+    }
+    if (acc.totalBP <= 0) {
+      errors.push('净值增长 BP 未设置。');
+    }
+  }
+
+  if (st.mode === 'loss') {
+    if ((st.totalLoss || 0) <= 0) {
+      errors.push('总目标亏损金额未设置。');
+    }
+    const hasBp = acc.holdings.some(p => (st.bpData[p.code] ?? p.defaultBP) > 0);
+    if (!hasBp) {
+      errors.push('所有产品目标承担亏损 BP 均为 0，请至少设置一只。');
+    }
+    // 有 BP 的产品需选择赎回来源专户
+    const activeProds = acc.holdings.filter(p => {
+      const bp = st.bpData[p.code] ?? p.defaultBP;
+      const ratio = (st.totalLoss || 1) > 0 ? bp / (st.totalLoss || 1) : 0;
+      const F = Math.round(ratio * st.baseSize) * 10000;
+      return bp > 0 && F > 0 && !st.lossRedSourceMap[p.code];
+    });
+    if (activeProds.length > 0) {
+      errors.push('以下产品未选择赎回来源专户：' + activeProds.map(p => p.code).join('、'));
+    }
+  }
+
+  if (errors.length > 0) {
+    const msg = '以下项目未完成，请完善后再同步：\n\n' + errors.map((e, i) => (i + 1) + '. ' + e).join('\n');
+    document.getElementById('syncModalBody').innerHTML = '<div style="padding:8px 0;font-size:14px;color:var(--text);white-space:pre-line;">' + msg.replace(/\n/g, '<br>') + '</div>';
+    document.getElementById('syncModal').classList.add('show');
+    document.getElementById('syncConfirmBtn').style.display = 'none';
+    return;
+  }
+  document.getElementById('syncConfirmBtn').style.display = '';
+
+  // 2. 合规校验：同日反向交易拦截
+  const reverseCheck = validateReverseTrade(acc, st);
+  if (reverseCheck.hasReverse) {
+    showReverseTradeModal(reverseCheck);
+    return;
+  }
+
+  let sumF = 0, sumI = 0, sumK = 0;
+  let syncedProducts = [];
+
+  if (st.mode === 'profit') {
+    acc.holdings.forEach(p => {
+      if (!st.selectedMap[p.code]) return;
+      const bp = st.bpData[p.code] ?? 0;
+      const ratio = acc.totalBP > 0 ? bp / acc.totalBP : 0;
+      const F = Math.ceil(ratio * p.size / 10000) * 10000;
+      const spvData = getSPVData(p.code);
+      const nav = spvData.length > 0 ? (spvData[0].nav || 0) : 0;
+      const K = nav > 0 ? Math.round(F / nav) : 0;
+      sumF += F; sumI += F; sumK += K;
+      // 逐产品目标专户
+      const targetSpvId = st.profitTargetMap[p.code] || '';
+      const targetSpvName = targetSpvId ? getAccountName(targetSpvId) : '';
+      syncedProducts.push({ code: p.code, name: p.name.split('（')[0], bp, F, K, targetSpvId, targetSpvName });
+    });
+  } else if (st.mode === 'loss') {
+    const totalLoss = st.totalLoss || 1;
+    acc.holdings.forEach(p => {
+      const bp = st.bpData[p.code] ?? p.defaultBP;
+      const adj = st.lossAdjData[p.code] || 0;
+      const ratio = totalLoss > 0 ? bp / totalLoss : 0;
+      const F = totalLoss > 0 ? Math.round(ratio * st.baseSize) * 10000 : 0;
+      const I_val = F - adj;
+      const redSpvCode = st.lossRedSourceMap[p.code] || '';
+      const redSpvName = redSpvCode ? (getSPVData(p.code).find(s => s.spvCode === redSpvCode) || {}).spvName || redSpvCode : '';
+      const nav = redSpvCode ? (getSPVData(p.code).find(s => s.spvCode === redSpvCode) || {}).nav || 0 : 0;
+      const redQty = nav > 0 ? Math.round(I_val / nav) : null;
+      sumF += F; sumI += I_val;
+      syncedProducts.push({ code: p.code, name: p.name.split('（')[0], bp, F, adj, I_val, redSpvCode, redSpvName, redQty });
+    });
+  }
+
+  // 保存待确认数据
+  pendingSyncData = { acc, st, syncedProducts, sumF, sumI, sumK };
+  showSyncModal();
+}
+
+function showSyncModal() {
+  const data = pendingSyncData;
+  if (!data) return;
+  const { acc, st, syncedProducts, sumF, sumI, sumK } = data;
+  const modeLabel = st.mode === 'profit' ? '收益分配型（拉壳）' : '亏损分摊型（调仓）';
+  const summaryTotal = st.mode === 'profit'
+    ? `<span>应分配合计 <strong style="color:var(--primary);">${(sumF/10000).toLocaleString()} 万</strong></span> <span style="margin-left:16px;">申购份额合计 <strong>${sumK.toLocaleString()} 份</strong></span>`
+    : (() => {
+        const sumRedQty = syncedProducts.reduce((s, p) => s + (p.redQty || 0), 0);
+        return `<span>分摊合计 <strong style="color:var(--primary);">${(sumF/10000).toLocaleString()} 万</strong></span> <span style="margin-left:16px;">实际偿付合计 <strong style="color:var(--success);">${(sumI/10000).toLocaleString()} 万</strong></span> <span style="margin-left:16px;">赎回份额合计 <strong>${sumRedQty.toLocaleString()} 份</strong></span>`;
+      })();
+
+  const isProfit = st.mode === 'profit';
+  let tableHTML = '<table class="spv-table" style="margin-top:12px;"><thead><tr>';
+  tableHTML += `<th>产品代码</th><th>产品名称</th><th>BP</th><th>${isProfit ? '应分配收益' : '分摊金额'}</th>`;
+  if (!isProfit) tableHTML += '<th>调减金额</th><th>赎回来源</th><th>实际金额</th><th>赎回份额</th>';
+  if (isProfit) tableHTML += '<th>申购目标专户</th>';
+  tableHTML += '</tr></thead><tbody>';
+
+  syncedProducts.forEach(p => {
+    tableHTML += '<tr>';
+    tableHTML += `<td style="font-weight:500;">${p.code}</td><td>${p.name}</td><td class="num">${p.bp}</td>`;
+    tableHTML += `<td class="num" style="font-weight:600;">${(p.F/10000).toLocaleString()}万</td>`;
+    if (!isProfit) {
+      tableHTML += `<td class="num">${p.adj ? (p.adj/10000).toLocaleString()+'万' : '--'}</td>`;
+      tableHTML += `<td>${p.redSpvName ? p.redSpvName.substring(0,12) : '--'}</td>`;
+      tableHTML += `<td class="num" style="font-weight:600;">${(p.I_val/10000).toLocaleString()}万</td>`;
+      tableHTML += `<td class="num">${p.redQty ? p.redQty.toLocaleString() : '--'}</td>`;
+    }
+    if (isProfit) {
+      tableHTML += `<td>${p.targetSpvName ? p.targetSpvName.split('·')[0].substring(0,10) : '<span style="color:var(--text-muted);">未指定</span>'}</td>`;
+    }
+    tableHTML += '</tr>';
+  });
+  tableHTML += '</tbody></table>';
+
+  document.getElementById('syncModalBody').innerHTML = `
+    <div class="info-line"><span class="info-label">模式</span><span class="info-value">${modeLabel}</span></div>
+    <div class="info-line"><span class="info-label">源专户</span><span class="info-value">${acc.name}（${acc.code}）<span style="font-weight:400;color:var(--text-muted);margin-left:8px;">${isProfit ? '总BP ' + acc.totalBP : '总目标亏损 ' + (st.totalLoss || 0) + ' 万'}</span></span></div>
+    ${isProfit ? '<div class="info-line"><span class="info-label">目标专户</span><span class="info-value">' + (function() { const tids = [...new Set(Object.values(st.profitTargetMap).filter(Boolean))]; return tids.length > 0 ? tids.map(tid => getAccountName(tid)).join('、') : '未指定'; })() + '</span></div>' : ''}
+    <div class="info-line"><span class="info-label">产品数量</span><span class="info-value">${syncedProducts.length} 只</span></div>
+    <div class="info-line" style="padding:8px 0;">${summaryTotal}</div>
+    ${tableHTML}
+  `;
+  document.getElementById('syncModal').classList.add('show');
+}
+
+function closeSyncModal() {
+  document.getElementById('syncModal').classList.remove('show');
+  pendingSyncData = null;
+}
+
+function confirmSync() {
+  const data = pendingSyncData;
+  if (!data) return;
+  const { acc, st, syncedProducts } = data;
+
+  // 写入 positionData._spv，标记来源为专户调仓
+  syncedProducts.forEach(p => {
+    let posRow = positionData.find(r => r.code === p.code);
+    if (!posRow) {
+      posRow = createDefaultPositionRow(p.code, p.name);
+      positionData.push(posRow);
+    }
+    if (!posRow._spv) posRow._spv = {};
+
+    if (st.mode === 'profit') {
+      // 拉壳：源专户赎回 = +F（资金流入），目标专户申购 = -F（资金流出）
+      const targetSpvId = p.targetSpvId;
+      if (targetSpvId) {
+        if (!posRow._spv[targetSpvId]) posRow._spv[targetSpvId] = { sub: null, red: null, subManual: 0, subRebalance: 0, redManual: 0, redRebalance: 0 };
+        const spv = posRow._spv[targetSpvId];
+        spv.subRebalance += p.F;
+        spv.sub = (spv.sub || 0) - p.F;
+      }
+      // 源专户
+      if (!posRow._spv[acc.id]) posRow._spv[acc.id] = { sub: null, red: null, subManual: 0, subRebalance: 0, redManual: 0, redRebalance: 0 };
+      const srcSpv = posRow._spv[acc.id];
+      srcSpv.redRebalance += p.F;
+      srcSpv.red = (srcSpv.red || 0) + p.F;
+    } else if (st.mode === 'loss') {
+      // 调仓：赎回来源专户赎回 = +实际金额（资金流入）
+      const redSpvId = p.redSpvCode;
+      if (redSpvId && redSpvId in getOnlineSpvList().reduce((m, s) => ({...m, [s.id]: true}), {})) {
+        // 需映射 spvCode → spvId
+        const spvId = getOnlineSpvList().find(s => s.code === redSpvId)?.id || redSpvId;
+        if (!posRow._spv[spvId]) posRow._spv[spvId] = { sub: null, red: null, subManual: 0, subRebalance: 0, redManual: 0, redRebalance: 0 };
+        const spv = posRow._spv[spvId];
+        spv.redRebalance += p.I_val;
+        spv.red = (spv.red || 0) + p.I_val;
+      }
+    }
+  });
+
+  savePositionData();
+  data.st.status = 'done';
+  closeSyncModal();
+  renderSidebar();
+  const acc2 = getAccount(currentAccountId);
+  const st2 = getState(currentAccountId);
+  if (acc2 && st2) renderContent(acc2, st2);
+  // 自动跳转头寸管理 Tab 查看效果
+  switchTab('position');
+}
+
+function exportData() {
+  const acc = getAccount(currentAccountId);
+  alert('导出功能：将生成 ' + (acc ? acc.name : '') + ' 的收益分配明细 Excel 文件\n\n' +
+    '列：勾选 | 产品代码 | 产品名称 | 最新规模 | 目标BP | 占比 | 应分配收益 | 赎回金额（源专户） | 调减金额 | 净赎回金额 | 申购目标专户 | 申购金额 | 费用\n\n' +
+    '（Demo 版本，实际开发后对接导出接口）');
+}
+
+// ==================== INIT ====================
+
+// ==================== TAB SWITCH ====================
+let currentTab = 'position';
+let positionFilter = '';
+let positionStatusFilter = 'all'; // all / pending / confirmed / unbalanced
+let colToggleExpanded = false; // 列切换区域是否展开，默认收缩
+let spvPageIndex = 0;  // 专户分页当前页码（0-based）
+const SPV_PAGE_SIZE = 4;  // 每页展示专户数
+
+// ==================== 头寸管理 TAB - 数据 ====================
+
+// 在线专户列表（按 spvMaintList 排序，仅返回上线状态）
+// ==================== 专户产品维护 - 数据层 ====================
+function initSpvMaintList() {
+  try {
+    const saved = localStorage.getItem('spv_maint_list');
+    if (saved) { const list = JSON.parse(saved); if (Array.isArray(list) && list.length > 0) return list; }
+  } catch(e) {}
+  return allAccounts.map((a, idx) => ({ id: a.id, online: true, sortOrder: idx + 1 }));
+}
+
+let spvMaintList = initSpvMaintList();
+let spvMaintOnlineTab = 'online';
+let spvMaintFilter = '';
+let spvMaintPageIdx = 0;
+const SPV_MAINT_PAGE_SIZE = 20;
+
+function saveSpvMaintList() { try { localStorage.setItem('spv_maint_list', JSON.stringify(spvMaintList)); } catch(e) {} }
+
+function getOnlineSpvList() {
+  const onlineIds = spvMaintList.filter(p => p.online).sort((a, b) => a.sortOrder - b.sortOrder).map(p => p.id);
+  return onlineIds.map(id => allAccounts.find(a => a.id === id)).filter(Boolean);
+}
+
+// 理财产品日初头寸数据（模拟线上系统数据）
+let positionData = loadPositionData();
+
+// 从 localStorage 加载头寸数据，若无则使用默认值
+function loadPositionData() {
+  const defaultData = [
+    { code:'EW0599', name:'阳光金私享增利稳健天天购(300天最低持有)', date:'2026-06-29', dayBegin:4335105.63, subAll:2670000, redAll:-16749789.81, fee:0, t1Back:0, bankExch:1000000 },
+    { code:'EW0580', name:'阳光金私享增利周开(182天最低持有)2号', date:'2026-06-29', dayBegin:5000000, subAll:1000000, redAll:-2000000, fee:-500000, t1Back:3000000, bankExch:0 },
+    { code:'EW1340', name:'阳光金私享增利周开(9个月最低持有)2号', date:'2026-06-29', dayBegin:1000000, subAll:2000000, redAll:-4000000, fee:0, t1Back:0, bankExch:0 },
+    { code:'EW0515', name:'阳光金私享增利周开(182天最低持有)', date:'2026-06-29', dayBegin:0, subAll:0, redAll:0, fee:0, t1Back:0, bankExch:0 },
+    { code:'EW7746', name:'阳光金增利稳健天天购46号(14天最低持有)', date:'2026-06-29', dayBegin:8000000, subAll:500000, redAll:-300000, fee:-10000, t1Back:0, bankExch:500000 },
+    { code:'EW7748', name:'阳光金增利稳健天天购52号(30天最低持有)', date:'2026-06-29', dayBegin:12000000, subAll:0, redAll:-1500000, fee:0, t1Back:0, bankExch:0 },
+    { code:'EW4659', name:'阳光金增利稳健天天购16号(90天最低持有)', date:'2026-06-29', dayBegin:35000000, subAll:5000000, redAll:-2000000, fee:-50000, t1Back:1000000, bankExch:2000000 },
+    { code:'EW6287', name:'阳光金增利稳健乐享天天购49号(14天最低持有)', date:'2026-06-29', dayBegin:18000000, subAll:8000000, redAll:-1000000, fee:0, t1Back:0, bankExch:0 },
+    { code:'EW5208', name:'阳光金增利稳健天天购27号(7天最低持有)', date:'2026-06-29', dayBegin:5000000, subAll:0, redAll:-800000, fee:-20000, t1Back:0, bankExch:0 },
+    { code:'EW4217', name:'阳光金丰利617期', date:'2026-06-29', dayBegin:20000000, subAll:3000000, redAll:0, fee:0, t1Back:500000, bankExch:0 },
+    { code:'EW4512', name:'阳光金丰利682期', date:'2026-06-29', dayBegin:15000000, subAll:0, redAll:-5000000, fee:0, t1Back:2000000, bankExch:0 },
+    { code:'EW6075', name:'阳光金丰利874期', date:'2026-06-29', dayBegin:8000000, subAll:2000000, redAll:-1000000, fee:-30000, t1Back:0, bankExch:0 },
+    { code:'EW5231', name:'颐享阳光金安享如意日开1号(180天最低持有)', date:'2026-06-29', dayBegin:25000000, subAll:0, redAll:-3000000, fee:0, t1Back:0, bankExch:0 },
+    { code:'EW2911', name:'阳光金增利稳健乐享天天购9号(30天最低持有)', date:'2026-06-29', dayBegin:6000000, subAll:1000000, redAll:0, fee:0, t1Back:0, bankExch:0 },
+    { code:'EW1390', name:'阳光金安心计划-存单存款策略(60天最低持有)', date:'2026-06-29', dayBegin:10000000, subAll:0, redAll:-2000000, fee:0, t1Back:0, bankExch:500000 },
+  ];
+  try {
+    const saved = localStorage.getItem('position_data');
+    if (saved) {
+      const savedData = JSON.parse(saved);
+      if (Array.isArray(savedData) && savedData.length > 0) {
+        // 合并默认值与已保存数据：保存的覆盖默认，默认中新增的补充进去
+        const savedMap = new Map(savedData.map(d => [d.code, d]));
+        const merged = defaultData.map(d => {
+          const s = savedMap.get(d.code);
+          return s ? { ...d, confirmed: s.confirmed || false } : { ...d, confirmed: false };
+        }).concat(
+          savedData.filter(d => !defaultData.some(dd => dd.code === d.code))
+            .map(d => ({ ...d, confirmed: d.confirmed || false }))
+        );
+        return merged;
+      }
+    }
+  } catch(e) {}
+  // 默认数据加confirmed字段
+  return defaultData.map(d => ({ ...d, confirmed: false }));
+}
+
+function savePositionData() {
+  try {
+    localStorage.setItem('position_data', JSON.stringify(positionData));
+  } catch(e) {}
+}
+
+// 确认产品头寸已整理完毕
+function confirmPosition(code) {
+  const row = positionData.find(r => r.code === code);
+  if (row) {
+    row.confirmed = true;
+    savePositionData();
+    renderPositionPage();
+  }
+}
+
+// 取消确认
+function unconfirmPosition(code) {
+  const row = positionData.find(r => r.code === code);
+  if (row) {
+    row.confirmed = false;
+    savePositionData();
+    renderPositionPage();
+  }
+}
+
+// 专户持仓数据（模拟线上系统专户弹窗数据）
+const spvHoldingsData = {
+  'EW0599': [
+    { spvCode:'ZTQX08', spvName:'中铁信托-乾鑫8号', navDate:'2026-06-27', nav:1.11146787, channel:'直销', qty:50000000, scale:55573393.50, subAmt:0, redAmt:0 },
+    { spvCode:'2021-1147', spvName:'华润信托·招利33号', navDate:'2026-06-27', nav:1.10354761, channel:'直销', qty:30000000, scale:33106428.30, subAmt:0, redAmt:0 },
+    { spvCode:'ZTYS19', spvName:'中铁信托-云升19号', navDate:'2026-06-27', nav:1.02370411, channel:'直销', qty:20000000, scale:20474082.20, subAmt:0, redAmt:0 },
+    { spvCode:'6666666666', spvName:'国联光盈多策略18号', navDate:'2026-06-27', nav:1.0257, channel:'基煜', qty:15000000, scale:15385500.00, subAmt:0, redAmt:0 },
+    { spvCode:'SAGP35', spvName:'光大期货阳光甄选8号', navDate:'2026-06-27', nav:1.0111, channel:'基煜', qty:10000000, scale:10111000.00, subAmt:0, redAmt:0 },
+    { spvCode:'B42146', spvName:'国联光盈多策略19号', navDate:'2026-06-27', nav:1.0513, channel:'基煜', qty:8000000, scale:8410400.00, subAmt:0, redAmt:0 },
+    { spvCode:'300245', spvName:'光大永明资产聚优稳鑫13号', navDate:'2026-06-27', nav:1.01691257, channel:'直销', qty:12000000, scale:12202950.84, subAmt:0, redAmt:0 },
+    { spvCode:'DB3275', spvName:'国金资管方恒3号', navDate:'2026-06-27', nav:0.99373356, channel:'基煜', qty:6000000, scale:5962401.36, subAmt:0, redAmt:0 },
+  ],
+  'EW0580': [
+    { spvCode:'ZTQX08', spvName:'中铁信托-乾鑫8号', navDate:'2026-06-27', nav:1.11146787, channel:'直销', qty:10000000, scale:11114678.70, subAmt:0, redAmt:0 },
+    { spvCode:'2021-1147', spvName:'华润信托·招利33号', navDate:'2026-06-27', nav:1.10354761, channel:'直销', qty:8000000, scale:8828380.88, subAmt:0, redAmt:0 },
+    { spvCode:'O53200', spvName:'陆家嘴信托-悦享3号', navDate:'2026-06-27', nav:1.01555972, channel:'直销', qty:5000000, scale:5077798.60, subAmt:0, redAmt:0 },
+    { spvCode:'SBAT53', spvName:'光大期货光芒16号', navDate:'2026-06-26', nav:0.9744, channel:'直销', qty:3000000, scale:2923200.00, subAmt:0, redAmt:0 },
+  ],
+  'EW4659': [
+    { spvCode:'ZTQX08', spvName:'中铁信托-乾鑫8号', navDate:'2026-06-27', nav:1.11146787, channel:'直销', qty:20000000, scale:22229357.40, subAmt:0, redAmt:0 },
+    { spvCode:'2021-1147', spvName:'华润信托·招利33号', navDate:'2026-06-27', nav:1.10354761, channel:'直销', qty:15000000, scale:16553214.15, subAmt:0, redAmt:0 },
+    { spvCode:'300245', spvName:'光大永明资产聚优稳鑫13号', navDate:'2026-06-27', nav:1.01691257, channel:'直销', qty:10000000, scale:10169125.70, subAmt:0, redAmt:0 },
+    { spvCode:'SAGP35', spvName:'光大期货阳光甄选8号', navDate:'2026-06-27', nav:1.0111, channel:'基煜', qty:5000000, scale:5055500.00, subAmt:0, redAmt:0 },
+  ],
+};
+
+// ==================== 理财产品维护 - 完整数据模型 ====================
+// 产品维护列表：从 positionData 构建，每行包含上线状态、排序序号、活期配置
+// productMaintList: [{ code, name, online, sortOrder, calcLive }]
+// online: true=已上线（在头寸管理中显示）, false=已下线
+// sortOrder: 显示排序序号（1-based）
+// calcLive: true=计算活期, false=不计算活期
+
+const DEFAULT_CURRENT_CONFIG = {
+  'EW0599': false, 'EW0580': false, 'EW1340': false, 'EW0515': false,
+  'EW7746': false, 'EW7748': false, 'EW4659': false, 'EW6287': false,
+  'EW5208': false, 'EW5231': false, 'EW2911': false, 'EW1390': false,
+  'EW4217': false, 'EW4512': false,
+};
+
+// 初始化产品维护列表（首次加载时从 positionData 构建）
+function initProductMaintList() {
+  try {
+    const saved = localStorage.getItem('product_maint_list');
+    if (saved) {
+      const list = JSON.parse(saved);
+      // 验证数据完整性
+      if (Array.isArray(list) && list.length > 0) return list;
+    }
+  } catch(e) {}
+  // 默认：所有产品上线，按 positionData 顺序排列，活期按 DEFAULT_CURRENT_CONFIG
+  return positionData.map((p, idx) => ({
+    code: p.code,
+    name: p.name,
+    online: true,
+    sortOrder: idx + 1,
+    calcLive: DEFAULT_CURRENT_CONFIG[p.code] !== false
+  }));
+}
+
+let productMaintList = initProductMaintList();
+
+function saveProductMaintList() {
+  try {
+    localStorage.setItem('product_maint_list', JSON.stringify(productMaintList));
+  } catch(e) {}
+}
+
+// 获取已上线产品（按 sortOrder 排序），供头寸管理页面使用
+function getOnlineProducts() {
+  return productMaintList
+    .filter(p => p.online)
+    .sort((a, b) => a.sortOrder - b.sortOrder);
+}
+
+// 判断某产品是否计算活期（从 productMaintList 读取，未找到时默认 true）
+function shouldCalcCurrent(code) {
+  const item = productMaintList.find(p => p.code === code);
+  if (item) return item.calcLive !== false;
+  return true; // 不在维护列表中的产品默认计算活期
+}
+
+// 为没有专户数据的产品生成默认数据
+function getSPVData(productCode) {
+  if (spvHoldingsData[productCode]) return spvHoldingsData[productCode];
+  // 前 4 只产品持仓较少，用于展示超额赎回预警效果
+  const demoWarnCodes = ['EW3517','EW0599','EW4217','EW2911'];
+  const qtyZTQX = demoWarnCodes.includes(productCode) ? 5000000 : 200000000;
+  const qty1147 = demoWarnCodes.includes(productCode) ? 3000000 : 150000000;
+  return [
+    { spvCode:'ZTQX08', spvName:'中铁信托-乾鑫8号', navDate:'2026-06-27', nav:1.11146787, channel:'直销', qty:qtyZTQX, scale:5557339.35, subAmt:0, redAmt:0 },
+    { spvCode:'2021-1147', spvName:'华润信托·招利33号', navDate:'2026-06-27', nav:1.10354761, channel:'直销', qty:qty1147, scale:3310642.83, subAmt:0, redAmt:0 },
+  ];
+}
+
+// 列显示配置（默认显示紫色底标记的核心列）
+const positionColumns = [
+  { key:'code', label:'产品代码', defaultShow:true, isPurple:true },
+  { key:'name', label:'产品名称', defaultShow:true, isPurple:true },
+  { key:'date', label:'头寸日期', defaultShow:true, isPurple:true },
+  { key:'dayBegin', label:'日初头寸', defaultShow:true, isPurple:true, isNum:true },
+  { key:'subAll', label:'申购总额', defaultShow:false, isPurple:true, isNum:true },
+  { key:'redAll', label:'赎回总额', defaultShow:false, isPurple:true, isNum:true },
+  { key:'fee', label:'付费', defaultShow:false, isPurple:true, isNum:true },
+  { key:'t1Back', label:'T+1回款', defaultShow:false, isPurple:true, isNum:true },
+  { key:'bankExch', label:'银行交易所资金汇总', defaultShow:false, isPurple:false, isNum:true },
+  { key:'srSum', label:'申赎合计', defaultShow:true, isPurple:false, isNum:true },
+  { key:'spvSubTotal', label:'专户总申购款', defaultShow:false, isPurple:true, isNum:true, clickable:'spvSub' },
+  { key:'spvRedTotal', label:'专户总赎回款', defaultShow:false, isPurple:true, isNum:true, clickable:'spvRed' },
+  { key:'totalSub', label:'总申购款', defaultShow:false, isPurple:false, isNum:true },
+  { key:'needLiveAmt', label:'需存活期款金额', defaultShow:true, isPurple:false, isNum:true },
+  { key:'totalRed', label:'总赎回款', defaultShow:false, isPurple:false, isNum:true },
+  { key:'needTakeLiveAmt', label:'需取活期款金额', defaultShow:true, isPurple:false, isNum:true },
+  { key:'beforeMod', label:'修改前-日终申赎', defaultShow:false, isPurple:false, isNum:true },
+  { key:'afterMod', label:'修改后-日终申赎', defaultShow:false, isPurple:false, isNum:true },
+  { key:'posStatus', label:'头寸状态', defaultShow:true, isPurple:false, alwaysShow:true },
+  { key:'action', label:'操作', defaultShow:true, isPurple:false, alwaysShow:true },
+];
+
+// 当前可见列状态
+let visibleColumns = {};
+positionColumns.forEach(c => { visibleColumns[c.key] = c.defaultShow; });
+
+// ==================== 头寸管理 - 计算逻辑 ====================
+
+function calcPositionRow(row) {
+  // 申赎合计 = 日初头寸 + 申购总额 + 赎回总额 + 付费 + T+1回款 + 银行交易所资金汇总
+  row.srSum = row.dayBegin + row.subAll + row.redAll + row.fee + row.t1Back + row.bankExch;
+
+  // 净申赎 = (申购总额 + 赎回总额) × 95% + 付费 + T+1回款 + 银行交易所资金汇总
+  const netSR = (row.subAll + row.redAll) * 0.95 + row.fee + row.t1Back + row.bankExch;
+
+  // 总申购款：netSR > 0 时 = -ROUNDDOWN(netSR/10000)*10000
+  if (netSR > 0) {
+    row.totalSub = -Math.floor(netSR / 10000) * 10000;
+  } else {
+    row.totalSub = null;
+  }
+
+  // 需存活期款金额：(申购总额+赎回总额) > 0 时 = -ROUNDDOWN((subAll+redAll)*5%/10000)*10000
+  if (shouldCalcCurrent(row.code) && row.subAll + row.redAll > 0) {
+    row.needLiveAmt = -Math.floor(-(row.subAll + row.redAll) * 0.05 / 10000) * 10000;
+  } else {
+    row.needLiveAmt = null;
+  }
+
+  // 总赎回款：netSR < 0 时 = ROUNDUP(-netSR/10000)*10000
+  if (netSR < 0) {
+    row.totalRed = Math.ceil(-netSR / 10000) * 10000;
+  } else {
+    row.totalRed = null;
+  }
+
+  // 需取活期款金额：(申购总额+赎回总额) < 0 时 = ROUNDUP(-(subAll+redAll)*5%/10000)*10000
+  if (shouldCalcCurrent(row.code) && row.subAll + row.redAll < 0) {
+    row.needTakeLiveAmt = Math.ceil(-(row.subAll + row.redAll) * 0.05 / 10000) * 10000;
+  } else {
+    row.needTakeLiveAmt = null;
+  }
+
+  // 修改前-日终申赎 = 申赎合计 + 总申购款 + 总赎回款
+  row.beforeMod = row.srSum + (row.totalSub || 0) + (row.totalRed || 0);
+
+  // 修改后-日终申赎 暂同修改前（demo 中简化）
+  row.afterMod = row.beforeMod;
+
+  // 头寸状态判定：afterMod===0 → 已平，afterMod<0 → 未平，其他 → 未调整
+  if (row.afterMod === 0) {
+    row.posStatus = 'balanced';
+  } else if (row.afterMod < 0) {
+    row.posStatus = 'unbalanced';
+  } else {
+    row.posStatus = 'pending';
+  }
+
+  // 专户总申购款/总赎回款（模拟轧差数据）
+  if (netSR > 500000) {
+    row.spvSubTotal = -Math.round(netSR * 0.3 / 10000) * 10000;
+    row.spvRedTotal = null;
+  } else if (netSR < -500000) {
+    row.spvSubTotal = null;
+    row.spvRedTotal = Math.round(-netSR * 0.3 / 10000) * 10000;
+  } else {
+    row.spvSubTotal = null;
+    row.spvRedTotal = null;
+  }
+
+  // 为每个展示专户生成申购/赎回金额模拟数据（保留已同步的专户调仓数据）
+  if (!row._spv) row._spv = {};
+  getOnlineSpvList().forEach((spv, idx) => {
+    if (row._spv[spv.id] && (row._spv[spv.id].subRebalance || row._spv[spv.id].redRebalance)) {
+      // 已有专户调仓数据，只更新模拟的 manual 部分
+      const existing = row._spv[spv.id];
+      existing.subManual = existing.subManual || 0;
+      existing.redManual = existing.redManual || 0;
+      const seed = row.code.charCodeAt(row.code.length-1) + idx * 7;
+      if (netSR > 500000) {
+        existing.subManual = -(seed * 100000 + 500000);
+        existing.sub = (existing.subManual || 0) + (existing.subRebalance || 0);
+      } else if (netSR < -500000) {
+        existing.redManual = (seed * 100000 + 500000);
+        existing.red = (existing.redManual || 0) + (existing.redRebalance || 0);
+      } else {
+        existing.subManual = 0; existing.redManual = 0;
+        existing.sub = existing.subRebalance || 0 ? existing.subRebalance : null;
+        existing.red = existing.redRebalance || 0 ? existing.redRebalance : null;
+      }
+    } else {
+      // 无专户调仓数据，初始化模拟数据
+      const seed = row.code.charCodeAt(row.code.length-1) + idx * 7;
+      if (netSR > 500000) {
+        row._spv[spv.id] = { sub: -(seed * 100000 + 500000), red: null, subManual: -(seed * 100000 + 500000), subRebalance: 0, redManual: 0, redRebalance: 0 };
+      } else if (netSR < -500000) {
+        row._spv[spv.id] = { sub: null, red: (seed * 100000 + 500000), subManual: 0, subRebalance: 0, redManual: (seed * 100000 + 500000), redRebalance: 0 };
+      } else {
+        row._spv[spv.id] = { sub: null, red: null, subManual: 0, subRebalance: 0, redManual: 0, redRebalance: 0 };
+      }
+    }
+  });
+}
+
+function getSpvPage() {
+  const list = getOnlineSpvList();
+  const start = spvPageIndex * SPV_PAGE_SIZE;
+  return list.slice(start, start + SPV_PAGE_SIZE);
+}
+
+function goSpvPage(dir) {
+  const list = getOnlineSpvList();
+  const maxPage = Math.ceil(list.length / SPV_PAGE_SIZE) - 1;
+  spvPageIndex = Math.max(0, Math.min(maxPage, spvPageIndex + dir));
+  renderPositionPage();
+}
+
+// ==================== INIT ====================
+function init() {
+  try {
+    console.log('init start');
+    // 初始化头寸管理 Tab
+    currentTab = 'position';
+    positionColumns.forEach(c => { visibleColumns[c.key] = c.defaultShow; });
+    console.log('calling renderPositionPage');
+    renderPositionPage();
+    console.log('renderPositionPage done');
+
+    // 预渲染专户调仓 Tab 的左侧导航（不自动选中产品）
+    renderSidebar();
+    console.log('init done');
+  } catch(e) {
+    console.error('init error:', e.message, e.stack);
+    document.body.innerHTML += '<div style="position:fixed;top:0;left:0;right:0;background:red;color:#fff;padding:10px;z-index:99999;font-size:12px;">JS Error: ' + e.message + '</div>';
+  }
+}
+
+init();
+
+function switchTab(tab) {
+  currentTab = tab;
+  // 更新导航栏状态
+  document.querySelectorAll('.nav-tab').forEach(el => {
+    el.classList.toggle('active', el.dataset.tab === tab);
+  });
+  // 更新 badge
+  const badgeMap = { position: '头寸管理', adjust: '专户调仓', product: '理财产品维护', spv: '专户产品维护' };
+  document.getElementById('headerBadge').textContent = badgeMap[tab] || '';
+
+  // 切换显示
+  document.getElementById('tabPosition').style.display = tab === 'position' ? 'flex' : 'none';
+  document.getElementById('tabAdjust').style.display = tab === 'adjust' ? 'flex' : 'none';
+  document.getElementById('tabProduct').style.display = tab === 'product' ? 'flex' : 'none';
+  document.getElementById('tabSpv').style.display = tab === 'spv' ? 'flex' : 'none';
+
+  if (tab === 'position') {
+    renderPositionPage();
+  } else if (tab === 'adjust') {
+    renderSidebar();
+    if (!currentAccountId) {
+      // 未选择产品时显示空状态提示
+      document.getElementById('mainContent').innerHTML = `
+        <div class="empty-state" style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:var(--text-muted);">
+          <div class="empty-icon" style="font-size:64px;margin-bottom:16px;">📋</div>
+          <div style="font-size:16px;font-weight:500;color:var(--text-secondary);margin-bottom:8px;">左边选一个专户吧 👆</div>
+          <div style="font-size:13px;">选好后在这里分配调仓金额</div>
+        </div>`;
+    }
+  } else if (tab === 'product') {
+    renderProductMaintPage();
+  } else if (tab === 'spv') {
+    renderSpvMaintPage();
+  }
+}
+
+
+// ==================== 理财产品维护 - 完整页面（融合：识别上线、排序、活期配置） ====================
+
+let maintDragSrc = null; // 拖拽源行索引
+let maintFilterName = ''; // 产品名称搜索关键词
+let maintFilterLive = 'all'; // 活期筛选：all / yes / no
+let maintOnlineTab = 'online'; // 当前 Tab：online / offline
+
+function renderProductMaintPage() {
+  const container = document.getElementById('productMaintContent');
+
+  // 先按上线/下线 Tab 过滤
+  const listByTab = productMaintList.filter(p => p.online === (maintOnlineTab === 'online'));
+
+  // 再按搜索和活期筛选
+  const filtered = listByTab.filter(p => {
+    if (maintFilterName && !p.name.toLowerCase().includes(maintFilterName.toLowerCase()) && !p.code.toLowerCase().includes(maintFilterName.toLowerCase())) return false;
+    if (maintFilterLive === 'yes' && !p.calcLive) return false;
+    if (maintFilterLive === 'no' && p.calcLive) return false;
+    return true;
+  });
+
+  const totalCount = productMaintList.length;
+  const onlineCount = productMaintList.filter(p => p.online).length;
+  const offlineCount = totalCount - onlineCount;
+  const liveYesCount = listByTab.filter(p => p.calcLive).length;
+  const liveNoCount = listByTab.filter(p => !p.calcLive).length;
+  const filteredCount = filtered.length;
+
+  let tableRows = filtered.map((p, idx) => {
+    const realIdx = productMaintList.findIndex(pm => pm.code === p.code);
+    const isOnline = p.online;
+    return `
+      <tr draggable="true"
+          data-idx="${idx}"
+          ondragstart="onMaintDragStart(event, ${idx})"
+          ondragover="onMaintDragOver(event)"
+          ondragleave="onMaintDragLeave(event)"
+          ondrop="onMaintDrop(event, ${idx})"
+          ondragend="onMaintDragEnd(event)">
+        <td style="width:36px;text-align:center;">
+          <span class="drag-handle" title="拖拽排序">⋮⋮</span>
+        </td>
+        <td style="width:60px;text-align:center;">
+          <input type="number" class="sort-input" value="${p.sortOrder}" min="1"
+            onchange="onSortOrderChange(${realIdx}, this.value)"
+            onfocus="this.select()" title="手动修改排序序号">
+        </td>
+        <td style="font-weight:500;">${p.code}</td>
+        <td style="max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${p.name}">${p.name}</td>
+        <td style="width:110px;text-align:center;">
+          <label class="switch-label" onclick="toggleProductCalcLive(${realIdx})" style="justify-content:center;">
+            <div class="switch-track ${p.calcLive ? 'on' : ''}">
+              <div class="switch-thumb"></div>
+            </div>
+            <span style="font-size:12px;">${p.calcLive ? '计算' : '不计算'}</span>
+          </label>
+        </td>
+        <td style="width:90px;text-align:center;">
+          <button class="toggle-online-btn ${isOnline ? 'on' : 'off'}" onclick="toggleProductOnline(${realIdx})" title="${isOnline ? '点击下线' : '点击上线'}">
+            ${isOnline ? '下线' : '上线'}
+          </button>
+        </td>
+      </tr>`;
+  }).join('');
+
+  const emptyTip = filteredCount === 0 ? `<div style="padding:24px;text-align:center;color:var(--text-muted);font-size:13px;">暂无${maintOnlineTab === 'online' ? '上线中' : '已下线'}产品</div>` : '';
+
+  container.innerHTML = `
+    <h2>理财产品维护</h2>
+
+    <!-- 说明条 -->
+    <div class="product-maint-notice">
+      <span class="notice-icon">💡</span>
+      <div>
+        <strong>操作说明：</strong>通过「上线中 / 已下线」Tab 切换管理产品；拖拽或修改序号调整展示顺序；"计算活期"开关控制「需存活期款金额」「需取活期款金额」两列是否计算。
+      </div>
+    </div>
+
+    <!-- Tab 切换 -->
+    <div class="maint-tabs">
+      <div class="maint-tab ${maintOnlineTab === 'online' ? 'active' : ''}" onclick="switchMaintOnlineTab('online')">
+        上线中 <span class="tab-count">(${onlineCount})</span>
+      </div>
+      <div class="maint-tab ${maintOnlineTab === 'offline' ? 'active' : ''}" onclick="switchMaintOnlineTab('offline')">
+        已下线 <span class="tab-count">(${offlineCount})</span>
+      </div>
+    </div>
+
+    <!-- 工具栏 -->
+    <div class="product-maint-toolbar">
+      <input type="text" class="form-input" id="maintFilterName" placeholder="搜索产品代码或名称" value="${escHtml(maintFilterName)}"
+        style="width:220px;" oninput="onMaintFilterChange()">
+      <select class="form-select" id="maintFilterLive" onchange="onMaintFilterChange()" style="width:140px;">
+        <option value="all" ${maintFilterLive === 'all' ? 'selected' : ''}>活期：全部</option>
+        <option value="yes" ${maintFilterLive === 'yes' ? 'selected' : ''}>活期：计算</option>
+        <option value="no" ${maintFilterLive === 'no' ? 'selected' : ''}>活期：不计算</option>
+      </select>
+      <span class="toolbar-divider"></span>
+      <span style="font-size:13px;color:var(--text-secondary);">
+        共 <strong>${totalCount}</strong> 只 ·
+        ${maintOnlineTab === 'online' ? '上线中' : '已下线'} <strong style="color:${maintOnlineTab === 'online' ? '#115E59' : 'var(--text-muted)'};">${maintOnlineTab === 'online' ? onlineCount : offlineCount}</strong> 只
+        ${filteredCount < listByTab.length ? ` · 筛选结果 <strong style="color:var(--primary);">${filteredCount}</strong> 只` : ''}
+      </span>
+      <span class="toolbar-divider"></span>
+      <span style="font-size:12px;color:var(--text-muted);">
+        活期：计算 <strong style="color:#115E59;">${liveYesCount}</strong> · 不计算 <strong style="color:#991B1B;">${liveNoCount}</strong>
+      </span>
+      <span style="flex:1;"></span>
+      ${maintOnlineTab === 'online' ? `<button class="btn btn-primary btn-sm" onclick="showAddProductModal()">+ 新增理财产品</button>` : ''}
+    </div>
+
+    <!-- 表格 -->
+    <table class="product-maint-table">
+      <thead>
+        <tr>
+          <th style="width:36px;text-align:center;">⋮⋮</th>
+          <th style="width:60px;text-align:center;">序号</th>
+          <th style="width:120px;">产品代码</th>
+          <th>产品名称</th>
+          <th style="width:110px;text-align:center;">计算活期</th>
+          <th style="width:90px;text-align:center;">操作</th>
+        </tr>
+      </thead>
+      <tbody>${tableRows}</tbody>
+    </table>
+
+    ${emptyTip}
+
+    <div style="margin-top:12px;font-size:12px;color:var(--text-muted);text-align:right;">
+      修改后自动保存 · 头寸管理页面实时联动
+    </div>
+  `;
+}
+
+// ========== 产品维护操作 ==========
+
+function toggleProductOnline(idx) {
+  productMaintList[idx].online = !productMaintList[idx].online;
+  saveProductMaintList();
+  renderProductMaintPage();
+  if (currentTab === 'position') renderPositionPage();
+}
+
+function toggleProductCalcLive(idx) {
+  productMaintList[idx].calcLive = !productMaintList[idx].calcLive;
+  saveProductMaintList();
+  renderProductMaintPage();
+  if (currentTab === 'position') renderPositionPage();
+}
+
+function onSortOrderChange(idx, val) {
+  const num = parseInt(val);
+  if (!isNaN(num) && num >= 1) {
+    productMaintList[idx].sortOrder = num;
+    // 重新排序整个列表
+    productMaintList.sort((a, b) => a.sortOrder - b.sortOrder);
+    // 重新编号
+    productMaintList.forEach((p, i) => { p.sortOrder = i + 1; });
+  }
+  saveProductMaintList();
+  renderProductMaintPage();
+  if (currentTab === 'position') renderPositionPage();
+}
+
+function renumberSortOrder() {
+  productMaintList.forEach((p, i) => { p.sortOrder = i + 1; });
+  saveProductMaintList();
+  renderProductMaintPage();
+  if (currentTab === 'position') renderPositionPage();
+}
+
+// ========== Tab 切换 ==========
+
+function switchMaintOnlineTab(tab) {
+  maintOnlineTab = tab;
+  renderProductMaintPage();
+}
+
+// ========== 搜索过滤 ==========
+
+function onMaintFilterChange() {
+  maintFilterName = document.getElementById('maintFilterName').value;
+  maintFilterLive = document.getElementById('maintFilterLive').value;
+  renderProductMaintPage();
+}
+
+// HTML 转义辅助函数
+function escHtml(s) { return (s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+
+// ========== 拖拽排序 ==========
+
+function onMaintDragStart(e, idx) {
+  maintDragSrc = idx;
+  e.target.closest('tr').style.opacity = '0.5';
+  e.dataTransfer.effectAllowed = 'move';
+  e.dataTransfer.setData('text/plain', String(idx));
+}
+
+function onMaintDragOver(e) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  const tr = e.target.closest('tr');
+  if (tr) tr.classList.add('drag-over');
+}
+
+function onMaintDragLeave(e) {
+  const tr = e.target.closest('tr');
+  if (tr) tr.classList.remove('drag-over');
+}
+
+function onMaintDrop(e, targetIdx) {
+  e.preventDefault();
+  if (maintDragSrc === null || maintDragSrc === targetIdx) return;
+
+  // 获取当前 Tab 的数组（上线或下线），再映射到 productMaintList 真实索引
+  const tabList = productMaintList.filter(p => p.online === (maintOnlineTab === 'online'));
+  const srcRealIdx = productMaintList.findIndex(p => p.code === tabList[maintDragSrc].code);
+  const targetRealIdx = productMaintList.findIndex(p => p.code === tabList[targetIdx].code);
+  if (srcRealIdx === -1 || targetRealIdx === -1) return;
+
+  // 移动元素
+  const [moved] = productMaintList.splice(srcRealIdx, 1);
+  productMaintList.splice(targetRealIdx, 0, moved);
+  // 重新编号
+  productMaintList.forEach((p, i) => { p.sortOrder = i + 1; });
+  maintDragSrc = null;
+  saveProductMaintList();
+  renderProductMaintPage();
+  if (currentTab === 'position') renderPositionPage();
+}
+
+function onMaintDragEnd(e) {
+  e.target.closest('tr').style.opacity = '';
+  document.querySelectorAll('.product-maint-table tbody tr').forEach(tr => tr.classList.remove('drag-over'));
+  maintDragSrc = null;
+}
+
+// ========== 新增理财产品 ==========
+
+function showAddProductModal() {
+  const modal = document.getElementById('addProductModal');
+  document.getElementById('newProductCode').value = '';
+  document.getElementById('newProductName').value = '';
+  document.getElementById('newProductOnline').value = 'true';
+  document.getElementById('newProductCalcLive').value = 'auto';
+  document.getElementById('addProductHint').style.display = 'none';
+  document.getElementById('addProductHint').textContent = '';
+  modal.classList.add('show');
+  setTimeout(() => document.getElementById('newProductCode').focus(), 50);
+}
+
+function closeAddProductModal() {
+  document.getElementById('addProductModal').classList.remove('show');
+}
+
+function confirmAddProduct() {
+  const codeInput = document.getElementById('newProductCode');
+  const nameInput = document.getElementById('newProductName');
+  const onlineInput = document.getElementById('newProductOnline');
+  const liveInput = document.getElementById('newProductCalcLive');
+  const hint = document.getElementById('addProductHint');
+
+  const code = (codeInput.value || '').trim();
+  const name = (nameInput.value || '').trim();
+  const online = onlineInput.value === 'true';
+
+  if (!code) {
+    hint.textContent = '请输入产品代码';
+    hint.style.display = 'block';
+    codeInput.focus();
+    return;
+  }
+  if (!name) {
+    hint.textContent = '请输入产品名称';
+    hint.style.display = 'block';
+    nameInput.focus();
+    return;
+  }
+  if (productMaintList.some(p => p.code === code)) {
+    hint.textContent = '产品代码已存在，请勿重复添加';
+    hint.style.display = 'block';
+    codeInput.focus();
+    return;
+  }
+
+  // 计算活期默认值
+  let calcLive;
+  if (liveInput.value === 'auto') {
+    calcLive = DEFAULT_CURRENT_CONFIG[code] !== false;
+  } else {
+    calcLive = liveInput.value === 'true';
+  }
+
+  // 添加到维护列表末尾
+  productMaintList.push({
+    code: code,
+    name: name,
+    online: online,
+    sortOrder: productMaintList.length + 1,
+    calcLive: calcLive
+  });
+
+  // 同时补充到 positionData，避免头寸页找不到数据
+  if (!positionData.some(p => p.code === code)) {
+    positionData.push(createDefaultPositionRow(code, name));
+  }
+
+  saveProductMaintList();
+  savePositionData();
+  renumberSortOrder();
+  closeAddProductModal();
+}
+
+// ==================== 专户产品维护 - 渲染层 ====================
+
+function getSpvOnlineList() {
+  return spvMaintList.filter(p => p.online === (spvMaintOnlineTab === 'online'));
+}
+
+function getSpvFilteredList() {
+  const list = getSpvOnlineList();
+  const q = spvMaintFilter.trim().toLowerCase();
+  if (!q) return list;
+  return list.filter(p => {
+    const acc = allAccounts.find(a => a.id === p.id);
+    if (!acc) return false;
+    return acc.name.toLowerCase().includes(q) || acc.code.toLowerCase().includes(q);
+  });
+}
+
+let spvMaintDragSrc = null;
+
+function renderSpvMaintPage() {
+  const container = document.getElementById('spvMaintContent');
+  const filtered = getSpvFilteredList();
+  const totalPages = Math.ceil(filtered.length / SPV_MAINT_PAGE_SIZE) || 1;
+  if (spvMaintPageIdx >= totalPages) spvMaintPageIdx = totalPages - 1;
+  const start = spvMaintPageIdx * SPV_MAINT_PAGE_SIZE;
+  const pageItems = filtered.slice(start, start + SPV_MAINT_PAGE_SIZE);
+
+  const onlineCount = spvMaintList.filter(p => p.online).length;
+  const offlineCount = spvMaintList.length - onlineCount;
+
+  let rowsHTML = pageItems.map((p, idx) => {
+    const acc = allAccounts.find(a => a.id === p.id);
+    if (!acc) return '';
+    const realIdx = spvMaintList.findIndex(pm => pm.id === p.id);
+    return `
+      <tr draggable="true" data-idx="${idx}"
+          ondragstart="onSpvMaintDragStart(event, ${idx})"
+          ondragover="onSpvMaintDragOver(event)"
+          ondragleave="onSpvMaintDragLeave(event)"
+          ondrop="onSpvMaintDrop(event, ${idx})"
+          ondragend="onSpvMaintDragEnd(event)">
+        <td style="width:36px;text-align:center;">
+          <span class="drag-handle" title="拖拽排序">⋮⋮</span>
+        </td>
+        <td style="width:60px;text-align:center;">
+          <input type="number" class="sort-input" value="${p.sortOrder}" min="1"
+            onchange="onSpvSortOrderChange(${realIdx}, this.value)" onfocus="this.select()">
+        </td>
+        <td style="font-weight:500;">${acc.code}</td>
+        <td style="max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${acc.name}">${acc.name}</td>
+        <td style="width:80px;text-align:center;">${acc.tVal || 'T+0'}</td>
+        <td style="width:90px;text-align:center;">
+          <button class="toggle-online-btn ${p.online ? 'on' : 'off'}" onclick="toggleSpvOnline(${realIdx})">
+            ${p.online ? '下线' : '上线'}
+          </button>
+        </td>
+      </tr>`;
+  }).join('');
+
+  container.innerHTML = `
+    <h2 style="margin-bottom:12px;">专户产品维护</h2>
+    <div class="product-maint-notice">
+      <span class="notice-icon">💡</span>
+      <div><strong>操作说明：</strong>通过「上线中 / 已下线」Tab 切换管理专户；拖拽或修改序号调整展示顺序；下线后该专户在头寸管理页面不再展示。</div>
+    </div>
+    <div class="maint-tabs">
+      <div class="maint-tab ${spvMaintOnlineTab === 'online' ? 'active' : ''}" onclick="switchSpvMaintTab('online')">
+        上线中 <span class="tab-count">(${onlineCount})</span>
+      </div>
+      <div class="maint-tab ${spvMaintOnlineTab === 'offline' ? 'active' : ''}" onclick="switchSpvMaintTab('offline')">
+        已下线 <span class="tab-count">(${offlineCount})</span>
+      </div>
+    </div>
+    <div class="product-maint-toolbar">
+      <input type="text" class="form-input" id="spvMaintFilter" placeholder="搜索专户代码或名称" value="${escHtml(spvMaintFilter)}"
+        style="width:240px;" oninput="onSpvMaintFilterChange()">
+      <span style="font-size:13px;color:var(--text-secondary);">
+        共 <strong>${spvMaintList.length}</strong> 个 ·
+        ${spvMaintOnlineTab === 'online' ? '上线中' : '已下线'} <strong style="color:${spvMaintOnlineTab === 'online' ? '#166534' : 'var(--text-muted)'};">${spvMaintOnlineTab === 'online' ? onlineCount : offlineCount}</strong> 个
+        ${spvMaintFilter ? ` · 筛选结果 <strong style="color:var(--primary);">${filtered.length}</strong> 个` : ''}
+      </span>
+      <span style="flex:1;"></span>
+      ${spvMaintOnlineTab === 'online' ? `<button class="btn btn-primary btn-sm" onclick="showAddSpvModal()">+ 新增专户产品</button>` : ''}
+    </div>
+    <table class="product-maint-table">
+      <thead>
+        <tr>
+          <th style="width:36px;text-align:center;">⋮⋮</th>
+          <th style="width:60px;text-align:center;">序号</th>
+          <th style="width:130px;">专户代码</th>
+          <th>专户名称</th>
+          <th style="width:80px;text-align:center;">时效</th>
+          <th style="width:90px;text-align:center;">操作</th>
+        </tr>
+      </thead>
+      <tbody>${rowsHTML || `<tr><td colspan="6" style="padding:24px;text-align:center;color:var(--text-muted);">暂无${spvMaintOnlineTab === 'online' ? '上线中' : '已下线'}专户</td></tr>`}</tbody>
+    </table>
+    <div class="pagination-bar">
+      <span class="page-info">共 ${filtered.length} 条</span>
+      <select class="page-size-select" onchange="SPV_MAINT_PAGE_SIZE=parseInt(this.value);spvMaintPageIdx=0;renderSpvMaintPage()">
+        <option value="20" ${SPV_MAINT_PAGE_SIZE===20?'selected':''}>20 条/页</option>
+        <option value="50" ${SPV_MAINT_PAGE_SIZE===50?'selected':''}>50 条/页</option>
+        <option value="100" ${SPV_MAINT_PAGE_SIZE===100?'selected':''}>100 条/页</option>
+      </select>
+      <button ${spvMaintPageIdx===0?'disabled':''} onclick="spvMaintPageIdx=0;renderSpvMaintPage()">首页</button>
+      <button ${spvMaintPageIdx===0?'disabled':''} onclick="spvMaintPageIdx--;renderSpvMaintPage()">上一页</button>
+      ${Array.from({length: Math.min(totalPages, 5)}, (_, i) => {
+        let p;
+        if (totalPages <= 5) p = i;
+        else if (spvMaintPageIdx < 3) p = i;
+        else if (spvMaintPageIdx > totalPages - 3) p = totalPages - 5 + i;
+        else p = spvMaintPageIdx - 2 + i;
+        return `<button ${p===spvMaintPageIdx?'style="background:var(--primary);color:#fff;"':''} onclick="spvMaintPageIdx=${p};renderSpvMaintPage()">${p+1}</button>`;
+      }).join('')}
+      <button ${spvMaintPageIdx>=totalPages-1?'disabled':''} onclick="spvMaintPageIdx++;renderSpvMaintPage()">下一页</button>
+      <button ${spvMaintPageIdx>=totalPages-1?'disabled':''} onclick="spvMaintPageIdx=totalPages-1;renderSpvMaintPage()">末页</button>
+    </div>
+    <div style="margin-top:12px;font-size:12px;color:var(--text-muted);text-align:right;">修改后自动保存 · 头寸管理页面实时联动</div>
+  `;
+}
+
+function switchSpvMaintTab(tab) {
+  spvMaintOnlineTab = tab;
+  spvMaintPageIdx = 0;
+  renderSpvMaintPage();
+}
+
+function onSpvMaintFilterChange() {
+  spvMaintFilter = document.getElementById('spvMaintFilter').value;
+  spvMaintPageIdx = 0;
+  renderSpvMaintPage();
+}
+
+function toggleSpvOnline(idx) {
+  spvMaintList[idx].online = !spvMaintList[idx].online;
+  saveSpvMaintList();
+  renderSpvMaintPage();
+}
+
+function onSpvSortOrderChange(idx, val) {
+  const num = parseInt(val);
+  if (!isNaN(num) && num >= 1) {
+    spvMaintList[idx].sortOrder = num;
+    spvMaintList.sort((a, b) => a.sortOrder - b.sortOrder);
+    spvMaintList.forEach((p, i) => { p.sortOrder = i + 1; });
+  }
+  saveSpvMaintList();
+  renderSpvMaintPage();
+}
+
+function onSpvMaintDragStart(e, idx) {
+  spvMaintDragSrc = idx;
+  e.target.closest('tr').style.opacity = '0.5';
+  e.dataTransfer.effectAllowed = 'move';
+}
+function onSpvMaintDragOver(e) { e.preventDefault(); const tr = e.target.closest('tr'); if (tr) tr.classList.add('drag-over'); }
+function onSpvMaintDragLeave(e) { const tr = e.target.closest('tr'); if (tr) tr.classList.remove('drag-over'); }
+function onSpvMaintDrop(e, targetIdx) {
+  e.preventDefault();
+  if (spvMaintDragSrc === null || spvMaintDragSrc === targetIdx) return;
+  const tabList = spvMaintList.filter(p => p.online === (spvMaintOnlineTab === 'online'));
+  const srcId = tabList[spvMaintDragSrc].id;
+  const targetId = tabList[targetIdx].id;
+  const srcRealIdx = spvMaintList.findIndex(p => p.id === srcId);
+  const targetRealIdx = spvMaintList.findIndex(p => p.id === targetId);
+  if (srcRealIdx === -1 || targetRealIdx === -1) return;
+  const [moved] = spvMaintList.splice(srcRealIdx, 1);
+  spvMaintList.splice(targetRealIdx, 0, moved);
+  spvMaintList.forEach((p, i) => { p.sortOrder = i + 1; });
+  spvMaintDragSrc = null;
+  saveSpvMaintList();
+  renderSpvMaintPage();
+}
+function onSpvMaintDragEnd(e) {
+  e.target.closest('tr').style.opacity = '';
+  document.querySelectorAll('#spvMaintContent .product-maint-table tbody tr').forEach(tr => tr.classList.remove('drag-over'));
+  spvMaintDragSrc = null;
+}
+
+function showAddSpvModal() {
+  const modal = document.getElementById('addSpvModal');
+  document.getElementById('newSpvCode').value = '';
+  document.getElementById('newSpvName').value = '';
+  document.getElementById('newSpvTval').value = 'T+0';
+  document.getElementById('addSpvHint').style.display = 'none';
+  modal.classList.add('show');
+  setTimeout(() => document.getElementById('newSpvCode').focus(), 50);
+}
+
+function closeAddSpvModal() {
+  document.getElementById('addSpvModal').classList.remove('show');
+}
+
+function confirmAddSpv() {
+  const code = (document.getElementById('newSpvCode').value || '').trim();
+  const name = (document.getElementById('newSpvName').value || '').trim();
+  const tVal = document.getElementById('newSpvTval').value;
+  const hint = document.getElementById('addSpvHint');
+  if (!code) { hint.textContent = '请输入专户代码'; hint.style.display = 'block'; return; }
+  if (!name) { hint.textContent = '请输入专户名称'; hint.style.display = 'block'; return; }
+  if (spvMaintList.some(p => { const a = allAccounts.find(ac => ac.id === p.id); return a && a.code === code; })) {
+    hint.textContent = '专户代码已存在'; hint.style.display = 'block'; return;
+  }
+  const newId = 'spv_' + Date.now();
+  allAccounts.push({ id: newId, code, name, tVal, totalBP: 0, accountSize: 0, defaultMode: 'profit', holdings: [] });
+  spvMaintList.push({ id: newId, online: true, sortOrder: spvMaintList.length + 1 });
+  saveSpvMaintList();
+  closeAddSpvModal();
+  renderSpvMaintPage();
+}
+
+// 创建默认头寸数据行（新增产品无初始数据时使用）
+function createDefaultPositionRow(code, name) {
+  return {
+    code: code,
+    name: name,
+    date: new Date().toISOString().slice(0, 10),
+    dayBegin: 0,
+    subAll: 0,
+    redAll: 0,
+    fee: 0,
+    t1Back: 0,
+    bankExch: 0
+  };
+}
+
+let positionSpvModalData = null; // 当前打开的专户弹窗数据
+
+function renderPositionPage() {
+  try {
+  // 计算所有行
+  positionData.forEach(row => calcPositionRow(row));
+
+  // 过滤：只显示已上线的产品 + 搜索过滤
+  const onlineCodes = new Set(getOnlineProducts().map(p => p.code));
+  const q = positionFilter.trim().toLowerCase();
+  const allFiltered = positionData.filter(row => {
+    if (!onlineCodes.has(row.code)) return false;
+    if (!q) return true;
+    return row.code.toLowerCase().includes(q) || row.name.toLowerCase().includes(q);
+  });
+
+  // 统计各状态数量（基于搜索过滤后的全集）
+  const totalCount = allFiltered.length;
+  const confirmedCount = allFiltered.filter(r => r.confirmed).length;
+  const pendingCount = totalCount - confirmedCount;
+  const unbalancedCount = allFiltered.filter(r => !r.confirmed && r.posStatus === 'unbalanced').length;
+  const balancedCount = allFiltered.filter(r => !r.confirmed && r.posStatus === 'balanced').length;
+
+  // 状态筛选
+  let filtered = allFiltered;
+  if (positionStatusFilter === 'pending') {
+    filtered = allFiltered.filter(r => !r.confirmed);
+  } else if (positionStatusFilter === 'confirmed') {
+    filtered = allFiltered.filter(r => r.confirmed);
+  } else if (positionStatusFilter === 'unbalanced') {
+    filtered = allFiltered.filter(r => !r.confirmed && r.posStatus === 'unbalanced');
+  }
+
+  const container = document.getElementById('positionContent');
+
+  // 构建表头（两层：固定列 rowspan=2，专户列 colspan=2）
+  let headerRow1 = '', headerRow2 = '';
+  positionColumns.forEach(col => {
+    if (!visibleColumns[col.key]) return;
+    const purpleClass = col.isPurple ? ' style="background:#EDE9FE;"' : '';
+    headerRow1 += `<th${purpleClass} rowspan="2">${col.label}</th>`;
+  });
+  // 专户列：每个专户 colspan=2（分页展示）
+  const spvPage = getSpvPage();
+  spvPage.forEach(spv => {
+    headerRow1 += `<th class="spv-group-header" colspan="2"><span class="spv-name">${spv.name}</span></th>`;
+    headerRow2 += `<th class="spv-sub-col">申购金额</th><th class="spv-red-col">赎回金额</th>`;
+  });
+
+  // 头寸状态标签HTML
+  function posStatusTag(status) {
+    if (status === 'balanced') return '<span class="pos-status-tag balanced">已平 ✓</span>';
+    if (status === 'unbalanced') return '<span class="pos-status-tag unbalanced">未平 ⚠️</span>';
+    return '<span class="pos-status-tag pending">未调整</span>';
+  }
+
+  // 构建表体
+  let bodyHTML = '';
+  filtered.forEach((row, idx) => {
+    const isWarn = (row.afterMod || 0) < 0;
+    const isConfirmed = row.confirmed;
+    let rowClass = '';
+    if (isConfirmed) rowClass = ' class="confirmed-row"';
+    else if (isWarn) rowClass = ' class="warn-row"';
+
+    let cellsHTML = '';
+    positionColumns.forEach(col => {
+      if (!visibleColumns[col.key]) return;
+      const val = row[col.key];
+
+      if (col.key === 'code') {
+        cellsHTML += `<td style="font-weight:500;"><a class="product-link" href="#" onclick="event.preventDefault();">${val}</a></td>`;
+      } else if (col.key === 'name') {
+        cellsHTML += `<td style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${val}"><a class="product-link" href="#" onclick="event.preventDefault();">${val}</a></td>`;
+      } else if (col.key === 'posStatus') {
+        if (isConfirmed) {
+          cellsHTML += `<td class="pos-status-cell"><span class="pos-status-tag confirmed">已确认</span></td>`;
+        } else {
+          cellsHTML += `<td class="pos-status-cell">${posStatusTag(row.posStatus)}</td>`;
+        }
+      } else if (col.key === 'action') {
+        if (isConfirmed) {
+          cellsHTML += `<td class="action-cell"><button class="confirm-btn confirmed" onclick="unconfirmPosition('${row.code}')">↩ 撤销</button></td>`;
+        } else {
+          cellsHTML += `<td class="action-cell"><button class="confirm-btn" onclick="confirmPosition('${row.code}')">✓ 确认</button></td>`;
+        }
+      } else if (col.isNum) {
+        // 活期字段：不计算活期的产品显示特殊标记
+        if ((col.key === 'needLiveAmt' || col.key === 'needTakeLiveAmt') && !shouldCalcCurrent(row.code)) {
+          cellsHTML += `<td class="num"><span class="tag-live-skip" title="该产品不计算活期存取">不适用</span></td>`;
+        } else if (val == null) {
+          cellsHTML += `<td class="num" style="color:var(--text-muted);">--</td>`;
+        } else {
+          const colorClass = val > 0 ? 'pos' : (val < 0 ? 'neg' : '');
+          cellsHTML += `<td class="num ${colorClass}">${fmtMoney(val)}</td>`;
+        }
+      } else {
+        cellsHTML += `<td>${val || '--'}</td>`;
+      }
+    });
+    // 专户列
+    spvPage.forEach(spv => {
+      const sd = (row._spv && row._spv[spv.id]) ? row._spv[spv.id] : { sub: null, red: null };
+      const subManual = sd.subManual || 0;
+      const subRebalance = sd.subRebalance || 0;
+      const redManual = sd.redManual || 0;
+      const redRebalance = sd.redRebalance || 0;
+      const makeSubTitle = () => {
+        if (!subManual && !subRebalance) return '';
+        let t = '';
+        if (subManual) t += '手动调整: ' + fmtMoneyNeg(subManual);
+        if (subRebalance) t += (t ? '\n' : '') + '专户调仓: ' + fmtMoneyNeg(subRebalance);
+        return t;
+      };
+      const makeRedTitle = () => {
+        if (!redManual && !redRebalance) return '';
+        let t = '';
+        if (redManual) t += '手动调整: ' + fmtMoneyPos(redManual);
+        if (redRebalance) t += (t ? '\n' : '') + '专户调仓: ' + fmtMoneyPos(redRebalance);
+        return t;
+      };
+      // 申购金额
+      if (sd.sub != null) {
+        const subTitle = makeSubTitle();
+        cellsHTML += `<td class="num"><span class="clickable-amount" onclick="openPositionSpvModal('${row.code}','${spv.id}','sub')"${subTitle ? ' title="' + subTitle + '"' : ''}>${fmtMoneyNeg(sd.sub)}</span>${subRebalance ? ' <sup style="font-size:9px;color:#2563EB;">调仓</sup>' : ''}</td>`;
+      } else {
+        cellsHTML += `<td class="num" style="color:var(--text-muted);">--</td>`;
+      }
+      // 赎回金额
+      if (sd.red != null) {
+        const redTitle = makeRedTitle();
+        cellsHTML += `<td class="num"><span class="clickable-amount" onclick="openPositionSpvModal('${row.code}','${spv.id}','red')"${redTitle ? ' title="' + redTitle + '"' : ''}>${fmtMoneyPos(sd.red)}</span>${redRebalance ? ' <sup style="font-size:9px;color:#2563EB;">调仓</sup>' : ''}</td>`;
+      } else {
+        cellsHTML += `<td class="num" style="color:var(--text-muted);">--</td>`;
+      }
+    });
+
+    bodyHTML += `<tr${rowClass} data-code="${row.code}">${cellsHTML}</tr>`;
+  });
+
+  // 汇总
+  let totalSubAll = 0, totalRedAll = 0, totalFee = 0, totalT1 = 0, totalBankExch = 0;
+  let totalSrSum = 0, totalBeforeMod = 0;
+  let spvTotals = {}; // { spvId: { sub: 0, red: 0 } }
+  spvPage.forEach(spv => { spvTotals[spv.id] = { sub: 0, red: 0 }; });
+  filtered.forEach(row => {
+    totalSubAll += row.subAll;
+    totalRedAll += row.redAll;
+    totalFee += row.fee;
+    totalT1 += row.t1Back;
+    totalBankExch += row.bankExch;
+    totalSrSum += row.srSum;
+    totalBeforeMod += (row.beforeMod || 0);
+    if (row._spv) {
+      spvPage.forEach(spv => {
+        if (row._spv[spv.id]) {
+          spvTotals[spv.id].sub += (row._spv[spv.id].sub || 0);
+          spvTotals[spv.id].red += (row._spv[spv.id].red || 0);
+        }
+      });
+    }
+  });
+
+  // 列切换按钮（固定列 + 专户列），alwaysShow列不生成切换按钮
+  let toggleBtnsHTML = '';
+  positionColumns.forEach(col => {
+    if (col.alwaysShow) return;
+    const cls = visibleColumns[col.key] ? 'show' : 'hide';
+    toggleBtnsHTML += `<button class="col-toggle-btn ${cls}" onclick="toggleColumn('${col.key}')">${col.label}</button>`;
+  });
+
+  // 构建汇总行的专户列单元格
+  let summarySpvCells = '';
+  spvPage.forEach(spv => {
+    const t = spvTotals[spv.id];
+    summarySpvCells += `<td class="num">${t.sub !== 0 ? fmtMoneyNeg(t.sub) : '<span style="color:var(--text-muted);">--</span>'}</td>`;
+    summarySpvCells += `<td class="num">${t.red !== 0 ? fmtMoneyPos(t.red) : '<span style="color:var(--text-muted);">--</span>'}</td>`;
+  });
+
+  // 构建汇总行的固定列单元格
+  let summaryFixedCells = '';
+  positionColumns.forEach(col => {
+    if (!visibleColumns[col.key]) return;
+    summaryFixedCells += '<td class="num" style="font-weight:600;"></td>';
+  });
+
+  // 进度百分比
+  const progressPct = totalCount > 0 ? Math.round(confirmedCount / totalCount * 100) : 0;
+
+  // 状态筛选按钮
+  const sf = positionStatusFilter;
+  const filterBtns = `
+    <div class="status-filter-group">
+      <button class="status-filter-btn ${sf==='all'?'active':''}" onclick="setPositionStatusFilter('all')">全部<span class="filter-count">${totalCount}</span></button>
+      <button class="status-filter-btn ${sf==='pending'?'active':''}" onclick="setPositionStatusFilter('pending')">待处理<span class="filter-count">${pendingCount}</span></button>
+      <button class="status-filter-btn ${sf==='unbalanced'?'active':''}" onclick="setPositionStatusFilter('unbalanced')">未平<span class="filter-count">${unbalancedCount}</span></button>
+      <button class="status-filter-btn ${sf==='confirmed'?'active':''}" onclick="setPositionStatusFilter('confirmed')">已确认<span class="filter-count">${confirmedCount}</span></button>
+    </div>
+  `;
+
+  container.innerHTML = `
+    <!-- 顶部操作栏 -->
+    <div class="position-toolbar">
+      <div class="position-toolbar-left">
+        <button class="toolbar-btn primary" onclick="alert('Demo: 上传日初头寸文件')">
+          <span>⬆️</span> 上传日初头寸
+        </button>
+        <button class="toolbar-btn success" onclick="alert('Demo: 上传SPV持仓文件')">
+          <span>⬆️</span> 上传SPV持仓
+        </button>
+        <div class="toolbar-info">
+          <span>最新上传日初头寸日期：<strong>2026-06-04</strong></span>
+          <span>上传SPV持仓日期：<strong>2026-06-04</strong></span>
+          <span>交易所账户：<strong style="color:var(--success);">已配置 ✓</strong></span>
+        </div>
+      </div>
+      <div class="position-toolbar-right">
+        <button class="toolbar-btn" onclick="alert('交易所资金流入账户：已配置 上交所/深交所 两个账户。')" style="background:#EFF6FF;border:1px solid #93C5FD;color:#1D4ED8;">
+          <span>🏦</span> 交易所账户
+        </button>
+        <button class="toolbar-btn warning" onclick="exportPositionData()">
+          <span>⬇️</span> 导出数据
+        </button>
+      </div>
+    </div>
+
+    <!-- 信息提示条 -->
+    <div class="info-tip-bar">
+      <span class="tip-num">1</span>
+      <span>点击上方按钮选择文件上传；2. 依次填入两个；文件顺序为 SPV持仓 → 日初头寸</span>
+    </div>
+
+    <!-- 进度 + 筛选（同一行） -->
+    <div class="position-progress-bar">
+      <span class="progress-text">整理进度：<strong>${confirmedCount}</strong> / ${totalCount} 只</span>
+      <div class="progress-track"><div class="progress-fill" style="width:${progressPct}%;"></div></div>
+      <span class="progress-text">待处理 <strong style="color:#9A3412;">${pendingCount}</strong> 只</span>
+      ${pendingCount > 0 ? `<button class="jump-btn" onclick="jumpToNextPending()">⏭ 跳转下一个待处理</button>` : ''}
+      <div style="flex:1;"></div>
+      ${filterBtns}
+    </div>
+
+    <!-- 字段控制 + 搜索 + 列切换（同一行） -->
+    <div class="filter-bar" style="margin-top:0;">
+      <button class="expand-fields-btn" onclick="toggleAllColumns()">展示所有字段</button>
+      <span style="font-size:12px;color:var(--text-muted);">共计 <strong style="color:var(--text);">${totalCount}</strong> 个理财产品</span>
+      <label style="margin-left:12px;">产品搜索</label>
+      <input type="text" placeholder="代码 / 名称..." value="${escapeHtml(positionFilter)}" oninput="positionFilter=this.value;renderPositionPage()" style="width:200px;">
+      <div style="flex:1;"></div>
+      ${(() => {
+        const onlineList = getOnlineSpvList();
+        const spvTotalPages = Math.ceil(onlineList.length / SPV_PAGE_SIZE);
+        return `<span style="font-size:12px;color:var(--text-muted);">持仓专户 <strong>${onlineList.length}</strong> 个</span>
+          <button onclick="goSpvPage(-1)" ${spvPageIndex === 0 ? 'disabled' : ''} style="padding:2px 8px;border:1px solid var(--border);border-radius:4px;background:#fff;cursor:pointer;font-size:12px;" title="上一页">◀</button>
+          <span style="font-size:12px;color:var(--text-secondary);">${spvPageIndex + 1}/${spvTotalPages}</span>
+          <button onclick="goSpvPage(1)" ${spvPageIndex >= spvTotalPages - 1 ? 'disabled' : ''} style="padding:2px 8px;border:1px solid var(--border);border-radius:4px;background:#fff;cursor:pointer;font-size:12px;" title="下一页">▶</button>`;
+      })()}
+      <button class="col-toggle-toggle-btn" onclick="toggleColToggleArea()">${colToggleExpanded ? '收起字段 ▲' : '展开字段 ▼'}</button>
+    </div>
+    ${colToggleExpanded ? `
+    <!-- 列切换按钮组（可收缩） -->
+    <div class="filter-bar col-toggle-area" style="margin-top:0;border-top:none;border-radius:0 0 var(--radius) var(--radius);">
+      <div class="col-toggle-group">${toggleBtnsHTML}</div>
+    </div>` : ''}
+
+    <!-- 主表 -->
+    <div class="section-card" style="margin-top:0;">
+      <div class="section-body" style="padding:0;">
+        <div class="table-container" style="max-height:60vh;">
+          <table class="position-table">
+            <thead>
+              <tr>${headerRow1}</tr>
+              <tr>${headerRow2}</tr>
+            </thead>
+            <tbody>
+              ${bodyHTML}
+              <tr class="position-summary-row">
+                ${summaryFixedCells}${summarySpvCells}
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- 分页 -->
+        <div class="pagination-bar">
+          <span class="page-info">共 ${filtered.length} 条</span>
+          <select class="page-size-select">
+            <option>20 条/页</option>
+            <option>50 条/页</option>
+            <option>100 条/页</option>
+          </select>
+          <button disabled>上一页</button>
+          <button>1</button>
+          <button disabled>下一页</button>
+        </div>
+
+        <div class="position-summary">
+          <div class="ps-item"><span class="ps-label">产品数</span><span class="ps-value">${filtered.length}</span></div>
+          <div class="ps-item"><span class="ps-label">申购总额</span><span class="ps-value positive">${fmtMoney(totalSubAll)}</span></div>
+          <div class="ps-item"><span class="ps-label">赎回总额</span><span class="ps-value negative">${fmtMoney(totalRedAll)}</span></div>
+          <div class="ps-item"><span class="ps-label">付费</span><span class="ps-value negative">${fmtMoney(totalFee)}</span></div>
+          <div class="ps-item"><span class="ps-label">T+1回款</span><span class="ps-value positive">${fmtMoney(totalT1)}</span></div>
+          <div class="ps-item"><span class="ps-label">银行交易所资金</span><span class="ps-value positive">${fmtMoney(totalBankExch)}</span></div>
+          <div class="ps-item"><span class="ps-label">申赎合计</span><span class="ps-value" style="color:var(--primary);">${fmtMoney(totalSrSum)}</span></div>
+        </div>
+      </div>
+    </div>
+  `;
+  } catch(e) {
+    console.error('renderPositionPage error:', e.message, e.stack);
+    document.getElementById('positionContent').innerHTML = '<div style="color:red;padding:20px;">Render Error: ' + e.message + '</div>';
+  }
+}
+
+// 设置状态筛选
+function setPositionStatusFilter(filter) {
+  positionStatusFilter = filter;
+  renderPositionPage();
+}
+
+// 跳转到下一个待处理产品
+function jumpToNextPending() {
+  const onlineCodes = new Set(getOnlineProducts().map(p => p.code));
+  const q = positionFilter.trim().toLowerCase();
+  const pending = positionData.filter(row => {
+    if (!onlineCodes.has(row.code)) return false;
+    if (row.confirmed) return false;
+    if (!q) return true;
+    return row.code.toLowerCase().includes(q) || row.name.toLowerCase().includes(q);
+  });
+  if (pending.length === 0) {
+    alert('没有待处理的产品了，全部已确认！');
+    return;
+  }
+  // 找到第一个待处理产品在表格中的行
+  const targetCode = pending[0].code;
+  const tbody = document.querySelector('.position-table tbody');
+  if (tbody) {
+    const rows = tbody.querySelectorAll('tr[data-code]');
+    for (const tr of rows) {
+      if (tr.dataset.code === targetCode) {
+        tr.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        // 闪烁高亮
+        tr.style.transition = 'background 0.3s';
+        const originalBg = tr.style.background;
+        tr.style.background = '#FEF3C7';
+        setTimeout(() => { tr.style.background = originalBg; }, 1500);
+        break;
+      }
+    }
+  }
+}
+
+function toggleAllColumns() {
+  // 切换所有列的显示/隐藏（alwaysShow列不受影响，专户列不受影响）
+  const toggleableCols = positionColumns.filter(c => !c.alwaysShow);
+  const allVisible = toggleableCols.every(c => visibleColumns[c.key]);
+  toggleableCols.forEach(c => {
+    visibleColumns[c.key] = !allVisible;
+  });
+  // 确保alwaysShow列始终可见
+  positionColumns.forEach(c => { if (c.alwaysShow) visibleColumns[c.key] = true; });
+  renderPositionPage();
+}
+
+function toggleColumn(key) {
+  // alwaysShow列不允许切换
+  const col = positionColumns.find(c => c.key === key);
+  if (col && col.alwaysShow) return;
+  visibleColumns[key] = !visibleColumns[key];
+  renderPositionPage();
+}
+
+// 展开/收起列切换区域
+function toggleColToggleArea() {
+  colToggleExpanded = !colToggleExpanded;
+  renderPositionPage();
+}
+
+// 头寸管理页面点击专户金额 → 弹出调仓弹窗（优化版）
+function openPositionSpvModal(productCode, spvId, type) {
+  const product = positionData.find(p => p.code === productCode);
+  if (!product) return;
+  const spv = getOnlineSpvList().find(s => s.id === spvId);
+  if (!spv) return;
+  const sd = (product._spv && product._spv[spvId]) ? product._spv[spvId] : { sub: null, red: null };
+
+  // 获取该产品的专户持仓明细数据
+  const spvHoldings = getSPVData(productCode);
+  const spvHolding = spvHoldings.find(h => h.spvCode === spv.code || h.spvName === spv.name) || spvHoldings[0];
+
+  // 当前金额
+  const currentSub = sd.sub || 0;
+  const currentRed = sd.red || 0;
+
+  // 实际净值（用于份额计算）
+  const nav = spvHolding.nav || 1;
+  const navDate = spvHolding.navDate || '2026-01-08';
+  const qty = spvHolding.qty || 0;
+  const scale = spvHolding.scale || 0;
+  const channel = spvHolding.channel || '直销';
+
+  // 时效从专户数据读取（allAccounts 中有 tVal 字段）
+  const tVal = spv.tVal || 'T+0';
+
+  // 剩余可申购金额 = 产品层面剩余额度（模拟：总规模30%为申购上限）
+  const maxSub = Math.round(scale * 0.3 / 10000) * 10000;
+  const remainSub = Math.max(0, maxSub - Math.abs(currentSub));
+
+  // 赎回相关
+  const estRedAll = scale;                     // 预估全部赎回金额
+  const remainRed = Math.max(0, estRedAll - Math.abs(currentRed)); // 剩余总赎回款
+
+  // 预估赎回份额（用实际净值计算）
+  const estRedQty = currentRed > 0 ? Math.round(currentRed / nav) : 0;
+  const maxRedQty = Math.round(qty * 0.95);
+
+  // 预估专户头寸 = 持有规模 + 申购 - 赎回
+  const estHeadroom = scale + (currentSub) - (currentRed);
+
+  const modalHTML = `
+    <div class="modal-overlay show" id="spvAmountModal" onclick="closeSpvAmountModal(event)">
+      <div class="modal spv-trade-modal" onclick="event.stopPropagation()">
+        <div class="modal-header">
+          <div class="header-left">
+            <h3>${spv.name}</h3>
+            <span class="时效">时效：${tVal}</span>
+            <span class="nav-date-hint">（净值日期 ${navDate} · 净值 ${nav.toFixed(4)}）</span>
+          </div>
+          <span class="modal-close" onclick="closeSpvAmountModal()" style="display:flex;cursor:pointer;font-size:20px;color:var(--text-muted);padding:4px;line-height:1;" title="关闭">×</span>
+        </div>
+        <div class="spv-product-info">
+          <span class="prod-tag">${product.code}</span>
+          <span>${product.name}</span>
+          <span style="margin-left:auto;font-size:11px;">渠道：${channel}</span>
+        </div>
+        <div class="modal-body">
+
+          <!-- 申购卡片 -->
+          <div class="spv-trade-card card-sub">
+            <div class="card-label"><span class="card-icon sub">申</span>申购金额</div>
+            <div class="spv-input-group">
+              <div class="input-row">
+                <input type="text" id="spvSubInput" value="${currentSub !== 0 ? Math.abs(currentSub).toLocaleString('zh-CN') : ''}"
+                  placeholder="请输入申购金额" oninput="onSpvSubInput(${nav})">
+                <span class="unit">元</span>
+              </div>
+              <div class="input-hint" id="subHint">${currentSub !== 0 ? fmtWanYuan(Math.abs(currentSub)) : ''}</div>
+            </div>
+            <div class="spv-action-row">
+              <button class="spv-action-btn primary" onclick="fillTotalSub('${productCode}','${spvId}')">📥 带入总申购款</button>
+              <button class="spv-action-btn danger" onclick="fillSubHeadroom('${productCode}','${spvId}')">⚡ 一键平头寸</button>
+              <span class="spv-action-info">可申购：<span class="info-value" id="remainSub">${fmtMoney(remainSub)}</span></span>
+            </div>
+          </div>
+
+          <!-- 赎回卡片 -->
+          <div class="spv-trade-card card-red">
+            <div class="card-label"><span class="card-icon red">赎</span>赎回金额</div>
+            <div class="spv-input-group">
+              <div class="input-row">
+                <input type="text" id="spvRedInput" value="${currentRed !== 0 ? currentRed.toLocaleString('zh-CN') : ''}"
+                  placeholder="请输入赎回金额" oninput="onSpvRedInput(${nav},${maxRedQty})">
+                <span class="unit">元</span>
+              </div>
+              <div class="input-hint" id="redHint">${currentRed !== 0 ? fmtWanYuan(currentRed) : ''}</div>
+            </div>
+            <div class="spv-action-row">
+              <button class="spv-action-btn" onclick="fillAllRed('${productCode}','${spvId}',${scale})">📤 全部赎回</button>
+              <button class="spv-action-btn primary" onclick="fillTotalRed('${productCode}','${spvId}')">📥 带入总赎回款</button>
+              <span class="spv-action-info">预估全部：<span class="info-value">${fmtMoney(estRedAll)}</span></span>
+            </div>
+            <div class="spv-action-row">
+              <button class="spv-action-btn danger" onclick="fillRedHeadroom('${productCode}','${spvId}')">⚡ 一键平头寸</button>
+              <span class="spv-action-info">剩余可赎：<span class="info-value" id="remainRed">${fmtMoney(remainRed)}</span></span>
+            </div>
+
+            <!-- 预估赎回份额（嵌在赎回卡片内） -->
+            <div class="spv-est-row">
+              <span class="est-label">预估赎回份额</span>
+              <div class="est-box">
+                <div class="est-main" id="estRedQty">${estRedQty > 0 ? estRedQty.toLocaleString('zh-CN') + ' 份' : '—'}</div>
+                <div class="est-sub">按净值 ${nav.toFixed(4)} 计算 · 最多赎回 ${maxRedQty.toLocaleString('zh-CN')} 份</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 头寸概览 -->
+          <div class="spv-headroom-expand" id="headroomDetail">
+            <div class="hr-title">头寸概览</div>
+            <div class="hr-row">
+              <span class="hr-label">持有规模</span>
+              <span class="hr-val">${fmtMoney(scale)}</span>
+            </div>
+            <div class="hr-row">
+              <span class="hr-label">申购金额</span>
+              <span class="hr-val" style="color:${currentSub !== 0 ? '#e74c3c' : 'var(--text-muted)'};">${currentSub !== 0 ? fmtMoney(Math.abs(currentSub)) : '—'}</span>
+            </div>
+            <div class="hr-row">
+              <span class="hr-label">赎回金额</span>
+              <span class="hr-val" style="color:${currentRed !== 0 ? '#27ae60' : 'var(--text-muted)'};">${currentRed !== 0 ? '+' + fmtMoney(currentRed) : '—'}</span>
+            </div>
+            <div class="hr-row hr-total">
+              <span class="hr-label">预估专户头寸</span>
+              <span class="hr-val" style="color:var(--primary);">${fmtMoney(estHeadroom)}</span>
+            </div>
+          </div>
+
+        </div>
+        <div class="modal-footer">
+          <button class="spv-btn-cancel" onclick="closeSpvAmountModal()" style="padding:9px 28px;font-size:13px;border:1px solid #d1d5db;border-radius:6px;background:#fff;color:#6B7280;cursor:pointer;font-weight:500;letter-spacing:0.5px;">取消</button>
+          <button class="spv-btn-confirm" onclick="saveSpvAmount('${productCode}','${spvId}')" style="padding:9px 32px;font-size:13px;border:none;border-radius:6px;background:#1A3C6D;color:#fff;cursor:pointer;font-weight:600;letter-spacing:1px;box-shadow:0 2px 6px rgba(26,60,109,0.25);">确定</button>
+        </div>
+      </div>
+    </div>`;
+
+  // 移除旧弹窗
+  const old = document.getElementById('spvAmountModal');
+  if (old) old.remove();
+  document.body.insertAdjacentHTML('beforeend', modalHTML);
+  // 根据点击类型自动聚焦对应输入框
+  setTimeout(() => {
+    if (type === 'red') {
+      document.getElementById('spvRedInput')?.focus();
+    } else {
+      document.getElementById('spvSubInput')?.focus();
+    }
+  }, 100);
+}
+
+// 申购金额输入处理（互斥：填写申购时清空赎回；实时千分位格式化）
+function onSpvSubInput(nav) {
+  const input = document.getElementById('spvSubInput');
+  const hint = document.getElementById('subHint');
+  const raw = input.value.replace(/,/g, '');
+  const val = parseFloat(raw);
+  // 实时千分位格式化（保留用户光标位置）
+  if (!isNaN(val) && val > 0) {
+    const start = input.selectionStart;
+    const beforeLen = input.value.length;
+    input.value = val.toLocaleString('zh-CN');
+    const afterLen = input.value.length;
+    const diff = afterLen - beforeLen;
+    input.setSelectionRange(start + diff, start + diff);
+    hint.textContent = fmtWanYuan(val);
+    // 互斥：清空赎回
+    const redInput = document.getElementById('spvRedInput');
+    if (redInput && redInput.value) { redInput.value = ''; document.getElementById('redHint').textContent = ''; document.getElementById('estRedQty').textContent = '—'; }
+  } else if (raw === '') {
+    hint.textContent = '';
+    input.value = '';
+  }
+}
+
+// 赎回金额输入处理（互斥：填写赎回时清空申购；用实际净值计算份额；实时千分位格式化）
+function onSpvRedInput(nav, maxRedQty) {
+  const input = document.getElementById('spvRedInput');
+  const hint = document.getElementById('redHint');
+  const raw = input.value.replace(/,/g, '');
+  const val = parseFloat(raw);
+  if (!isNaN(val) && val > 0) {
+    const start = input.selectionStart;
+    const beforeLen = input.value.length;
+    input.value = val.toLocaleString('zh-CN');
+    const afterLen = input.value.length;
+    const diff = afterLen - beforeLen;
+    input.setSelectionRange(start + diff, start + diff);
+    hint.textContent = fmtWanYuan(val);
+    // 互斥：清空申购
+    const subInput = document.getElementById('spvSubInput');
+    if (subInput && subInput.value) { subInput.value = ''; document.getElementById('subHint').textContent = ''; }
+    // 用实际净值计算预估赎回份额
+    const estQty = Math.round(val / nav);
+    document.getElementById('estRedQty').textContent = estQty.toLocaleString('zh-CN') + ' 份';
+  } else if (raw === '') {
+    hint.textContent = '';
+    input.value = '';
+    document.getElementById('estRedQty').textContent = '—';
+  }
+}
+
+// 带入总申购款
+function fillTotalSub(productCode, spvId) {
+  const product = positionData.find(p => p.code === productCode);
+  if (!product) return;
+  const totalSub = Math.abs(product.totalSub || 0);
+  document.getElementById('spvSubInput').value = totalSub > 0 ? totalSub.toLocaleString('zh-CN') : '';
+  onSpvSubInput();
+}
+
+// 一键平头寸（申购）
+function fillSubHeadroom(productCode, spvId) {
+  const product = positionData.find(p => p.code === productCode);
+  if (!product) return;
+  const spvHoldings = getSPVData(productCode);
+  const totalScale = spvHoldings.reduce((sum, h) => sum + (h.scale || 0), 0);
+  const headroom = Math.round(totalScale * 0.15 / 10000) * 10000;
+  document.getElementById('spvSubInput').value = headroom > 0 ? headroom.toLocaleString('zh-CN') : '';
+  onSpvSubInput();
+}
+
+// 全部赎回（联动：填入后更新预估份额）
+function fillAllRed(productCode, spvId, scale) {
+  document.getElementById('spvRedInput').value = scale > 0 ? scale.toLocaleString('zh-CN') : '';
+  onSpvRedInput();
+}
+
+// 带入总赎回款
+function fillTotalRed(productCode, spvId) {
+  const product = positionData.find(p => p.code === productCode);
+  if (!product) return;
+  const totalRed = product.totalRed || 0;
+  document.getElementById('spvRedInput').value = totalRed > 0 ? totalRed.toLocaleString('zh-CN') : '';
+  onSpvRedInput();
+}
+
+// 一键平头寸（赎回）
+function fillRedHeadroom(productCode, spvId) {
+  const spvHoldings = getSPVData(productCode);
+  const totalScale = spvHoldings.reduce((sum, h) => sum + (h.scale || 0), 0);
+  const headroom = Math.round(totalScale * 0.15 / 10000) * 10000;
+  document.getElementById('spvRedInput').value = headroom > 0 ? headroom.toLocaleString('zh-CN') : '';
+  onSpvRedInput();
+}
+
+function closeSpvAmountModal(e) {
+  if (e && e.target !== document.getElementById('spvAmountModal')) return;
+  const modal = document.getElementById('spvAmountModal');
+  if (modal) modal.remove();
+}
+
+function saveSpvAmount(productCode, spvId) {
+  const subInput = document.getElementById('spvSubInput');
+  const redInput = document.getElementById('spvRedInput');
+
+  const subValStr = subInput ? subInput.value.replace(/,/g, '') : '';
+  const redValStr = redInput ? redInput.value.replace(/,/g, '') : '';
+
+  const subVal = parseFloat(subValStr);
+  const redVal = parseFloat(redValStr);
+
+  const product = positionData.find(p => p.code === productCode);
+  if (!product) return;
+
+  // 持仓份额校验：赎回份额 > 当前持仓时拦截
+  if (!isNaN(redVal) && redVal > 0) {
+    const spvHoldings = getSPVData(productCode);
+    const spvHolding = spvHoldings.find(h => h.spvCode === spvId || h.spvName === spvId) || spvHoldings[0];
+    if (spvHolding) {
+      const nav = spvHolding.nav || 1;
+      const qty = spvHolding.qty || 0;
+      const estRedQty = Math.round(redVal / nav);
+      if (estRedQty > qty) {
+        alert('赎回份额校验不通过！\n\n申请赎回份额：' + estRedQty.toLocaleString('zh-CN') + ' 份\n当前专户持仓：' + qty.toLocaleString('zh-CN') + ' 份\n\n请调整赎回金额后重试。');
+        return;
+      }
+    }
+  }
+
+  if (!product._spv) product._spv = {};
+  if (!product._spv[spvId]) product._spv[spvId] = { sub: null, red: null };
+
+  // 申购金额为负（表示支出）
+  if (!isNaN(subVal) && subVal > 0) {
+    product._spv[spvId].sub = -subVal;
+  } else {
+    product._spv[spvId].sub = null;
+  }
+
+  // 赎回金额为正
+  if (!isNaN(redVal) && redVal > 0) {
+    product._spv[spvId].red = redVal;
+  } else {
+    product._spv[spvId].red = null;
+  }
+
+  closeSpvAmountModal();
+  renderPositionPage();
+}
+
+// 格式化万元显示（如 1千）
+function fmtWanYuan(v) {
+  if (v >= 100000000) {
+    return (v / 100000000).toFixed(2) + '亿';
+  } else if (v >= 10000) {
+    return (v / 10000).toFixed(2) + '万';
+  } else if (v >= 1000) {
+    return (v / 1000).toFixed(0) + '千';
+  }
+  return v.toString();
+}
+
+function fmtMoney(v) {
+  if (v == null || isNaN(v)) return '--';
+  return v.toLocaleString('zh-CN', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+}
+
+function fmtMoneyNeg(v) {
+  // 负数用红色显示（专户总申购款）
+  if (v == null || isNaN(v)) return '--';
+  return v.toLocaleString('zh-CN', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+}
+
+function fmtMoneyPos(v) {
+  // 正数用绿色显示（专户总赎回款）
+  if (v == null || isNaN(v)) return '--';
+  return v.toLocaleString('zh-CN', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+}
+
+function escapeHtml(str) {
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ==================== 专户弹窗 ====================
+
+function openSPVModal(productCode, type) {
+  const product = positionData.find(p => p.code === productCode);
+  if (!product) return;
+
+  const spvList = getSPVData(productCode);
+  positionSpvModalData = { productCode, productName: product.name, type, spvList };
+
+  // 计算汇总
+  let totalScale = 0, totalSub = 0, totalRed = 0;
+  spvList.forEach(s => {
+    totalScale += s.scale;
+    totalSub += (s.subAmt || 0);
+    totalRed += (s.redAmt || 0);
+  });
+
+  let rowsHTML = '';
+  spvList.forEach((s, idx) => {
+    const estRedQty = s.redAmt > 0 ? Math.round(s.redAmt / s.nav) : 0;
+    const estHeadroom = s.scale + (s.subAmt || 0) - (s.redAmt || 0);
+    const isWarn = s.redAmt > 0 && estRedQty > s.qty;
+    const rowClass = isWarn ? ' class="warn-row"' : '';
+
+    rowsHTML += `
+      <tr${rowClass} data-idx="${idx}">
+        <td>${s.spvCode}</td>
+        <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${s.spvName}">${s.spvName}</td>
+        <td>${s.navDate}</td>
+        <td class="num">${s.nav.toFixed(4)}</td>
+        <td>${s.channel}</td>
+        <td class="num">${s.qty.toLocaleString('zh-CN')}</td>
+        <td class="num">${s.scale.toLocaleString('zh-CN', {minimumFractionDigits:2})}</td>
+        <td><input type="number" class="spv-input" value="${s.subAmt || ''}" placeholder="0" oninput="onSPVInput(${idx},'subAmt',this.value)" onfocus="this.select()"></td>
+        <td><input type="number" class="spv-input" value="${s.redAmt || ''}" placeholder="0" oninput="onSPVInput(${idx},'redAmt',this.value)" onfocus="this.select()"></td>
+        <td class="num">${s.redAmt > 0 ? estRedQty.toLocaleString('zh-CN') : '--'}</td>
+        <td class="num">${estHeadroom.toLocaleString('zh-CN', {minimumFractionDigits:2})}</td>
+      </tr>`;
+  });
+
+  const modalBody = document.getElementById('spvModalBody');
+  modalBody.innerHTML = `
+    <div class="info-line"><span class="info-label">理财产品</span><span class="info-value">${product.code} ${product.name}</span></div>
+    <div class="info-line"><span class="info-label">类型</span><span class="info-value">${type === 'sub' ? '专户总申购款（轧差后）' : '专户总赎回款（轧差后）'}</span></div>
+    <div style="margin-top:10px;font-size:12px;color:var(--text-muted);">专户数: ${spvList.length} | 总持有规模: ${totalScale.toLocaleString('zh-CN',{minimumFractionDigits:2})} 元</div>
+    <div class="divider"></div>
+    <div class="table-container" style="max-height:350px;">
+      <table class="spv-table">
+        <thead>
+          <tr>
+            <th>专户代码</th>
+            <th>专户名称</th>
+            <th>净值日期</th>
+            <th>单位净值</th>
+            <th>渠道</th>
+            <th>持有数量</th>
+            <th>持有规模</th>
+            <th>申购金额</th>
+            <th>赎回金额</th>
+            <th>预估赎回份额</th>
+            <th>预估专户头寸</th>
+          </tr>
+        </thead>
+        <tbody>${rowsHTML}</tbody>
+      </table>
+    </div>
+  `;
+
+  document.getElementById('spvModal').classList.add('show');
+}
+
+function onSPVInput(idx, field, value) {
+  if (!positionSpvModalData) return;
+  const raw = parseFloat(value) || 0;
+  positionSpvModalData.spvList[idx][field] = raw;
+  // 重新打开弹窗刷新数据
+  const d = positionSpvModalData;
+  openSPVModal(d.productCode, d.type);
+}
+
+function closeSPVModal() {
+  document.getElementById('spvModal').classList.remove('show');
+  positionSpvModalData = null;
+}
+
+function exportPositionData() {
+  alert('导出功能：将生成头寸管理表 Excel 文件\n（Demo 版本，实际开发后对接导出接口）');
+}
+
+// ==================== 产品搜索添加 ====================
+
+function onProductSearch(query) {
+  const dropdown = document.getElementById('productSearchDropdown');
+  const input = document.getElementById('productSearchInput');
+  if (!query || query.trim().length < 1) {
+    dropdown.style.display = 'none';
+    return;
+  }
+  const q = query.trim().toLowerCase();
+  const results = productLibrary.filter(p =>
+    p.code.toLowerCase().includes(q) || p.name.toLowerCase().includes(q)
+  ).slice(0, 8);
+
+  if (results.length === 0) {
+    dropdown.innerHTML = '<div style="padding:8px 12px;font-size:12px;color:var(--text-muted);">未找到匹配产品</div>';
+  } else {
+    dropdown.innerHTML = results.map(p => `
+      <div onclick="addProductFromSearch('${p.code}')" style="padding:8px 12px;font-size:12px;cursor:pointer;border-bottom:1px solid #f0f0f0;display:flex;justify-content:space-between;align-items:center;">
+        <span><strong>${p.code}</strong> ${p.name.split('（')[0]}</span>
+        <span style="font-size:10px;color:var(--text-muted);">${p.type}</span>
+      </div>
+    `).join('');
+  }
+  dropdown.style.display = 'block';
+}
+
+function addProductFromSearch(code) {
+  const product = productLibrary.find(p => p.code === code);
+  if (!product) return;
+
+  const acc = getAccount(currentAccountId);
+  const st = getState(currentAccountId);
+  if (!acc || !st) return;
+
+  // 检查是否已存在
+  const exists = acc.holdings.find(p => p.code === code);
+  if (exists) {
+    alert('产品 ' + code + ' 已存在于当前列表中');
+    return;
+  }
+
+  // 添加新产品（默认未选中，BP=0）
+  acc.holdings.push({
+    code: product.code,
+    name: product.name,
+    size: 100000000,  // 默认规模1亿
+    defaultBP: 0,
+    defaultSelected: false,
+    feeRatio: 1.0033613,
+  });
+  st.selectedMap[product.code] = false;
+  st.bpData[product.code] = 0;
+  st.feeRatioData[product.code] = 1.0033613;
+  st.spvHoldingAdj[product.code] = 0;
+
+  // 关闭下拉
+  document.getElementById('productSearchDropdown').style.display = 'none';
+  document.getElementById('productSearchInput').value = '';
+  renderContent(acc, st);
+  recalcCurrent();
+}
+
+function addCustomProduct() {
+  document.getElementById('addChannelProductModal').classList.add('show');
+  document.getElementById('chProdCode').value = '';
+  document.getElementById('chProdName').value = '';
+  document.getElementById('chProdBp').value = '1';
+  document.getElementById('chProdSize').value = '1.00';
+  document.getElementById('chProdHint').style.display = 'none';
+  setTimeout(() => document.getElementById('chProdCode').focus(), 50);
+}
+
+function closeAddChannelProductModal() {
+  document.getElementById('addChannelProductModal').classList.remove('show');
+}
+
+function confirmAddChannelProduct() {
+  const code = (document.getElementById('chProdCode').value || '').trim();
+  const name = (document.getElementById('chProdName').value || '').trim();
+  const bp = parseFloat(document.getElementById('chProdBp').value) || 1;
+  const sizeYi = parseFloat(document.getElementById('chProdSize').value) || 1;
+  const hint = document.getElementById('chProdHint');
+
+  if (!code) { hint.textContent = '请输入产品代码'; hint.style.display = 'block'; return; }
+  if (!name) { hint.textContent = '请输入产品名称'; hint.style.display = 'block'; return; }
+
+  const acc = getAccount(currentAccountId);
+  const st = getState(currentAccountId);
+  if (!acc || !st) return;
+
+  if (acc.holdings.find(p => p.code === code)) {
+    hint.textContent = '产品 ' + code + ' 已存在';
+    hint.style.display = 'block';
+    return;
+  }
+
+  const size = Math.round(sizeYi * 100000000);
+  acc.holdings.push({ code, name, size, defaultBP: bp, defaultSelected: true, feeRatio: 1.0033613 });
+  st.selectedMap[code] = true;
+  st.bpData[code] = bp;
+  st.feeRatioData[code] = 1.0033613;
+  st.spvHoldingAdj[code] = 0;
+
+  closeAddChannelProductModal();
+  renderContent(acc, st);
+  recalcCurrent();
+}
+
+// 点击其他地方关闭搜索下拉
+document.addEventListener('click', function(e) {
+  const dropdown = document.getElementById('productSearchDropdown');
+  const input = document.getElementById('productSearchInput');
+  if (!dropdown || !input) return;
+  if (e.target !== input && !dropdown.contains(e.target)) {
+    dropdown.style.display = 'none';
+  }
+});
+
+</script>
+
+<!-- 专户明细弹窗 -->
+<div class="modal-overlay" id="spvModal">
+  <div class="modal modal-wide">
+    <div class="modal-header">
+      <h3>专户持仓明细</h3>
+      <button class="modal-close" onclick="closeSPVModal()">&times;</button>
+    </div>
+    <div class="modal-body" id="spvModalBody"></div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeSPVModal()">关闭</button>
+      <button class="btn btn-primary" onclick="alert('Demo: 申购/赎回数据已保存');closeSPVModal();">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- Revoke Sync Modal -->
+<div class="modal-overlay" id="revokeModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>撤销同步</h3>
+      <button class="modal-close" onclick="closeRevokeModal()">&times;</button>
+    </div>
+    <div class="modal-body" id="revokeModalBody"></div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeRevokeModal()">取消</button>
+      <button class="btn" style="background:var(--danger);color:#fff;" onclick="confirmRevoke()">确认撤销同步</button>
+    </div>
+  </div>
+</div>
+
+<!-- Sync Confirmation Modal -->
+<div class="modal-overlay" id="syncModal">
+  <div class="modal" style="width:800px;max-width:95vw;">
+    <div class="modal-header">
+      <h3>同步至头寸管理计算</h3>
+      <button class="modal-close" onclick="closeSyncModal()">&times;</button>
+    </div>
+    <div class="modal-body" id="syncModalBody"></div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeSyncModal()">取消</button>
+      <button class="btn btn-primary" id="syncConfirmBtn" onclick="confirmSync()">确认同步</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Product Modal -->
+<div class="modal-overlay" id="addProductModal">
+  <div class="modal" style="width:420px;max-width:90vw;">
+    <div class="modal-header">
+      <h3>新增理财产品</h3>
+      <button class="modal-close" onclick="closeAddProductModal()">&times;</button>
+    </div>
+    <div class="modal-body" id="addProductModalBody">
+      <div class="form-row">
+        <label class="form-label" for="newProductCode">产品代码</label>
+        <input type="text" id="newProductCode" class="form-input" placeholder="请输入产品代码，如 P00001" maxlength="20">
+      </div>
+      <div class="form-row">
+        <label class="form-label" for="newProductName">产品名称</label>
+        <input type="text" id="newProductName" class="form-input" placeholder="请输入产品名称" maxlength="100">
+      </div>
+      <div class="form-row">
+        <label class="form-label" for="newProductOnline">上线状态</label>
+        <select id="newProductOnline" class="form-select">
+          <option value="true">上线（在头寸管理中显示）</option>
+          <option value="false">下线（暂不显示）</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <label class="form-label" for="newProductCalcLive">计算活期</label>
+        <select id="newProductCalcLive" class="form-select">
+          <option value="auto">按规则自动判断</option>
+          <option value="true">计算活期</option>
+          <option value="false">不计算活期</option>
+        </select>
+      </div>
+      <div class="form-hint" id="addProductHint" style="display:none;color:var(--danger);font-size:12px;margin-top:8px;"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeAddProductModal()">取消</button>
+      <button class="btn btn-primary" onclick="confirmAddProduct()">确认新增</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Channel Product Modal -->
+<div class="modal-overlay" id="addChannelProductModal">
+  <div class="modal" style="width:420px;max-width:90vw;">
+    <div class="modal-header">
+      <h3>添加理财产品</h3>
+      <button class="modal-close" onclick="closeAddChannelProductModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <label class="form-label" for="chProdCode">产品代码</label>
+        <input type="text" id="chProdCode" class="form-input" placeholder="如 EW9999" maxlength="30">
+      </div>
+      <div class="form-row">
+        <label class="form-label" for="chProdName">产品名称</label>
+        <input type="text" id="chProdName" class="form-input" placeholder="产品全称" maxlength="100">
+      </div>
+      <div class="form-row" style="display:flex;gap:12px;">
+        <div style="flex:1;">
+          <label class="form-label" for="chProdBp">目标 BP</label>
+          <input type="number" id="chProdBp" class="form-input" value="1" step="1" min="1">
+        </div>
+        <div style="flex:1;">
+          <label class="form-label" for="chProdSize">产品规模（亿）</label>
+          <input type="number" id="chProdSize" class="form-input" value="1.00" step="0.01" min="0.01">
+        </div>
+      </div>
+      <div class="form-hint" id="chProdHint" style="display:none;color:var(--danger);font-size:12px;margin-top:8px;"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeAddChannelProductModal()">取消</button>
+      <button class="btn btn-primary" onclick="confirmAddChannelProduct()">确认新增</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add SPV Product Modal -->
+<div class="modal-overlay" id="addSpvModal">
+  <div class="modal" style="width:420px;max-width:90vw;">
+    <div class="modal-header">
+      <h3>新增专户产品</h3>
+      <button class="modal-close" onclick="closeAddSpvModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <label class="form-label" for="newSpvCode">专户代码</label>
+        <input type="text" id="newSpvCode" class="form-input" placeholder="请输入专户代码，如 JS08ZG" maxlength="30">
+      </div>
+      <div class="form-row">
+        <label class="form-label" for="newSpvName">专户名称</label>
+        <input type="text" id="newSpvName" class="form-input" placeholder="请输入专户全称" maxlength="100">
+      </div>
+      <div class="form-row">
+        <label class="form-label" for="newSpvTval">时效</label>
+        <select id="newSpvTval" class="form-select">
+          <option value="T+0">T+0</option>
+          <option value="T+1">T+1</option>
+        </select>
+      </div>
+      <div class="form-hint" id="addSpvHint" style="display:none;color:var(--danger);font-size:12px;margin-top:8px;"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeAddSpvModal()">取消</button>
+      <button class="btn btn-primary" onclick="confirmAddSpv()">确认新增</button>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
