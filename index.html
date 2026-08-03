@@ -1372,7 +1372,7 @@
   .pi-header-grid .pi-label { font-size: 12px; color: #64748B; font-weight: 500; }
   .pi-header-grid .pi-value { font-size: 13px; color: #1E293B; font-weight: 600; overflow: hidden; text-overflow: ellipsis; }
   .pi-header-grid .pi-value.code { color: var(--primary); font-weight: 700; }
-  .pi-header-grid .pi-value.t0 { color: #059669; }
+  .pi-header-grid .pi-value.t0 { color: var(--primary); font-weight: 700; }
   .pi-header-grid .pi-value.scale { font-family: 'Consolas','Monaco',monospace; }
 
   .pi-table-wrap {
@@ -4007,7 +4007,7 @@ function renderPositionPage() {
       if (col.key === 'code') {
         cellsHTML += `<td style="font-weight:500;"><a class="product-link" href="#" onclick="event.preventDefault();openProductInfoModal('${val}','${escHtml(row.name)}');">${val}</a></td>`;
       } else if (col.key === 'name') {
-        cellsHTML += `<td style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${val}"><a class="product-link" href="#" onclick="event.preventDefault();openProductInfoModal('${val}','${escHtml(row.name)}');">${val}</a></td>`;
+        cellsHTML += `<td style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${val}"><a class="product-link" href="#" onclick="event.preventDefault();openProductInfoModal('${row.code}','${escHtml(row.name)}');">${val}</a></td>`;
       } else if (col.key === 'posStatus') {
         if (isConfirmed) {
           cellsHTML += `<td class="pos-status-cell"><span class="pos-status-tag confirmed">已确认</span></td>`;
