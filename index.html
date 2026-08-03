@@ -1499,7 +1499,8 @@
   <!-- 左侧专户导航 -->
   <div class="sidebar" id="sidebar">
     <div class="sidebar-search">
-      <input type="text" id="sidebarSearch" placeholder="搜索专户..." oninput="renderSidebar()">
+      <input type="text" id="sidebarSearch" placeholder="搜索专户..." onkeydown="if(event.key==='Enter')doSidebarSearch()">
+      <button onclick="doSidebarSearch()" style="margin-top:6px;width:100%;padding:4px 0;font-size:12px;border:1px solid var(--border);border-radius:4px;background:var(--primary);color:#fff;cursor:pointer;">查询</button>
     </div>
     <div class="sidebar-stats">
       <span>✓ 已调 <strong id="sidebarDone">0</strong></span>
@@ -1775,6 +1776,11 @@ function getAccount(accountId) {
 }
 
 // ==================== SIDEBAR ====================
+
+function doSidebarSearch() {
+  sidebarFilter = document.getElementById('sidebarSearch')?.value || '';
+  renderSidebar();
+}
 
 function getSidebarItems() {
   const q = sidebarFilter.trim().toLowerCase();
@@ -3439,7 +3445,8 @@ function renderProductMaintPage() {
     <!-- 工具栏 -->
     <div class="product-maint-toolbar">
       <input type="text" class="form-input" id="maintFilterName" placeholder="搜索产品代码或名称" value="${escHtml(maintFilterName)}"
-        style="width:220px;" oninput="onMaintFilterChange()">
+        style="width:220px;" onkeydown="if(event.key==='Enter')onMaintFilterChange()">
+      <button onclick="onMaintFilterChange()" style="padding:6px 14px;font-size:12px;border:1px solid var(--border);border-radius:4px;background:var(--primary);color:#fff;cursor:pointer;">查询</button>
       <select class="form-select" id="maintFilterLive" onchange="onMaintFilterChange()" style="width:140px;">
         <option value="all" ${maintFilterLive === 'all' ? 'selected' : ''}>活期：全部</option>
         <option value="yes" ${maintFilterLive === 'yes' ? 'selected' : ''}>活期：计算</option>
@@ -3755,7 +3762,8 @@ function renderSpvMaintPage() {
     </div>
     <div class="product-maint-toolbar">
       <input type="text" class="form-input" id="spvMaintFilter" placeholder="搜索专户代码或名称" value="${escHtml(spvMaintFilter)}"
-        style="width:240px;" oninput="onSpvMaintFilterChange()">
+        style="width:240px;" onkeydown="if(event.key==='Enter')onSpvMaintFilterChange()">
+      <button onclick="onSpvMaintFilterChange()" style="padding:6px 14px;font-size:12px;border:1px solid var(--border);border-radius:4px;background:var(--primary);color:#fff;cursor:pointer;">查询</button>
       <span style="font-size:13px;color:var(--text-secondary);">
         共 <strong>${spvMaintList.length}</strong> 个 ·
         ${spvMaintOnlineTab === 'online' ? '上线中' : '已下线'} <strong style="color:${spvMaintOnlineTab === 'online' ? '#166534' : 'var(--text-muted)'};">${spvMaintOnlineTab === 'online' ? onlineCount : offlineCount}</strong> 个
@@ -4186,7 +4194,8 @@ function renderPositionPage() {
       <button class="expand-fields-btn" onclick="toggleAllColumns()">展示所有字段</button>
       <span style="font-size:12px;color:var(--text-muted);">共计 <strong style="color:var(--text);">${totalCount}</strong> 个理财产品</span>
       <label style="margin-left:12px;">产品搜索</label>
-      <input type="text" placeholder="代码 / 名称..." value="${escapeHtml(positionFilter)}" oninput="positionFilter=this.value;renderPositionPage()" style="width:200px;">
+      <input type="text" id="positionSearchInput" placeholder="代码 / 名称..." value="${escapeHtml(positionFilter)}" onkeydown="if(event.key==='Enter')doPositionSearch()" style="width:200px;">
+      <button onclick="doPositionSearch()" style="padding:4px 12px;font-size:12px;border:1px solid var(--border);border-radius:4px;background:var(--primary);color:#fff;cursor:pointer;">查询</button>
       <div style="flex:1;"></div>
       ${(() => {
         const onlineList = getOnlineSpvList();
@@ -4257,6 +4266,11 @@ function renderPositionPage() {
 // 设置状态筛选
 function setPositionStatusFilter(filter) {
   positionStatusFilter = filter;
+  renderPositionPage();
+}
+
+function doPositionSearch() {
+  positionFilter = document.getElementById('positionSearchInput')?.value || '';
   renderPositionPage();
 }
 
