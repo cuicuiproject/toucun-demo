@@ -1302,38 +1302,124 @@
     color: var(--text-muted);
   }
 
-  /* 头寸概览（默认可见） */
-  .spv-headroom-expand {
   .spv-trade-modal .modal-footer .spv-btn-cancel {
-    padding: 8px 24px;
-    font-size: 13px;
-    border: 1px solid #D1D5DB;
-    border-radius: 6px;
-    background: #F9FAFB;
-    color: #6B7280;
-    cursor: pointer;
-    font-weight: 500;
-  }
-  .spv-trade-modal .modal-footer .spv-btn-cancel:hover {
-    background: #F3F4F6;
-    color: #374151;
-  }
-  .spv-trade-modal .modal-footer .spv-btn-confirm {
-    padding: 8px 28px;
-    font-size: 13px;
-    border: none;
-    border-radius: 6px;
-    background: #0084ff;
-    color: #fff;
+    min-width: 140px;
+    padding: 10px 28px;
+    font-size: 14px;
+    border: 1px solid #C7D2FE;
+    border-radius: 8px;
+    background: #FFFFFF;
+    color: #2563EB;
     cursor: pointer;
     font-weight: 600;
+    transition: all .15s;
+  }
+  .spv-trade-modal .modal-footer .spv-btn-cancel:hover {
+    background: #EFF6FF;
+    border-color: #93C5FD;
+    color: #1D4ED8;
+  }
+  .spv-trade-modal .modal-footer .spv-btn-confirm {
+    min-width: 160px;
+    padding: 10px 32px;
+    font-size: 14px;
+    border: none;
+    border-radius: 8px;
+    background: linear-gradient(135deg, #2563EB 0%, #1E40AF 100%);
+    color: #FFFFFF;
+    cursor: pointer;
+    font-weight: 600;
+    box-shadow: 0 4px 12px rgba(37, 99, 235, .35);
+    transition: all .15s;
   }
   .spv-trade-modal .modal-footer .spv-btn-confirm:hover {
-    background: #006cd6;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(37, 99, 235, .45);
   }
   .spv-trade-modal .modal-footer .spv-btn-confirm:disabled {
     background: #D1D5DB; color: #9CA3AF; cursor: not-allowed;
-    transform: none;
+    transform: none; box-shadow: none;
+  }
+  .spv-trade-modal .modal-footer {
+    gap: 12px;
+  }
+
+  /* ============== 产品信息弹窗（投产版本） ============== */
+  .product-info-modal { max-width: 98vw; width: 1400px; }
+.product-info-modal .modal-body { max-height: 80vh; overflow-y: auto; }
+  .product-info-modal .modal-header {
+    background: linear-gradient(135deg, #1A3C6D, #2B5EA7);
+    border-bottom: none;
+    padding: 14px 24px;
+  }
+  .product-info-modal .modal-header h3 {
+    margin: 0; font-size: 16px; font-weight: 600; color: #fff;
+  }
+  .product-info-modal .modal-body {
+    padding: 16px 20px 20px 20px;
+    background: #fff;
+  }
+  .pi-header {
+    background: #F8FAFC;
+    border: 1px solid #E2E8F0;
+    border-radius: 6px;
+    padding: 10px 16px;
+    margin-bottom: 12px;
+  }
+  .pi-header-grid { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; }
+  .pi-header-grid .pi-cell { display: flex; align-items: center; gap: 4px; white-space: nowrap; }
+  .pi-header-grid .pi-sep { width: 1px; height: 16px; background: #CBD5E1; margin: 0 4px; flex-shrink: 0; }
+  .pi-header-grid .pi-label { font-size: 12px; color: #64748B; font-weight: 500; }
+  .pi-header-grid .pi-value { font-size: 13px; color: #1E293B; font-weight: 600; overflow: hidden; text-overflow: ellipsis; }
+  .pi-header-grid .pi-value.code { color: var(--primary); font-weight: 700; }
+  .pi-header-grid .pi-value.t0 { color: #059669; }
+  .pi-header-grid .pi-value.scale { font-family: 'Consolas','Monaco',monospace; }
+
+  .pi-table-wrap {
+    background: #fff;
+    border: 1px solid #E5E7EB;
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  .pi-table-scroll { max-height: 55vh; overflow: auto; }
+  table.pi-table {
+    width: 100%; border-collapse: collapse;
+    font-size: 12px;
+  }
+  table.pi-table thead th {
+    background: #F8FAFC;
+    color: #475569;
+    font-weight: 600;
+    padding: 8px 12px;
+    text-align: left;
+    border-bottom: 2px solid #E2E8F0;
+    white-space: nowrap;
+    position: sticky; top: 0; z-index: 1;
+    user-select: none; font-size: 11px;
+  }
+  table.pi-table thead th.pi-sortable { cursor: pointer; }
+  table.pi-table thead th.pi-sortable:hover { background: #E2E8F0; color: #1E293B; }
+  table.pi-table thead th .pi-sort-icon { font-size: 10px; color: #94A3B8; margin-left: 3px; }
+  table.pi-table thead th.pi-sort-active { color: #2563EB; }
+  table.pi-table thead th.pi-sort-active .pi-sort-icon { color: #2563EB; }
+
+  table.pi-table tbody td {
+    padding: 7px 12px;
+    border-bottom: 1px solid #F1F5F9;
+    color: #334155;
+    white-space: nowrap; font-size: 12px;
+  }
+  table.pi-table tbody tr:last-child td { border-bottom: none; }
+  table.pi-table tbody tr:hover { background: #F8FAFC; }
+  table.pi-table tbody td.pi-num { font-family: 'Consolas','Monaco',monospace; text-align: right; }
+  table.pi-table tbody td.pi-code a, table.pi-table tbody td.pi-name a {
+    color: #2563EB; text-decoration: none;
+  }
+  table.pi-table tbody td.pi-name { max-width: 260px; overflow: hidden; text-overflow: ellipsis; }
+  table.pi-table tbody td.pi-code a:hover, table.pi-table tbody td.pi-name a:hover { text-decoration: underline; }
+
+  .pi-empty {
+    padding: 48px 20px; text-align: center; color: #94A3B8; font-size: 13px;
   }
 
   /* 头寸概览 */
@@ -2886,6 +2972,176 @@ function getSPVData(productCode) {
   ];
 }
 
+// 产品信息弹窗状态
+let productInfoSort = { key: 'idx', dir: 'asc' };
+
+// 打开产品信息弹窗（投产版本：来自上传日初头寸 + SPV持仓文件）
+function openProductInfoModal(code, name) {
+  // 记录当前打开的产品，供表头排序重渲染使用
+  window._lastProductInfo = { code, name };
+
+  // 关闭已有的
+  const old = document.getElementById('productInfoModal');
+  if (old) old.remove();
+
+  // 查找产品行
+  const row = positionData.find(p => p.code === code) || {};
+  // 基础信息：从日初头寸 + SPV持仓文件回填
+  const dayBeginDate = row.dayBeginDate || '2026-07-31';   // 来自上传日初头寸
+  const navDate = row.navDate || '2026-05-28';             // 来自上传SPV持仓
+
+  // 底层专户数据：来自上传SPV持仓
+  const holdings = (getSPVData(code) || []).map(h => {
+    const spvMaint = spvMaintList.find(s => {
+      const acc = allAccounts.find(a => a.id === s.id);
+      return acc && acc.code === h.spvCode;
+    });
+    return {
+      code: h.spvCode,
+      name: h.spvName,
+      tVal: spvMaint ? spvMaint.tVal : 'T+0',
+      nature: spvMaint ? spvMaint.nature : (() => {
+        const demoNatures = ['债券专户', '权益专户', '多资产专户', '定制货币', '存款专户'];
+        return demoNatures[h.spvCode.length % demoNatures.length];
+      })(),
+      scale: h.scale || (h.qty * h.nav),
+      nav: h.nav,
+      navDate: h.navDate || navDate,
+      channel: h.channel || '直销',
+      qty: h.qty,
+    };
+  });
+
+  const totalScale = holdings.reduce((s, h) => s + h.scale, 0); // 总规模
+
+  // 计算 T+0/T+1 占比和各性质占比
+  const totalHoldScale = totalScale || 1;
+  const t0Scale = holdings.filter(h => h.tVal === 'T+0').reduce((s, h) => s + h.scale, 0);
+  const t1Scale = holdings.filter(h => h.tVal !== 'T+0').reduce((s, h) => s + h.scale, 0);
+  const natureTypes = ['债券专户', '权益专户', '多资产专户', '定制货币', '存款专户'];
+  const natureStats = natureTypes.map(nt => {
+    const scale = holdings.filter(h => h.nature === nt).reduce((s, h) => s + h.scale, 0);
+    return { name: nt, scale, pct: ((scale / totalHoldScale) * 100) };
+  }).filter(n => n.pct > 0);
+
+  // 排序
+  const sortKey = productInfoSort.key;
+  const sortDir = productInfoSort.dir === 'desc' ? -1 : 1;
+  const sorted = holdings.slice().sort((a, b) => {
+    if (sortKey === 'idx') return 0;
+    if (sortKey === 'ratio') return (a.qty - b.qty) * sortDir;
+    if (sortKey === 'scale' || sortKey === 'qty' || sortKey === 'nav') {
+      return (a[sortKey] - b[sortKey]) * sortDir;
+    }
+    return String(a[sortKey] || '').localeCompare(String(b[sortKey] || ''), 'zh-Hans-CN') * sortDir;
+  });
+
+  // 总数量（用于占比分母）
+  const totalQty = holdings.reduce((s, x) => s + x.qty, 0) || 1;
+
+  // 表格行
+  const tableRows = sorted.map((h, i) => {
+    const ratio = h.qty / totalQty;
+    return `
+      <tr>
+        <td style="text-align:center;color:#9CA3AF;">${i + 1}</td>
+        <td class="pi-code"><a href="#" onclick="event.preventDefault();">${escHtml(h.code)}</a></td>
+        <td class="pi-name" title="${escHtml(h.name)}"><a href="#" onclick="event.preventDefault();">${escHtml(h.name)}</a></td>
+        <td style="text-align:center;">${escHtml(h.tVal)}</td>
+        <td style="text-align:center;font-size:11px;">${escHtml(h.nature)}</td>
+        <td class="pi-num">${fmtNum(h.scale)}</td>
+        <td class="pi-num">${h.nav.toFixed(6)}</td>
+        <td style="text-align:center;">${escHtml(h.channel)}</td>
+        <td class="pi-num">${fmtNum(h.qty)}</td>
+        <td class="pi-num">${(ratio * 100).toFixed(2)}</td>
+      </tr>`;
+  }).join('');
+
+  // 表头排序样式 + 点击
+  const sortIcon = (k) => {
+    if (productInfoSort.key !== k) return '<span class="pi-sort-icon">⇅</span>';
+    return `<span class="pi-sort-icon">${productInfoSort.dir === 'asc' ? '↑' : '↓'}</span>`;
+  };
+  const sortClass = (k) => productInfoSort.key === k ? 'pi-sort-active' : '';
+  const sortTh = (k, label) =>
+    `<th class="pi-sortable ${sortClass(k)}" onclick="sortProductInfo('${k}','${code}','${escHtml(name || '')}')">${label}${sortIcon(k)}</th>`;
+
+  const headerTh = `
+    <tr>
+      <th style="width:50px;text-align:center;color:#9CA3AF;">序号</th>
+      <th>专户代码</th>
+      <th>专户名称</th>
+      <th style="text-align:center;">时效</th>
+      <th style="text-align:center;">性质</th>
+      <th style="text-align:right;">规模（元）</th>
+      <th style="text-align:right;">单位净值</th>
+      <th style="text-align:center;">渠道</th>
+      <th style="text-align:right;">数量</th>
+      ${sortTh('ratio', '占比 (%)')}
+    </tr>`;
+
+  const tableHTML = holdings.length
+    ? `<table class="pi-table"><thead>${headerTh}</thead><tbody>${tableRows}</tbody></table>`
+    : `<div class="pi-empty">该产品暂无上传的 SPV 持仓数据</div>`;
+
+  const natureRatioHTML = natureStats.map(n =>
+    `<div class="pi-cell"><span class="pi-label">${n.name}占比</span><span class="pi-value t0">${n.pct.toFixed(2)}%</span></div>`
+  ).join('<span class="pi-sep"></span>');
+
+  const bodyHTML = `
+    <div class="pi-header">
+      <div class="pi-header-grid">
+        <div class="pi-cell"><span class="pi-label">产品代码</span><span class="pi-value code">${escHtml(code)}</span></div>
+        <span class="pi-sep"></span>
+        <div class="pi-cell"><span class="pi-label">产品名称</span><span class="pi-value" title="${escHtml(name || code)}">${escHtml(name || code)}</span></div>
+        <span class="pi-sep"></span>
+        <div class="pi-cell"><span class="pi-label">持仓专户</span><span class="pi-value">${holdings.length} 个</span></div>
+        <span class="pi-sep"></span>
+        <div class="pi-cell"><span class="pi-label">总规模</span><span class="pi-value scale">${fmtNum(totalScale)}</span></div>
+        <span class="pi-sep"></span>
+        <div class="pi-cell"><span class="pi-label">T+0 占比</span><span class="pi-value t0">${((t0Scale/totalHoldScale)*100).toFixed(2)}%</span></div>
+        <span class="pi-sep"></span>
+        <div class="pi-cell"><span class="pi-label">T+1 占比</span><span class="pi-value">${((t1Scale/totalHoldScale)*100).toFixed(2)}%</span></div>
+        ${natureStats.length > 0 ? '<span class="pi-sep"></span>' + natureRatioHTML : ''}
+      </div>
+    </div>
+    <div class="pi-table-wrap">
+      <div class="pi-table-scroll">${tableHTML}</div>
+    </div>
+  `;
+
+  const modalHTML = `
+    <div class="modal-overlay show" id="productInfoModal" onclick="closeProductInfoModal(event)">
+      <div class="modal product-info-modal" onclick="event.stopPropagation()">
+        <div class="modal-header">
+          <h3>产品信息</h3>
+          <span class="modal-close" onclick="closeProductInfoModal()" style="display:flex;cursor:pointer;font-size:20px;color:var(--text-muted);padding:4px;line-height:1;" title="关闭">×</span>
+        </div>
+        <div class="modal-body">${bodyHTML}</div>
+      </div>
+    </div>
+  `;
+  document.body.insertAdjacentHTML('beforeend', modalHTML);
+}
+
+// 关闭产品信息弹窗
+function closeProductInfoModal(e) {
+  if (e && e.target && e.target.id !== 'productInfoModal') return;
+  const modal = document.getElementById('productInfoModal');
+  if (modal) modal.remove();
+}
+
+// 表头排序点击
+function sortProductInfo(key, code, name) {
+  if (productInfoSort.key === key) {
+    productInfoSort.dir = productInfoSort.dir === 'asc' ? 'desc' : 'asc';
+  } else {
+    productInfoSort.key = key;
+    productInfoSort.dir = 'asc';
+  }
+  openProductInfoModal(code, name);
+}
+
 // 列显示配置（默认显示紫色底标记的核心列）
 const positionColumns = [
   { key:'code', label:'产品代码', defaultShow:true, isPurple:true },
@@ -3728,9 +3984,9 @@ function renderPositionPage() {
       const val = row[col.key];
 
       if (col.key === 'code') {
-        cellsHTML += `<td style="font-weight:500;"><a class="product-link" href="#" onclick="event.preventDefault();">${val}</a></td>`;
+        cellsHTML += `<td style="font-weight:500;"><a class="product-link" href="#" onclick="event.preventDefault();openProductInfoModal('${val}','${escHtml(row.name)}');">${val}</a></td>`;
       } else if (col.key === 'name') {
-        cellsHTML += `<td style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${val}"><a class="product-link" href="#" onclick="event.preventDefault();">${val}</a></td>`;
+        cellsHTML += `<td style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${val}"><a class="product-link" href="#" onclick="event.preventDefault();openProductInfoModal('${val}','${escHtml(row.name)}');">${val}</a></td>`;
       } else if (col.key === 'posStatus') {
         if (isConfirmed) {
           cellsHTML += `<td class="pos-status-cell"><span class="pos-status-tag confirmed">已确认</span></td>`;
