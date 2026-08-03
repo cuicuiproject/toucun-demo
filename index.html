@@ -1016,6 +1016,14 @@
     font-weight: 600;
   }
 
+  /* 顶部上传区收缩按钮 */
+  .toolbar-collapse-btn {
+    padding: 5px 12px; border-radius: 6px; font-size: 12px; cursor: pointer;
+    border: 1px solid var(--border); background: var(--card-bg); color: var(--text-secondary);
+    white-space: nowrap; transition: all 0.15s;
+  }
+  .toolbar-collapse-btn:hover { border-color: var(--primary); color: var(--primary); }
+
   /* 产品统计栏 */
   .product-stats-bar {
     display: flex;
@@ -1049,6 +1057,10 @@
     font-weight: 600;
   }
   /* 专户申购/赎回弹窗 - 优化版（调仓模式：产品申购/赎回专户） */
+  .spv-readonly-tip {
+    background: #EFF6FF; border: 1px solid #93C5FD; color: #1D4ED8;
+    padding: 8px 12px; border-radius: 6px; margin-bottom: 12px; font-size: 12px;
+  }
   .spv-trade-modal {
     width: 780px;
     max-width: 95vw;
@@ -1129,8 +1141,8 @@
     margin-bottom: 14px;
   }
   .spv-trade-card.card-sub {
-    background: #FFF5F5;
-    border-color: #fecaca;
+    background: #EFF6FF;
+    border-color: #93C5FD;
   }
   .spv-trade-card.card-red {
     background: #F0FDFA;
@@ -1156,8 +1168,8 @@
     font-weight: 700;
     color: #fff;
   }
-  .spv-trade-card .card-label .card-icon.sub { background: #e74c3c; }
-  .spv-trade-card .card-label .card-icon.red { background: #27ae60; }
+  .spv-trade-card .card-label .card-icon.sub { background: #2563EB; }
+  .spv-trade-card .card-label .card-icon.red { background: #0F766E; }
 
   /* 输入区域 */
   .spv-input-group {
@@ -1246,12 +1258,12 @@
     color: #fff;
   }
   .spv-action-btn.danger {
-    border-color: #e74c3c;
-    color: #e74c3c;
+    border-color: #F59E0B;
+    color: #B45309;
     font-weight: 500;
   }
   .spv-action-btn.danger:hover {
-    background: #e74c3c;
+    background: #F59E0B;
     color: #fff;
   }
   .spv-action-info {
@@ -1265,75 +1277,63 @@
     font-weight: 600;
   }
 
-  /* 预估赎回份额（嵌在赎回卡片底部） */
+  /* 预估赎回份额（内联简化样式） */
   .spv-est-row {
-    margin-top: 12px;
-    padding-top: 12px;
+    margin-top: 10px;
+    padding-top: 8px;
     border-top: 1px dashed var(--border);
-  }
-  .spv-est-row .est-label {
     font-size: 12px;
     color: var(--text-muted);
-    margin-bottom: 6px;
-    display: block;
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    flex-wrap: wrap;
   }
-  .spv-est-row .est-box {
-    border: 1px solid #e8e8e8;
-    border-radius: 6px;
-    padding: 8px 12px;
-    background: #fff;
+  .spv-est-row .est-label {
+    color: var(--text-muted);
   }
   .spv-est-row .est-main {
-    font-size: 15px;
+    font-size: 13px;
     color: var(--text);
     font-weight: 600;
   }
   .spv-est-row .est-sub {
-    font-size: 12px;
+    font-size: 11px;
     color: var(--text-muted);
-    margin-top: 3px;
   }
 
   /* 头寸概览（默认可见） */
   .spv-headroom-expand {
   .spv-trade-modal .modal-footer .spv-btn-cancel {
-    padding: 9px 28px;
+    padding: 8px 24px;
     font-size: 13px;
-    border: 1px solid #d1d5db;
+    border: 1px solid #D1D5DB;
     border-radius: 6px;
-    background: #fff;
-    color: var(--text-secondary);
+    background: #F9FAFB;
+    color: #6B7280;
     cursor: pointer;
     font-weight: 500;
-    transition: all 0.18s;
-    letter-spacing: 0.5px;
   }
   .spv-trade-modal .modal-footer .spv-btn-cancel:hover {
-    border-color: #9ca3af;
-    color: var(--text);
-    background: #f3f4f6;
+    background: #F3F4F6;
+    color: #374151;
   }
   .spv-trade-modal .modal-footer .spv-btn-confirm {
-    padding: 9px 32px;
+    padding: 8px 28px;
     font-size: 13px;
     border: none;
     border-radius: 6px;
-    background: var(--primary);
+    background: #0084ff;
     color: #fff;
     cursor: pointer;
     font-weight: 600;
-    letter-spacing: 1px;
-    transition: all 0.18s;
-    box-shadow: 0 2px 6px rgba(26,60,109,0.25);
   }
   .spv-trade-modal .modal-footer .spv-btn-confirm:hover {
-    background: var(--primary-light);
-    box-shadow: 0 3px 10px rgba(26,60,109,0.35);
-    transform: translateY(-1px);
+    background: #006cd6;
   }
-  .spv-trade-modal .modal-footer .spv-btn-confirm:active {
-    transform: translateY(0);
-    box-shadow: 0 1px 4px rgba(26,60,109,0.2);
+  .spv-trade-modal .modal-footer .spv-btn-confirm:disabled {
+    background: #D1D5DB; color: #9CA3AF; cursor: not-allowed;
+    transform: none;
   }
 
   /* 头寸概览 */
@@ -1453,6 +1453,7 @@ const allAccounts = [
     code: 'JS08ZG',
     name: '宁聚5号',
     tVal: 'T+0',
+    nature: '债券专户',
     totalBP: 29,
     accountSize: 113183068.08,
     defaultMode: 'profit',
@@ -1482,6 +1483,7 @@ const allAccounts = [
     code: 'SGT2024001',
     name: '陕国投·鑫和14号',
     tVal: 'T+0',
+    nature: '债券专户',
     totalBP: 50,
     accountSize: 200000000,
     defaultMode: 'loss',
@@ -1501,6 +1503,7 @@ const allAccounts = [
     code: 'SGT2024002',
     name: '陕国投·鑫和7号',
     tVal: 'T+1',
+    nature: '债券专户',
     totalBP: 35,
     accountSize: 150000000,
     defaultMode: 'profit',
@@ -1520,6 +1523,7 @@ const allAccounts = [
     code: 'ZX2024001',
     name: '中信信托·融4号',
     tVal: 'T+0',
+    nature: '多资产专户',
     totalBP: 42,
     accountSize: 180000000,
     defaultMode: 'profit',
@@ -1539,6 +1543,7 @@ const allAccounts = [
     code: 'ZT2024001',
     name: '中铁信托·锦信15号',
     tVal: 'T+0',
+    nature: '债券专户',
     totalBP: 20,
     accountSize: 95000000,
     defaultMode: 'profit',
@@ -1556,6 +1561,7 @@ const allAccounts = [
     code: 'SGT2024003',
     name: '陕国投·鑫和18号',
     tVal: 'T+1',
+    nature: '债券专户',
     totalBP: 15,
     accountSize: 80000000,
     defaultMode: 'profit',
@@ -1571,6 +1577,7 @@ const allAccounts = [
     code: 'WK2024001',
     name: '五矿信托·恒信12号',
     tVal: 'T+0',
+    nature: '权益专户',
     totalBP: 25,
     accountSize: 120000000,
     defaultMode: 'loss',
@@ -1586,6 +1593,7 @@ const allAccounts = [
     code: 'PA2024001',
     name: '平安信托·丰盈9号',
     tVal: 'T+0',
+    nature: '多资产专户',
     totalBP: 18,
     accountSize: 65000000,
     defaultMode: 'profit',
@@ -2684,6 +2692,7 @@ let currentTab = 'position';
 let positionFilter = '';
 let positionStatusFilter = 'all'; // all / pending / confirmed / unbalanced
 let colToggleExpanded = false; // 列切换区域是否展开，默认收缩
+let uploadAreaExpanded = true; // 顶部上传区是否展开，默认展开
 let spvPageIndex = 0;  // 专户分页当前页码（0-based）
 const SPV_PAGE_SIZE = 4;  // 每页展示专户数
 
@@ -2696,7 +2705,7 @@ function initSpvMaintList() {
     const saved = localStorage.getItem('spv_maint_list');
     if (saved) { const list = JSON.parse(saved); if (Array.isArray(list) && list.length > 0) return list; }
   } catch(e) {}
-  return allAccounts.map((a, idx) => ({ id: a.id, online: true, sortOrder: idx + 1 }));
+  return allAccounts.map((a, idx) => ({ id: a.id, online: true, sortOrder: idx + 1, tVal: a.tVal, nature: a.nature || '债券专户' }));
 }
 
 let spvMaintList = initSpvMaintList();
@@ -3437,12 +3446,26 @@ function renderSpvMaintPage() {
             onchange="onSpvSortOrderChange(${realIdx}, this.value)" onfocus="this.select()">
         </td>
         <td style="font-weight:500;">${acc.code}</td>
-        <td style="max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${acc.name}">${acc.name}</td>
-        <td style="width:80px;text-align:center;">${acc.tVal || 'T+0'}</td>
-        <td style="width:90px;text-align:center;">
-          <button class="toggle-online-btn ${p.online ? 'on' : 'off'}" onclick="toggleSpvOnline(${realIdx})">
-            ${p.online ? '下线' : '上线'}
-          </button>
+        <td style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${acc.name}">${acc.name}</td>
+        <td style="width:80px;text-align:center;">
+          ${p.online ? `<select class="table-input" style="width:72px;font-size:11px;text-align:center;padding:3px 4px;"
+            onchange="onSpvTvalChange(${realIdx}, this.value)">
+            <option value="T+0" ${p.tVal === 'T+0' ? 'selected' : ''}>T+0</option>
+            <option value="T+1" ${p.tVal === 'T+1' ? 'selected' : ''}>T+1</option>
+          </select>` : `<span style="font-size:11px;color:var(--text-muted);">${p.tVal || 'T+0'}</span>`}
+        </td>
+        <td style="width:110px;text-align:center;">
+          ${p.online ? `<select class="table-input" style="width:100px;font-size:11px;text-align:center;padding:3px 4px;"
+            onchange="onSpvNatureChange(${realIdx}, this.value)">
+            <option value="债券专户" ${p.nature === '债券专户' ? 'selected' : ''}>债券专户</option>
+            <option value="权益专户" ${p.nature === '权益专户' ? 'selected' : ''}>权益专户</option>
+            <option value="多资产专户" ${p.nature === '多资产专户' ? 'selected' : ''}>多资产专户</option>
+            <option value="定制货币" ${p.nature === '定制货币' ? 'selected' : ''}>定制货币</option>
+            <option value="存款专户" ${p.nature === '存款专户' ? 'selected' : ''}>存款专户</option>
+          </select>` : `<span style="font-size:11px;color:var(--text-muted);">${p.nature || '债券专户'}</span>`}
+        </td>
+        <td style="width:80px;text-align:center;">
+          ${p.online ? `<button class="toggle-online-btn on" onclick="toggleSpvOnline(${realIdx})">下线</button>` : `<span style="font-size:11px;color:var(--text-muted);">已下线</span>`}
         </td>
       </tr>`;
   }).join('');
@@ -3479,11 +3502,12 @@ function renderSpvMaintPage() {
           <th style="width:60px;text-align:center;">序号</th>
           <th style="width:130px;">专户代码</th>
           <th>专户名称</th>
-          <th style="width:80px;text-align:center;">时效</th>
-          <th style="width:90px;text-align:center;">操作</th>
+          <th style="width:80px;text-align:center;">专户时效</th>
+          <th style="width:110px;text-align:center;">专户性质</th>
+          <th style="width:80px;text-align:center;">操作</th>
         </tr>
       </thead>
-      <tbody>${rowsHTML || `<tr><td colspan="6" style="padding:24px;text-align:center;color:var(--text-muted);">暂无${spvMaintOnlineTab === 'online' ? '上线中' : '已下线'}专户</td></tr>`}</tbody>
+      <tbody>${rowsHTML || `<tr><td colspan="7" style="padding:24px;text-align:center;color:var(--text-muted);">暂无${spvMaintOnlineTab === 'online' ? '上线中' : '已下线'}专户</td></tr>`}</tbody>
     </table>
     <div class="pagination-bar">
       <span class="page-info">共 ${filtered.length} 条</span>
@@ -3492,7 +3516,6 @@ function renderSpvMaintPage() {
         <option value="50" ${SPV_MAINT_PAGE_SIZE===50?'selected':''}>50 条/页</option>
         <option value="100" ${SPV_MAINT_PAGE_SIZE===100?'selected':''}>100 条/页</option>
       </select>
-      <button ${spvMaintPageIdx===0?'disabled':''} onclick="spvMaintPageIdx=0;renderSpvMaintPage()">首页</button>
       <button ${spvMaintPageIdx===0?'disabled':''} onclick="spvMaintPageIdx--;renderSpvMaintPage()">上一页</button>
       ${Array.from({length: Math.min(totalPages, 5)}, (_, i) => {
         let p;
@@ -3503,9 +3526,7 @@ function renderSpvMaintPage() {
         return `<button ${p===spvMaintPageIdx?'style="background:var(--primary);color:#fff;"':''} onclick="spvMaintPageIdx=${p};renderSpvMaintPage()">${p+1}</button>`;
       }).join('')}
       <button ${spvMaintPageIdx>=totalPages-1?'disabled':''} onclick="spvMaintPageIdx++;renderSpvMaintPage()">下一页</button>
-      <button ${spvMaintPageIdx>=totalPages-1?'disabled':''} onclick="spvMaintPageIdx=totalPages-1;renderSpvMaintPage()">末页</button>
     </div>
-    <div style="margin-top:12px;font-size:12px;color:var(--text-muted);text-align:right;">修改后自动保存 · 头寸管理页面实时联动</div>
   `;
 }
 
@@ -3521,8 +3542,28 @@ function onSpvMaintFilterChange() {
   renderSpvMaintPage();
 }
 
+function onSpvTvalChange(idx, val) {
+  if (!spvMaintList[idx].online) { renderSpvMaintPage(); return; }
+  if (!confirm('确认将专户时效修改为 ' + val + ' ？')) { renderSpvMaintPage(); return; }
+  spvMaintList[idx].tVal = val;
+  saveSpvMaintList();
+}
+
+function onSpvNatureChange(idx, val) {
+  if (!spvMaintList[idx].online) { renderSpvMaintPage(); return; }
+  if (!confirm('确认将专户性质修改为 ' + val + ' ？')) { renderSpvMaintPage(); return; }
+  spvMaintList[idx].nature = val;
+  saveSpvMaintList();
+}
+
 function toggleSpvOnline(idx) {
-  spvMaintList[idx].online = !spvMaintList[idx].online;
+  const item = spvMaintList[idx];
+  if (!item.online) return; // 已下线产品不允许重新上线
+  if (!confirm('确认将「' + (allAccounts.find(a => a.id === item.id) || {}).name + '」下线？')) return;
+  item.online = false;
+  // 下线后重新排列在线产品的序号
+  const onlineList = spvMaintList.filter(p => p.online);
+  onlineList.forEach((p, i) => { p.sortOrder = i + 1; });
   saveSpvMaintList();
   renderSpvMaintPage();
 }
@@ -3572,6 +3613,7 @@ function showAddSpvModal() {
   document.getElementById('newSpvCode').value = '';
   document.getElementById('newSpvName').value = '';
   document.getElementById('newSpvTval').value = 'T+0';
+  document.getElementById('newSpvNature').value = '债券专户';
   document.getElementById('addSpvHint').style.display = 'none';
   modal.classList.add('show');
   setTimeout(() => document.getElementById('newSpvCode').focus(), 50);
@@ -3585,6 +3627,7 @@ function confirmAddSpv() {
   const code = (document.getElementById('newSpvCode').value || '').trim();
   const name = (document.getElementById('newSpvName').value || '').trim();
   const tVal = document.getElementById('newSpvTval').value;
+  const nature = document.getElementById('newSpvNature').value;
   const hint = document.getElementById('addSpvHint');
   if (!code) { hint.textContent = '请输入专户代码'; hint.style.display = 'block'; return; }
   if (!name) { hint.textContent = '请输入专户名称'; hint.style.display = 'block'; return; }
@@ -3592,8 +3635,8 @@ function confirmAddSpv() {
     hint.textContent = '专户代码已存在'; hint.style.display = 'block'; return;
   }
   const newId = 'spv_' + Date.now();
-  allAccounts.push({ id: newId, code, name, tVal, totalBP: 0, accountSize: 0, defaultMode: 'profit', holdings: [] });
-  spvMaintList.push({ id: newId, online: true, sortOrder: spvMaintList.length + 1 });
+  allAccounts.push({ id: newId, code, name, tVal, nature, totalBP: 0, accountSize: 0, defaultMode: 'profit', holdings: [] });
+  spvMaintList.push({ id: newId, online: true, sortOrder: spvMaintList.length + 1, tVal, nature });
   saveSpvMaintList();
   closeAddSpvModal();
   renderSpvMaintPage();
@@ -3824,6 +3867,9 @@ function renderPositionPage() {
         <button class="toolbar-btn success" onclick="alert('Demo: 上传SPV持仓文件')">
           <span>⬆️</span> 上传SPV持仓
         </button>
+        <button class="toolbar-btn" onclick="alert('Demo: 上传银行交易所数据文件')" style="background:#6366F1;color:#fff;">
+          <span>⬆️</span> 上传银行交易所数据
+        </button>
         <div class="toolbar-info">
           <span>最新上传日初头寸日期：<strong>2026-06-04</strong></span>
           <span>上传SPV持仓日期：<strong>2026-06-04</strong></span>
@@ -3831,20 +3877,21 @@ function renderPositionPage() {
         </div>
       </div>
       <div class="position-toolbar-right">
-        <button class="toolbar-btn" onclick="alert('交易所资金流入账户：已配置 上交所/深交所 两个账户。')" style="background:#EFF6FF;border:1px solid #93C5FD;color:#1D4ED8;">
-          <span>🏦</span> 交易所账户
-        </button>
         <button class="toolbar-btn warning" onclick="exportPositionData()">
           <span>⬇️</span> 导出数据
+        </button>
+        <button class="toolbar-collapse-btn" onclick="toggleUploadArea()" title="收起/展开上传区">
+          ${uploadAreaExpanded ? '▲ 收起' : '▼ 展开'}
         </button>
       </div>
     </div>
 
-    <!-- 信息提示条 -->
+    <!-- 信息提示条（可收缩） -->
+    ${uploadAreaExpanded ? `
     <div class="info-tip-bar">
       <span class="tip-num">1</span>
-      <span>点击上方按钮选择文件上传；2. 依次填入两个；文件顺序为 SPV持仓 → 日初头寸</span>
-    </div>
+      <span>点击上方按钮选择文件上传；2. 支持文件拖拽上传，依次拖入文件： SPV持仓 → 日初头寸 → 银行交易所数据</span>
+    </div>` : ''}
 
     <!-- 进度 + 筛选（同一行） -->
     <div class="position-progress-bar">
@@ -3856,7 +3903,8 @@ function renderPositionPage() {
       ${filterBtns}
     </div>
 
-    <!-- 字段控制 + 搜索 + 列切换（同一行） -->
+    <!-- 字段控制 + 搜索 + 专户分页 + 列切换（同一行，可随上传区一起收缩） -->
+    ${uploadAreaExpanded ? `
     <div class="filter-bar" style="margin-top:0;">
       <button class="expand-fields-btn" onclick="toggleAllColumns()">展示所有字段</button>
       <span style="font-size:12px;color:var(--text-muted);">共计 <strong style="color:var(--text);">${totalCount}</strong> 个理财产品</span>
@@ -3878,6 +3926,7 @@ function renderPositionPage() {
     <div class="filter-bar col-toggle-area" style="margin-top:0;border-top:none;border-radius:0 0 var(--radius) var(--radius);">
       <div class="col-toggle-group">${toggleBtnsHTML}</div>
     </div>` : ''}
+    ` : ''}
 
     <!-- 主表 -->
     <div class="section-card" style="margin-top:0;">
@@ -3993,10 +4042,17 @@ function toggleColToggleArea() {
   renderPositionPage();
 }
 
+// 展开/收起顶部上传区
+function toggleUploadArea() {
+  uploadAreaExpanded = !uploadAreaExpanded;
+  renderPositionPage();
+}
+
 // 头寸管理页面点击专户金额 → 弹出调仓弹窗（优化版）
 function openPositionSpvModal(productCode, spvId, type) {
   const product = positionData.find(p => p.code === productCode);
   if (!product) return;
+  const isConfirmed = product.confirmed;
   const spv = getOnlineSpvList().find(s => s.id === spvId);
   if (!spv) return;
   const sd = (product._spv && product._spv[spvId]) ? product._spv[spvId] : { sub: null, red: null };
@@ -4041,7 +4097,6 @@ function openPositionSpvModal(productCode, spvId, type) {
           <div class="header-left">
             <h3>${spv.name}</h3>
             <span class="时效">时效：${tVal}</span>
-            <span class="nav-date-hint">（净值日期 ${navDate} · 净值 ${nav.toFixed(4)}）</span>
           </div>
           <span class="modal-close" onclick="closeSpvAmountModal()" style="display:flex;cursor:pointer;font-size:20px;color:var(--text-muted);padding:4px;line-height:1;" title="关闭">×</span>
         </div>
@@ -4051,6 +4106,7 @@ function openPositionSpvModal(productCode, spvId, type) {
           <span style="margin-left:auto;font-size:11px;">渠道：${channel}</span>
         </div>
         <div class="modal-body">
+          ${isConfirmed ? '<div class="spv-readonly-tip">该产品已确认整理，申购/赎回金额为只读状态。</div>' : ''}
 
           <!-- 申购卡片 -->
           <div class="spv-trade-card card-sub">
@@ -4058,7 +4114,7 @@ function openPositionSpvModal(productCode, spvId, type) {
             <div class="spv-input-group">
               <div class="input-row">
                 <input type="text" id="spvSubInput" value="${currentSub !== 0 ? Math.abs(currentSub).toLocaleString('zh-CN') : ''}"
-                  placeholder="请输入申购金额" oninput="onSpvSubInput(${nav})">
+                  placeholder="${isConfirmed ? '已确认，只读' : '请输入申购金额'}" ${isConfirmed ? 'disabled' : ''} oninput="onSpvSubInput(${nav})">
                 <span class="unit">元</span>
               </div>
               <div class="input-hint" id="subHint">${currentSub !== 0 ? fmtWanYuan(Math.abs(currentSub)) : ''}</div>
@@ -4076,7 +4132,7 @@ function openPositionSpvModal(productCode, spvId, type) {
             <div class="spv-input-group">
               <div class="input-row">
                 <input type="text" id="spvRedInput" value="${currentRed !== 0 ? currentRed.toLocaleString('zh-CN') : ''}"
-                  placeholder="请输入赎回金额" oninput="onSpvRedInput(${nav},${maxRedQty})">
+                  placeholder="${isConfirmed ? '已确认，只读' : '请输入赎回金额'}" ${isConfirmed ? 'disabled' : ''} oninput="onSpvRedInput(${nav},${maxRedQty})">
                 <span class="unit">元</span>
               </div>
               <div class="input-hint" id="redHint">${currentRed !== 0 ? fmtWanYuan(currentRed) : ''}</div>
@@ -4084,37 +4140,32 @@ function openPositionSpvModal(productCode, spvId, type) {
             <div class="spv-action-row">
               <button class="spv-action-btn" onclick="fillAllRed('${productCode}','${spvId}',${scale})">📤 全部赎回</button>
               <button class="spv-action-btn primary" onclick="fillTotalRed('${productCode}','${spvId}')">📥 带入总赎回款</button>
+              <button class="spv-action-btn danger" onclick="fillRedHeadroom('${productCode}','${spvId}')">⚡ 一键平头寸</button>
               <span class="spv-action-info">预估全部：<span class="info-value">${fmtMoney(estRedAll)}</span></span>
             </div>
-            <div class="spv-action-row">
-              <button class="spv-action-btn danger" onclick="fillRedHeadroom('${productCode}','${spvId}')">⚡ 一键平头寸</button>
-              <span class="spv-action-info">剩余可赎：<span class="info-value" id="remainRed">${fmtMoney(remainRed)}</span></span>
-            </div>
 
-            <!-- 预估赎回份额（嵌在赎回卡片内） -->
+            <!-- 预估赎回份额（内联简化） -->
             <div class="spv-est-row">
               <span class="est-label">预估赎回份额</span>
-              <div class="est-box">
-                <div class="est-main" id="estRedQty">${estRedQty > 0 ? estRedQty.toLocaleString('zh-CN') + ' 份' : '—'}</div>
-                <div class="est-sub">按净值 ${nav.toFixed(4)} 计算 · 最多赎回 ${maxRedQty.toLocaleString('zh-CN')} 份</div>
-              </div>
+              <span class="est-main" id="estRedQty">${estRedQty > 0 ? estRedQty.toLocaleString('zh-CN') + ' 份' : '—'}</span>
+              <span class="est-sub">按净值 ${nav.toFixed(4)} 计算 · 最多赎回 ${maxRedQty.toLocaleString('zh-CN')} 份 · 剩余可赎 <span class="info-value" id="remainRed">${fmtMoney(remainRed)}</span></span>
             </div>
           </div>
 
-          <!-- 头寸概览 -->
+          <!-- 明细信息 -->
           <div class="spv-headroom-expand" id="headroomDetail">
-            <div class="hr-title">头寸概览</div>
+            <div class="hr-title">明细信息</div>
+            <div class="hr-row">
+              <span class="hr-label">净值日期</span>
+              <span class="hr-val">${navDate}</span>
+            </div>
+            <div class="hr-row">
+              <span class="hr-label">单位净值</span>
+              <span class="hr-val">${nav.toFixed(4)}</span>
+            </div>
             <div class="hr-row">
               <span class="hr-label">持有规模</span>
               <span class="hr-val">${fmtMoney(scale)}</span>
-            </div>
-            <div class="hr-row">
-              <span class="hr-label">申购金额</span>
-              <span class="hr-val" style="color:${currentSub !== 0 ? '#e74c3c' : 'var(--text-muted)'};">${currentSub !== 0 ? fmtMoney(Math.abs(currentSub)) : '—'}</span>
-            </div>
-            <div class="hr-row">
-              <span class="hr-label">赎回金额</span>
-              <span class="hr-val" style="color:${currentRed !== 0 ? '#27ae60' : 'var(--text-muted)'};">${currentRed !== 0 ? '+' + fmtMoney(currentRed) : '—'}</span>
             </div>
             <div class="hr-row hr-total">
               <span class="hr-label">预估专户头寸</span>
@@ -4124,8 +4175,8 @@ function openPositionSpvModal(productCode, spvId, type) {
 
         </div>
         <div class="modal-footer">
-          <button class="spv-btn-cancel" onclick="closeSpvAmountModal()" style="padding:9px 28px;font-size:13px;border:1px solid #d1d5db;border-radius:6px;background:#fff;color:#6B7280;cursor:pointer;font-weight:500;letter-spacing:0.5px;">取消</button>
-          <button class="spv-btn-confirm" onclick="saveSpvAmount('${productCode}','${spvId}')" style="padding:9px 32px;font-size:13px;border:none;border-radius:6px;background:#1A3C6D;color:#fff;cursor:pointer;font-weight:600;letter-spacing:1px;box-shadow:0 2px 6px rgba(26,60,109,0.25);">确定</button>
+          <button class="spv-btn-cancel" onclick="closeSpvAmountModal()">取消</button>
+          <button class="spv-btn-confirm" onclick="saveSpvAmount('${productCode}','${spvId}')" ${isConfirmed ? 'disabled' : ''}>确定</button>
         </div>
       </div>
     </div>`;
@@ -4674,10 +4725,20 @@ document.addEventListener('click', function(e) {
         <input type="text" id="newSpvName" class="form-input" placeholder="请输入专户全称" maxlength="100">
       </div>
       <div class="form-row">
-        <label class="form-label" for="newSpvTval">时效</label>
+        <label class="form-label" for="newSpvTval">专户时效</label>
         <select id="newSpvTval" class="form-select">
           <option value="T+0">T+0</option>
           <option value="T+1">T+1</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <label class="form-label" for="newSpvNature">专户性质</label>
+        <select id="newSpvNature" class="form-select">
+          <option value="债券专户">债券专户</option>
+          <option value="权益专户">权益专户</option>
+          <option value="多资产专户">多资产专户</option>
+          <option value="定制货币">定制货币</option>
+          <option value="存款专户">存款专户</option>
         </select>
       </div>
       <div class="form-hint" id="addSpvHint" style="display:none;color:var(--danger);font-size:12px;margin-top:8px;"></div>
