@@ -1538,6 +1538,7 @@ const allAccounts = [
     id: 'ningju5',
     code: 'JS08ZG',
     name: '宁聚5号',
+    shortName: '宁聚5号',
     tVal: 'T+0',
     nature: '债券专户',
     totalBP: 29,
@@ -1568,6 +1569,7 @@ const allAccounts = [
     id: 'xinhe14',
     code: 'SGT2024001',
     name: '陕国投·鑫和14号',
+    shortName: '鑫和14号',
     tVal: 'T+0',
     nature: '债券专户',
     totalBP: 50,
@@ -1588,6 +1590,7 @@ const allAccounts = [
     id: 'xinhe7',
     code: 'SGT2024002',
     name: '陕国投·鑫和7号',
+    shortName: '鑫和7号',
     tVal: 'T+1',
     nature: '债券专户',
     totalBP: 35,
@@ -1608,6 +1611,7 @@ const allAccounts = [
     id: 'zhongxin',
     code: 'ZX2024001',
     name: '中信信托·融4号',
+    shortName: '融4号',
     tVal: 'T+0',
     nature: '多资产专户',
     totalBP: 42,
@@ -1628,6 +1632,7 @@ const allAccounts = [
     id: 'jxin15',
     code: 'ZT2024001',
     name: '中铁信托·锦信15号',
+    shortName: '锦信15号',
     tVal: 'T+0',
     nature: '债券专户',
     totalBP: 20,
@@ -1646,6 +1651,7 @@ const allAccounts = [
     id: 'other1',
     code: 'SGT2024003',
     name: '陕国投·鑫和18号',
+    shortName: '鑫和18号',
     tVal: 'T+1',
     nature: '债券专户',
     totalBP: 15,
@@ -1662,6 +1668,7 @@ const allAccounts = [
     id: 'other2',
     code: 'WK2024001',
     name: '五矿信托·恒信12号',
+    shortName: '恒信12号',
     tVal: 'T+0',
     nature: '权益专户',
     totalBP: 25,
@@ -1678,6 +1685,7 @@ const allAccounts = [
     id: 'other3',
     code: 'PA2024001',
     name: '平安信托·丰盈9号',
+    shortName: '丰盈9号',
     tVal: 'T+0',
     nature: '多资产专户',
     totalBP: 18,
@@ -2791,7 +2799,7 @@ function initSpvMaintList() {
     const saved = localStorage.getItem('spv_maint_list');
     if (saved) { const list = JSON.parse(saved); if (Array.isArray(list) && list.length > 0) return list; }
   } catch(e) {}
-  return allAccounts.map((a, idx) => ({ id: a.id, online: true, sortOrder: idx + 1, tVal: a.tVal, nature: a.nature || '债券专户' }));
+  return allAccounts.map((a, idx) => ({ id: a.id, online: true, sortOrder: idx + 1, tVal: a.tVal, nature: a.nature || '债券专户', shortName: a.shortName || a.name }));
 }
 
 let spvMaintList = initSpvMaintList();
@@ -3703,6 +3711,11 @@ function renderSpvMaintPage() {
         </td>
         <td style="font-weight:500;">${acc.code}</td>
         <td style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${acc.name}">${acc.name}</td>
+        <td style="width:130px;">
+          <input type="text" class="table-input" value="${p.shortName || acc.shortName || acc.name}" style="width:120px;text-align:left;font-size:12px;"
+            ${p.online ? '' : 'disabled'}
+            oninput="onSpvShortNameChange(${realIdx}, this.value)">
+        </td>
         <td style="width:80px;text-align:center;">
           ${p.online ? `<select class="table-input" style="width:72px;font-size:11px;text-align:center;padding:3px 4px;"
             onchange="onSpvTvalChange(${realIdx}, this.value)">
@@ -3758,12 +3771,13 @@ function renderSpvMaintPage() {
           <th style="width:60px;text-align:center;">序号</th>
           <th style="width:130px;">专户代码</th>
           <th>专户名称</th>
+          <th style="width:130px;">专户简称</th>
           <th style="width:80px;text-align:center;">专户时效</th>
           <th style="width:110px;text-align:center;">专户性质</th>
           <th style="width:80px;text-align:center;">操作</th>
         </tr>
       </thead>
-      <tbody>${rowsHTML || `<tr><td colspan="7" style="padding:24px;text-align:center;color:var(--text-muted);">暂无${spvMaintOnlineTab === 'online' ? '上线中' : '已下线'}专户</td></tr>`}</tbody>
+      <tbody>${rowsHTML || `<tr><td colspan="8" style="padding:24px;text-align:center;color:var(--text-muted);">暂无${spvMaintOnlineTab === 'online' ? '上线中' : '已下线'}专户</td></tr>`}</tbody>
     </table>
     <div class="pagination-bar">
       <span class="page-info">共 ${filtered.length} 条</span>
@@ -3796,6 +3810,11 @@ function onSpvMaintFilterChange() {
   spvMaintFilter = document.getElementById('spvMaintFilter').value;
   spvMaintPageIdx = 0;
   renderSpvMaintPage();
+}
+
+function onSpvShortNameChange(idx, val) {
+  spvMaintList[idx].shortName = val;
+  saveSpvMaintList();
 }
 
 function onSpvTvalChange(idx, val) {
@@ -3868,6 +3887,7 @@ function showAddSpvModal() {
   const modal = document.getElementById('addSpvModal');
   document.getElementById('newSpvCode').value = '';
   document.getElementById('newSpvName').value = '';
+  document.getElementById('newSpvShortName').value = '';
   document.getElementById('newSpvTval').value = 'T+0';
   document.getElementById('newSpvNature').value = '债券专户';
   document.getElementById('addSpvHint').style.display = 'none';
@@ -3884,6 +3904,7 @@ function confirmAddSpv() {
   const name = (document.getElementById('newSpvName').value || '').trim();
   const tVal = document.getElementById('newSpvTval').value;
   const nature = document.getElementById('newSpvNature').value;
+  const shortName = document.getElementById('newSpvShortName').value.trim() || name;
   const hint = document.getElementById('addSpvHint');
   if (!code) { hint.textContent = '请输入专户代码'; hint.style.display = 'block'; return; }
   if (!name) { hint.textContent = '请输入专户名称'; hint.style.display = 'block'; return; }
@@ -3891,8 +3912,8 @@ function confirmAddSpv() {
     hint.textContent = '专户代码已存在'; hint.style.display = 'block'; return;
   }
   const newId = 'spv_' + Date.now();
-  allAccounts.push({ id: newId, code, name, tVal, nature, totalBP: 0, accountSize: 0, defaultMode: 'profit', holdings: [] });
-  spvMaintList.push({ id: newId, online: true, sortOrder: spvMaintList.length + 1, tVal, nature });
+  allAccounts.push({ id: newId, code, name, shortName, tVal, nature, totalBP: 0, accountSize: 0, defaultMode: 'profit', holdings: [] });
+  spvMaintList.push({ id: newId, online: true, sortOrder: spvMaintList.length + 1, tVal, nature, shortName });
   saveSpvMaintList();
   closeAddSpvModal();
   renderSpvMaintPage();
@@ -4979,6 +5000,10 @@ document.addEventListener('click', function(e) {
       <div class="form-row">
         <label class="form-label" for="newSpvName">专户名称</label>
         <input type="text" id="newSpvName" class="form-input" placeholder="请输入专户全称" maxlength="100">
+      </div>
+      <div class="form-row">
+        <label class="form-label" for="newSpvShortName">专户简称</label>
+        <input type="text" id="newSpvShortName" class="form-input" placeholder="请输入专户简称" maxlength="30">
       </div>
       <div class="form-row">
         <label class="form-label" for="newSpvTval">专户时效</label>
