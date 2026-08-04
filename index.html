@@ -3403,14 +3403,14 @@ function renderProductMaintPage() {
         </td>
         <td style="font-weight:500;">${p.code}</td>
         <td style="max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${p.name}">${p.name}</td>
-        <td style="width:110px;text-align:center;">
+        ${maintOnlineTab === 'online' ? `<td style="width:110px;text-align:center;">
           <label class="switch-label" onclick="toggleProductCalcLive(${realIdx})" style="justify-content:center;">
             <div class="switch-track ${p.calcLive ? 'on' : ''}">
               <div class="switch-thumb"></div>
             </div>
             <span style="font-size:12px;">${p.calcLive ? '计算' : '不计算'}</span>
           </label>
-        </td>
+        </td>` : ''}
         <td style="width:90px;text-align:center;">
           <button class="toggle-online-btn ${isOnline ? 'on' : 'off'}" onclick="toggleProductOnline(${realIdx})" title="${isOnline ? '点击下线' : '点击上线'}">
             ${isOnline ? '下线' : '上线'}
@@ -3453,12 +3453,6 @@ function renderProductMaintPage() {
         <option value="no" ${maintFilterLive === 'no' ? 'selected' : ''}>活期：不计算</option>
       </select>
       <span class="toolbar-divider"></span>
-      <span style="font-size:13px;color:var(--text-secondary);">
-        共 <strong>${totalCount}</strong> 只 ·
-        ${maintOnlineTab === 'online' ? '上线中' : '已下线'} <strong style="color:${maintOnlineTab === 'online' ? '#115E59' : 'var(--text-muted)'};">${maintOnlineTab === 'online' ? onlineCount : offlineCount}</strong> 只
-        ${filteredCount < listByTab.length ? ` · 筛选结果 <strong style="color:var(--primary);">${filteredCount}</strong> 只` : ''}
-      </span>
-      <span class="toolbar-divider"></span>
       <span style="font-size:12px;color:var(--text-muted);">
         活期：计算 <strong style="color:#115E59;">${liveYesCount}</strong> · 不计算 <strong style="color:#991B1B;">${liveNoCount}</strong>
       </span>
@@ -3474,7 +3468,7 @@ function renderProductMaintPage() {
           <th style="width:60px;text-align:center;">序号</th>
           <th style="width:120px;">产品代码</th>
           <th>产品名称</th>
-          <th style="width:110px;text-align:center;">计算活期</th>
+          ${maintOnlineTab === 'online' ? '<th style="width:110px;text-align:center;">计算活期</th>' : ''}
           <th style="width:90px;text-align:center;">操作</th>
         </tr>
       </thead>
@@ -3483,9 +3477,6 @@ function renderProductMaintPage() {
 
     ${emptyTip}
 
-    <div style="margin-top:12px;font-size:12px;color:var(--text-muted);text-align:right;">
-      修改后自动保存 · 头寸管理页面实时联动
-    </div>
   `;
 }
 
@@ -3598,8 +3589,8 @@ function showAddProductModal() {
   const modal = document.getElementById('addProductModal');
   document.getElementById('newProductCode').value = '';
   document.getElementById('newProductName').value = '';
-  document.getElementById('newProductOnline').value = 'true';
-  document.getElementById('newProductCalcLive').value = 'auto';
+  document.getElementById('newProductCalcLive').value = 'true';
+  document.getElementById('newProductSortOrder').value = '';
   document.getElementById('addProductHint').style.display = 'none';
   document.getElementById('addProductHint').textContent = '';
   modal.classList.add('show');
@@ -3613,13 +3604,12 @@ function closeAddProductModal() {
 function confirmAddProduct() {
   const codeInput = document.getElementById('newProductCode');
   const nameInput = document.getElementById('newProductName');
-  const onlineInput = document.getElementById('newProductOnline');
   const liveInput = document.getElementById('newProductCalcLive');
   const hint = document.getElementById('addProductHint');
 
   const code = (codeInput.value || '').trim();
   const name = (nameInput.value || '').trim();
-  const online = onlineInput.value === 'true';
+  const online = true; // 默认上线
 
   if (!code) {
     hint.textContent = '请输入产品代码';
@@ -3640,22 +3630,22 @@ function confirmAddProduct() {
     return;
   }
 
-  // 计算活期默认值
-  let calcLive;
-  if (liveInput.value === 'auto') {
-    calcLive = DEFAULT_CURRENT_CONFIG[code] !== false;
-  } else {
-    calcLive = liveInput.value === 'true';
-  }
+  // 手动排序
+  const sortInput = document.getElementById('newProductSortOrder');
+  const sortOrder = parseInt(sortInput?.value) || productMaintList.length + 1;
 
-  // 添加到维护列表末尾
+  // 计算活期
+  const calcLive = liveInput.value === 'true';
+
+  // 添加到维护列表
   productMaintList.push({
     code: code,
     name: name,
     online: online,
-    sortOrder: productMaintList.length + 1,
+    sortOrder: sortOrder,
     calcLive: calcLive
   });
+  productMaintList.sort((a, b) => a.sortOrder - b.sortOrder);
 
   // 同时补充到 positionData，避免头寸页找不到数据
   if (!positionData.some(p => p.code === code)) {
@@ -3898,6 +3888,7 @@ function showAddSpvModal() {
   document.getElementById('newSpvShortName').value = '';
   document.getElementById('newSpvTval').value = 'T+0';
   document.getElementById('newSpvNature').value = '债券专户';
+  document.getElementById('newSpvSortOrder').value = '';
   document.getElementById('addSpvHint').style.display = 'none';
   modal.classList.add('show');
   setTimeout(() => document.getElementById('newSpvCode').focus(), 50);
@@ -3919,9 +3910,11 @@ function confirmAddSpv() {
   if (spvMaintList.some(p => { const a = allAccounts.find(ac => ac.id === p.id); return a && a.code === code; })) {
     hint.textContent = '专户代码已存在'; hint.style.display = 'block'; return;
   }
+  const sortVal = parseInt(document.getElementById('newSpvSortOrder').value) || spvMaintList.length + 1;
   const newId = 'spv_' + Date.now();
   allAccounts.push({ id: newId, code, name, shortName, tVal, nature, totalBP: 0, accountSize: 0, defaultMode: 'profit', holdings: [] });
-  spvMaintList.push({ id: newId, online: true, sortOrder: spvMaintList.length + 1, tVal, nature, shortName });
+  spvMaintList.push({ id: newId, online: true, sortOrder: sortVal, tVal, nature, shortName });
+  spvMaintList.sort((a, b) => a.sortOrder - b.sortOrder);
   saveSpvMaintList();
   closeAddSpvModal();
   renderSpvMaintPage();
@@ -4546,15 +4539,40 @@ function fillTotalSub(productCode, spvId) {
   onSpvSubInput();
 }
 
+// 计算产品级一键平头寸 gap
+// gap = |总申购款| - |专户总申购款(T+0)| + |专户总赎回款(T+0)| - |总赎回款|
+function calcHeadroomGap(product) {
+  const totalSub = Math.abs(product.totalSub || 0);
+  const totalRed = Math.abs(product.totalRed || 0);
+
+  // 汇总所有 T+0 专户的申购/赎回
+  let t0SubSum = 0, t0RedSum = 0;
+  if (product._spv) {
+    Object.keys(product._spv).forEach(sid => {
+      // 判断是否 T+0
+      const spvItem = spvMaintList.find(s => s.id === sid);
+      const isT0 = spvItem ? spvItem.tVal === 'T+0' : true;
+      if (!isT0) return;
+      const sd = product._spv[sid] || {};
+      t0SubSum += Math.abs(sd.sub || 0) + Math.abs(sd.subRebalance || 0) - Math.abs(sd.subManual || 0);
+      t0RedSum += Math.abs(sd.red || 0) + Math.abs(sd.redRebalance || 0) - Math.abs(sd.redManual || 0);
+    });
+  }
+  return totalSub - t0SubSum + t0RedSum - totalRed;
+}
+
 // 一键平头寸（申购）
 function fillSubHeadroom(productCode, spvId) {
   const product = positionData.find(p => p.code === productCode);
   if (!product) return;
-  const spvHoldings = getSPVData(productCode);
-  const totalScale = spvHoldings.reduce((sum, h) => sum + (h.scale || 0), 0);
-  const headroom = Math.round(totalScale * 0.15 / 10000) * 10000;
-  document.getElementById('spvSubInput').value = headroom > 0 ? headroom.toLocaleString('zh-CN') : '';
-  onSpvSubInput();
+  const gap = calcHeadroomGap(product);
+  const subInput = document.getElementById('spvSubInput');
+  if (subInput && gap > 0) {
+    subInput.value = gap.toLocaleString('zh-CN');
+    onSpvSubInput();
+  } else {
+    alert(gap < 0 ? '产品存在赎回缺口 ' + Math.abs(gap).toLocaleString('zh-CN') + ' 元，请使用赎回区一键平头寸。' : '产品头寸已平衡，无需额外操作。');
+  }
 }
 
 // 全部赎回（联动：填入后更新预估份额）
@@ -4574,11 +4592,16 @@ function fillTotalRed(productCode, spvId) {
 
 // 一键平头寸（赎回）
 function fillRedHeadroom(productCode, spvId) {
-  const spvHoldings = getSPVData(productCode);
-  const totalScale = spvHoldings.reduce((sum, h) => sum + (h.scale || 0), 0);
-  const headroom = Math.round(totalScale * 0.15 / 10000) * 10000;
-  document.getElementById('spvRedInput').value = headroom > 0 ? headroom.toLocaleString('zh-CN') : '';
-  onSpvRedInput();
+  const product = positionData.find(p => p.code === productCode);
+  if (!product) return;
+  const gap = calcHeadroomGap(product);
+  const redInput = document.getElementById('spvRedInput');
+  if (redInput && gap < 0) {
+    redInput.value = Math.abs(gap).toLocaleString('zh-CN');
+    onSpvRedInput();
+  } else {
+    alert(gap > 0 ? '产品存在申购缺口 ' + gap.toLocaleString('zh-CN') + ' 元，请使用申购区一键平头寸。' : '产品头寸已平衡，无需额外操作。');
+  }
 }
 
 function closeSpvAmountModal(e) {
@@ -4933,33 +4956,29 @@ document.addEventListener('click', function(e) {
     </div>
     <div class="modal-body" id="addProductModalBody">
       <div class="form-row">
-        <label class="form-label" for="newProductCode">产品代码</label>
-        <input type="text" id="newProductCode" class="form-input" placeholder="请输入产品代码，如 P00001" maxlength="20">
+        <label class="form-label" for="newProductCode"><span style="color:#DC2626;">*</span> 产品代码</label>
+        <input type="text" id="newProductCode" class="form-input" placeholder="请输入产品代码，如 P00001" maxlength="20" required>
       </div>
       <div class="form-row">
-        <label class="form-label" for="newProductName">产品名称</label>
-        <input type="text" id="newProductName" class="form-input" placeholder="请输入产品名称" maxlength="100">
+        <label class="form-label" for="newProductName"><span style="color:#DC2626;">*</span> 产品名称</label>
+        <input type="text" id="newProductName" class="form-input" placeholder="请输入产品名称" maxlength="100" required>
       </div>
       <div class="form-row">
-        <label class="form-label" for="newProductOnline">上线状态</label>
-        <select id="newProductOnline" class="form-select">
-          <option value="true">上线（在头寸管理中显示）</option>
-          <option value="false">下线（暂不显示）</option>
-        </select>
-      </div>
-      <div class="form-row">
-        <label class="form-label" for="newProductCalcLive">计算活期</label>
-        <select id="newProductCalcLive" class="form-select">
-          <option value="auto">按规则自动判断</option>
+        <label class="form-label" for="newProductCalcLive"><span style="color:#DC2626;">*</span> 计算活期</label>
+        <select id="newProductCalcLive" class="form-select" required>
           <option value="true">计算活期</option>
           <option value="false">不计算活期</option>
         </select>
+      </div>
+      <div class="form-row">
+        <label class="form-label" for="newProductSortOrder">手动排序</label>
+        <input type="number" id="newProductSortOrder" class="form-input" placeholder="选填，不填排在最后" min="1" step="1">
       </div>
       <div class="form-hint" id="addProductHint" style="display:none;color:var(--danger);font-size:12px;margin-top:8px;"></div>
     </div>
     <div class="modal-footer">
       <button class="btn btn-outline" onclick="closeAddProductModal()">取消</button>
-      <button class="btn btn-primary" onclick="confirmAddProduct()">确认新增</button>
+      <button class="btn btn-primary" onclick="confirmAddProduct()">确认录入</button>
     </div>
   </div>
 </div>
@@ -5001,34 +5020,34 @@ document.addEventListener('click', function(e) {
 
 <!-- Add SPV Product Modal -->
 <div class="modal-overlay" id="addSpvModal">
-  <div class="modal" style="width:420px;max-width:90vw;">
+  <div class="modal" style="width:600px;max-width:95vw;">
     <div class="modal-header">
       <h3>新增专户产品</h3>
       <button class="modal-close" onclick="closeAddSpvModal()">&times;</button>
     </div>
     <div class="modal-body">
       <div class="form-row">
-        <label class="form-label" for="newSpvCode">专户代码</label>
-        <input type="text" id="newSpvCode" class="form-input" placeholder="请输入专户代码，如 JS08ZG" maxlength="30">
+        <label class="form-label" for="newSpvCode"><span style="color:#DC2626;">*</span> 专户代码</label>
+        <input type="text" id="newSpvCode" class="form-input" placeholder="请输入专户代码，如 JS08ZG" maxlength="30" required>
       </div>
       <div class="form-row">
-        <label class="form-label" for="newSpvName">专户名称</label>
-        <input type="text" id="newSpvName" class="form-input" placeholder="请输入专户全称" maxlength="100">
+        <label class="form-label" for="newSpvName"><span style="color:#DC2626;">*</span> 专户名称</label>
+        <input type="text" id="newSpvName" class="form-input" placeholder="请输入专户全称" maxlength="100" required>
       </div>
       <div class="form-row">
         <label class="form-label" for="newSpvShortName">专户简称</label>
-        <input type="text" id="newSpvShortName" class="form-input" placeholder="请输入专户简称" maxlength="30">
+        <input type="text" id="newSpvShortName" class="form-input" placeholder="选填，默认与专户名称一致" maxlength="30">
       </div>
       <div class="form-row">
-        <label class="form-label" for="newSpvTval">专户时效</label>
-        <select id="newSpvTval" class="form-select">
+        <label class="form-label" for="newSpvTval"><span style="color:#DC2626;">*</span> 专户时效</label>
+        <select id="newSpvTval" class="form-select" required>
           <option value="T+0">T+0</option>
           <option value="T+1">T+1</option>
         </select>
       </div>
       <div class="form-row">
-        <label class="form-label" for="newSpvNature">专户性质</label>
-        <select id="newSpvNature" class="form-select">
+        <label class="form-label" for="newSpvNature"><span style="color:#DC2626;">*</span> 专户性质</label>
+        <select id="newSpvNature" class="form-select" required>
           <option value="债券专户">债券专户</option>
           <option value="权益专户">权益专户</option>
           <option value="多资产专户">多资产专户</option>
@@ -5036,11 +5055,15 @@ document.addEventListener('click', function(e) {
           <option value="存款专户">存款专户</option>
         </select>
       </div>
+      <div class="form-row">
+        <label class="form-label" for="newSpvSortOrder">手动排序</label>
+        <input type="number" id="newSpvSortOrder" class="form-input" placeholder="选填，不填排在最后" min="1" step="1">
+      </div>
       <div class="form-hint" id="addSpvHint" style="display:none;color:var(--danger);font-size:12px;margin-top:8px;"></div>
     </div>
     <div class="modal-footer">
       <button class="btn btn-outline" onclick="closeAddSpvModal()">取消</button>
-      <button class="btn btn-primary" onclick="confirmAddSpv()">确认新增</button>
+      <button class="btn btn-primary" onclick="confirmAddSpv()">确认录入</button>
     </div>
   </div>
 </div>
