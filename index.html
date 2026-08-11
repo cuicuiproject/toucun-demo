@@ -4328,7 +4328,9 @@ function toggleUploadArea() {
 function openPositionSpvModal(productCode, spvId, type) {
   const product = positionData.find(p => p.code === productCode);
   if (!product) return;
-  const isConfirmed = product.confirmed;
+  // 自动判定：待整理 → 可编辑；已平衡/无申赎 → 只读
+  const autoStatus = calcAutoStatus(product);
+  const isConfirmed = autoStatus === 'balanced' || autoStatus === 'idle';
   const spv = getOnlineSpvList().find(s => s.id === spvId);
   if (!spv) return;
   const sd = (product._spv && product._spv[spvId]) ? product._spv[spvId] : { sub: null, red: null };
@@ -4382,7 +4384,7 @@ function openPositionSpvModal(productCode, spvId, type) {
           <span style="margin-left:auto;font-size:11px;">渠道：${channel}</span>
         </div>
         <div class="modal-body">
-          ${isConfirmed ? '<div class="spv-readonly-tip">该产品已确认整理，申购/赎回金额为只读状态。</div>' : ''}
+          ${isConfirmed ? `<div class="spv-readonly-tip">该产品${autoStatus === 'balanced' ? '已平衡' : '无申赎'}，申购/赎回金额为只读状态。</div>` : ''}
 
           <!-- 申购卡片 -->
           <div class="spv-trade-card card-sub">
