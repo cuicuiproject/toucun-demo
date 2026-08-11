@@ -761,12 +761,16 @@
   .position-table tbody tr.warn-row { background: #FEF2F2 !important; }
   .position-table tbody tr.warn-row:hover { background: #FEE2E2 !important; }
 
-  /* 已确认行（灰色淡化） */
+  /* 已平衡行（灰色淡化+删除线） */
   .position-table tbody tr.confirmed-row { background: #F0F0F0 !important; opacity: 0.65; }
   .position-table tbody tr.confirmed-row:hover { background: #E8E8E8 !important; }
   .position-table tbody tr.confirmed-row td { text-decoration: line-through; text-decoration-color: var(--text-muted); }
-  .position-table tbody tr.confirmed-row td.pos-status-cell,
-  .position-table tbody tr.confirmed-row td.action-cell { text-decoration: none; }
+  .position-table tbody tr.confirmed-row td.pos-status-cell { text-decoration: none; }
+
+  /* 无申赎行（灰色文字，不加删除线） */
+  .position-table tbody tr.idle-row { background: #FAFAFA !important; }
+  .position-table tbody tr.idle-row:hover { background: #F5F5F5 !important; }
+  .position-table tbody tr.idle-row td { color: var(--text-muted); }
 
   /* 头寸状态标签 */
   .pos-status-tag {
@@ -774,21 +778,8 @@
     padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; white-space: nowrap;
   }
   .pos-status-tag.balanced { background: #CCFBF1; color: #115E59; }
-  .pos-status-tag.unbalanced { background: #FED7AA; color: #9A3412; }
-  .pos-status-tag.pending { background: #E5E7EB; color: #6B7280; }
-  .pos-status-tag.confirmed { background: #E5E7EB; color: #9CA3AF; }
-
-  /* 确认/取消确认按钮 */
-  .confirm-btn {
-    padding: 5px 14px; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer;
-    border: 1.5px solid #0084ff; background: #0084ff; color: #fff; white-space: nowrap;
-    transition: all 0.15s; box-shadow: 0 1px 3px rgba(0,132,255,0.25);
-  }
-  .confirm-btn:hover { background: #006cd6; box-shadow: 0 2px 6px rgba(0,132,255,0.35); }
-  .confirm-btn.confirmed {
-    background: #9CA3AF; border-color: #9CA3AF; color: #fff; box-shadow: none;
-  }
-  .confirm-btn.confirmed:hover { background: #6B7280; box-shadow: 0 1px 3px rgba(107,114,128,0.3); }
+  .pos-status-tag.pending { background: #FEF3C7; color: #92400E; }
+  .pos-status-tag.idle { background: #F3F4F6; color: #9CA3AF; }
 
   /* 进度条 */
   .position-progress-bar {
@@ -819,7 +810,7 @@
     transition: all 0.15s;
   }
   .jump-btn:hover { background: #FFEDD5; }
-  .pos-status-cell, .action-cell { white-space: nowrap; text-align: center; }
+  .pos-status-cell { white-space: nowrap; text-align: center; }
   .position-table tbody tr.position-summary-row { background: #F8F9FB !important; font-weight: 600; border-top: 2px solid var(--border); }
   .position-table tbody tr.position-summary-row td { padding: 10px 8px; font-size: 13px; color: var(--text); }
 
@@ -1723,6 +1714,10 @@ const productLibrary = [
   { code:'EW2923', name:'阳光金丰利臻享C083期', type:'封闭式', status:'存续' },
   { code:'EW5231', name:'颐享阳光金安享如意日开1号（180天最低持有）', type:'开放式', status:'存续' },
   { code:'EW5218', name:'阳光金增利稳健天天购15号（180天最低持有）', type:'开放式', status:'存续' },
+  // 以下为「已平衡」示例产品（gap=0，申赎轧差为零）
+  { code:'EW9001', name:'阳光金平衡示例1号（演示已平衡状态）', type:'开放式', status:'存续' },
+  { code:'EW9002', name:'阳光金平衡示例2号（演示已平衡状态）', type:'开放式', status:'存续' },
+  { code:'EW9003', name:'阳光金平衡示例3号（演示已平衡状态）', type:'开放式', status:'存续' },
 ];
 
 // ==================== GLOBAL STATE ====================
@@ -2790,7 +2785,7 @@ function exportData() {
 // ==================== TAB SWITCH ====================
 let currentTab = 'position';
 let positionFilter = '';
-let positionStatusFilter = 'all'; // all / pending / confirmed / unbalanced
+let positionStatusFilter = 'all'; // all / pending(待整理) / balanced(已平衡)
 let colToggleExpanded = false; // 列切换区域是否展开，默认收缩
 let uploadAreaExpanded = true; // 顶部上传区是否展开，默认展开
 let spvPageIndex = 0;  // 专户分页当前页码（0-based）
@@ -2842,6 +2837,13 @@ function loadPositionData() {
     { code:'EW5231', name:'颐享阳光金安享如意日开1号(180天最低持有)', date:'2026-06-29', dayBegin:25000000, subAll:0, redAll:-3000000, fee:0, t1Back:0, bankExch:0 },
     { code:'EW2911', name:'阳光金增利稳健乐享天天购9号(30天最低持有)', date:'2026-06-29', dayBegin:6000000, subAll:1000000, redAll:0, fee:0, t1Back:0, bankExch:0 },
     { code:'EW1390', name:'阳光金安心计划-存单存款策略(60天最低持有)', date:'2026-06-29', dayBegin:10000000, subAll:0, redAll:-2000000, fee:0, t1Back:0, bankExch:500000 },
+    // === 已平衡示例（gap=0，有申赎但专户轧差=0）===
+    // 示例1：申赎相等，netSR=0，totalSub=null、totalRed=null，gap=0
+    { code:'EW9001', name:'阳光金平衡示例1号(演示已平衡状态)', date:'2026-06-29', dayBegin:1000000, subAll:500000, redAll:-500000, fee:0, t1Back:0, bankExch:0 },
+    // 示例2：申赎相等+少量fee和T+1回款，netSR=50000在区间内，gap=0
+    { code:'EW9002', name:'阳光金平衡示例2号(演示已平衡状态)', date:'2026-06-29', dayBegin:2000000, subAll:300000, redAll:-300000, fee:-50000, t1Back:100000, bankExch:0 },
+    // 示例3：申赎相等，netSR=0，gap=0
+    { code:'EW9003', name:'阳光金平衡示例3号(演示已平衡状态)', date:'2026-06-29', dayBegin:5000000, subAll:200000, redAll:-200000, fee:0, t1Back:0, bankExch:0 },
   ];
   try {
     const saved = localStorage.getItem('position_data');
@@ -2852,17 +2854,16 @@ function loadPositionData() {
         const savedMap = new Map(savedData.map(d => [d.code, d]));
         const merged = defaultData.map(d => {
           const s = savedMap.get(d.code);
-          return s ? { ...d, confirmed: s.confirmed || false } : { ...d, confirmed: false };
+          return s ? { ...d, ...s } : { ...d };
         }).concat(
           savedData.filter(d => !defaultData.some(dd => dd.code === d.code))
-            .map(d => ({ ...d, confirmed: d.confirmed || false }))
+            .map(d => ({ ...d }))
         );
         return merged;
       }
     }
   } catch(e) {}
-  // 默认数据加confirmed字段
-  return defaultData.map(d => ({ ...d, confirmed: false }));
+  return defaultData.map(d => ({ ...d }));
 }
 
 function savePositionData() {
@@ -2871,24 +2872,19 @@ function savePositionData() {
   } catch(e) {}
 }
 
-// 确认产品头寸已整理完毕
-function confirmPosition(code) {
-  const row = positionData.find(r => r.code === code);
-  if (row) {
-    row.confirmed = true;
-    savePositionData();
-    renderPositionPage();
-  }
-}
-
-// 取消确认
-function unconfirmPosition(code) {
-  const row = positionData.find(r => r.code === code);
-  if (row) {
-    row.confirmed = false;
-    savePositionData();
-    renderPositionPage();
-  }
+// 自动计算头寸状态：已平衡 / 待整理 / 无申赎
+function calcAutoStatus(row) {
+  // 判断是否有申赎交易：totalSub/totalRed 只要不为 null 就说明有申赎需求
+  // 注意：totalSub 存的是负数（资金流出），不能用 > 0 判断
+  const hasTransaction =
+    row.totalSub != null ||
+    row.totalRed != null ||
+    row.srSum !== 0;
+  const gap = calcHeadroomGap(row);
+  if (!hasTransaction) return 'idle';      // 无申赎
+  // gap 容差：系统分配金额取整到万元，万元以下差异属正常取整误差
+  if (Math.abs(gap) < 10000) return 'balanced';  // 已平衡
+  return 'pending';                        // 待整理
 }
 
 // 专户持仓数据（模拟线上系统专户弹窗数据）
@@ -2937,8 +2933,20 @@ function initProductMaintList() {
     const saved = localStorage.getItem('product_maint_list');
     if (saved) {
       const list = JSON.parse(saved);
-      // 验证数据完整性
-      if (Array.isArray(list) && list.length > 0) return list;
+      if (Array.isArray(list) && list.length > 0) {
+        // 合并：补充 positionData 中存在但 saved 中缺失的产品（默认上线）
+        const savedCodes = new Set(list.map(p => p.code));
+        const missing = positionData
+          .filter(p => !savedCodes.has(p.code))
+          .map((p, idx) => ({
+            code: p.code,
+            name: p.name,
+            online: true,
+            sortOrder: list.length + idx + 1,
+            calcLive: DEFAULT_CURRENT_CONFIG[p.code] !== false
+          }));
+        return list.concat(missing);
+      }
     }
   } catch(e) {}
   // 默认：所有产品上线，按 positionData 顺序排列，活期按 DEFAULT_CURRENT_CONFIG
@@ -3158,8 +3166,8 @@ function sortProductInfo(key, code, name) {
 
 // 列显示配置（默认显示紫色底标记的核心列）
 const positionColumns = [
-  { key:'code', label:'产品代码', defaultShow:true, isPurple:true },
-  { key:'name', label:'产品名称', defaultShow:true, isPurple:true },
+  { key:'code', label:'产品代码', defaultShow:true, isPurple:true, alwaysShow:true },
+  { key:'name', label:'产品名称', defaultShow:true, isPurple:true, alwaysShow:true },
   { key:'date', label:'头寸日期', defaultShow:true, isPurple:true },
   { key:'dayBegin', label:'日初头寸', defaultShow:true, isPurple:true, isNum:true },
   { key:'subAll', label:'申购总额', defaultShow:false, isPurple:true, isNum:true },
@@ -3177,7 +3185,6 @@ const positionColumns = [
   { key:'beforeMod', label:'修改前-日终申赎', defaultShow:false, isPurple:false, isNum:true },
   { key:'afterMod', label:'修改后-日终申赎', defaultShow:false, isPurple:false, isNum:true },
   { key:'posStatus', label:'头寸状态', defaultShow:true, isPurple:false, alwaysShow:true },
-  { key:'action', label:'操作', defaultShow:true, isPurple:false, alwaysShow:true },
 ];
 
 // 当前可见列状态
@@ -3227,14 +3234,8 @@ function calcPositionRow(row) {
   // 修改后-日终申赎 暂同修改前（demo 中简化）
   row.afterMod = row.beforeMod;
 
-  // 头寸状态判定：afterMod===0 → 已平，afterMod<0 → 未平，其他 → 未调整
-  if (row.afterMod === 0) {
-    row.posStatus = 'balanced';
-  } else if (row.afterMod < 0) {
-    row.posStatus = 'unbalanced';
-  } else {
-    row.posStatus = 'pending';
-  }
+  // 头寸状态判定：由 calcAutoStatus 实时计算（gap驱动）
+  // posStatus 在 renderPositionPage 中根据 calcAutoStatus 动态赋值
 
   // 专户总申购款/总赎回款（模拟轧差数据）
   if (netSR > 500000) {
@@ -3953,19 +3954,18 @@ function renderPositionPage() {
 
   // 统计各状态数量（基于搜索过滤后的全集）
   const totalCount = allFiltered.length;
-  const confirmedCount = allFiltered.filter(r => r.confirmed).length;
-  const pendingCount = totalCount - confirmedCount;
-  const unbalancedCount = allFiltered.filter(r => !r.confirmed && r.posStatus === 'unbalanced').length;
-  const balancedCount = allFiltered.filter(r => !r.confirmed && r.posStatus === 'balanced').length;
+  // 基于自动状态统计
+  const allStatuses = allFiltered.map(r => calcAutoStatus(r));
+  const balancedCount = allStatuses.filter(s => s === 'balanced').length;
+  const pendingCount = allStatuses.filter(s => s === 'pending').length;
+  const idleCount = allStatuses.filter(s => s === 'idle').length;
 
   // 状态筛选
   let filtered = allFiltered;
   if (positionStatusFilter === 'pending') {
-    filtered = allFiltered.filter(r => !r.confirmed);
-  } else if (positionStatusFilter === 'confirmed') {
-    filtered = allFiltered.filter(r => r.confirmed);
-  } else if (positionStatusFilter === 'unbalanced') {
-    filtered = allFiltered.filter(r => !r.confirmed && r.posStatus === 'unbalanced');
+    filtered = allFiltered.filter(r => calcAutoStatus(r) === 'pending');
+  } else if (positionStatusFilter === 'balanced') {
+    filtered = allFiltered.filter(r => calcAutoStatus(r) === 'balanced');
   }
 
   const container = document.getElementById('positionContent');
@@ -3984,21 +3984,24 @@ function renderPositionPage() {
     headerRow2 += `<th class="spv-sub-col">申购金额</th><th class="spv-red-col">赎回金额</th>`;
   });
 
-  // 头寸状态标签HTML
-  function posStatusTag(status) {
-    if (status === 'balanced') return '<span class="pos-status-tag balanced">已平 ✓</span>';
-    if (status === 'unbalanced') return '<span class="pos-status-tag unbalanced">未平 ⚠️</span>';
-    return '<span class="pos-status-tag pending">未调整</span>';
+  // 头寸状态标签HTML（基于自动判定）
+  function posStatusTag(autoStatus) {
+    if (autoStatus === 'balanced') return '<span class="pos-status-tag balanced">已平衡 ✓</span>';
+    if (autoStatus === 'pending')  return '<span class="pos-status-tag pending">待整理 ⚠️</span>';
+    return '<span class="pos-status-tag idle">无申赎 —</span>';
   }
 
   // 构建表体
   let bodyHTML = '';
   filtered.forEach((row, idx) => {
-    const isWarn = (row.afterMod || 0) < 0;
-    const isConfirmed = row.confirmed;
+    const autoStatus = calcAutoStatus(row);
+    const isBalanced = autoStatus === 'balanced';
+    const isIdle = autoStatus === 'idle';
+    const isPending = autoStatus === 'pending';
     let rowClass = '';
-    if (isConfirmed) rowClass = ' class="confirmed-row"';
-    else if (isWarn) rowClass = ' class="warn-row"';
+    if (isBalanced) rowClass = ' class="confirmed-row"';
+    else if (isPending) rowClass = ' class="warn-row"';
+    else if (isIdle) rowClass = ' class="idle-row"';
 
     let cellsHTML = '';
     positionColumns.forEach(col => {
@@ -4010,17 +4013,7 @@ function renderPositionPage() {
       } else if (col.key === 'name') {
         cellsHTML += `<td style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${val}"><a class="product-link" href="#" onclick="event.preventDefault();openProductInfoModal('${row.code}','${escHtml(row.name)}');">${val}</a></td>`;
       } else if (col.key === 'posStatus') {
-        if (isConfirmed) {
-          cellsHTML += `<td class="pos-status-cell"><span class="pos-status-tag confirmed">已确认</span></td>`;
-        } else {
-          cellsHTML += `<td class="pos-status-cell">${posStatusTag(row.posStatus)}</td>`;
-        }
-      } else if (col.key === 'action') {
-        if (isConfirmed) {
-          cellsHTML += `<td class="action-cell"><button class="confirm-btn confirmed" onclick="unconfirmPosition('${row.code}')">↩ 撤销</button></td>`;
-        } else {
-          cellsHTML += `<td class="action-cell"><button class="confirm-btn" onclick="confirmPosition('${row.code}')">✓ 确认</button></td>`;
-        }
+        cellsHTML += `<td class="pos-status-cell">${posStatusTag(autoStatus)}</td>`;
       } else if (col.isNum) {
         // 活期字段：不计算活期的产品显示特殊标记
         if ((col.key === 'needLiveAmt' || col.key === 'needTakeLiveAmt') && !shouldCalcCurrent(row.code)) {
@@ -4121,17 +4114,16 @@ function renderPositionPage() {
     summaryFixedCells += '<td class="num" style="font-weight:600;"></td>';
   });
 
-  // 进度百分比
-  const progressPct = totalCount > 0 ? Math.round(confirmedCount / totalCount * 100) : 0;
+  // 进度百分比：已平衡占比
+  const progressPct = totalCount > 0 ? Math.round(balancedCount / totalCount * 100) : 0;
 
   // 状态筛选按钮
   const sf = positionStatusFilter;
   const filterBtns = `
     <div class="status-filter-group">
       <button class="status-filter-btn ${sf==='all'?'active':''}" onclick="setPositionStatusFilter('all')">全部<span class="filter-count">${totalCount}</span></button>
-      <button class="status-filter-btn ${sf==='pending'?'active':''}" onclick="setPositionStatusFilter('pending')">待处理<span class="filter-count">${pendingCount}</span></button>
-      <button class="status-filter-btn ${sf==='unbalanced'?'active':''}" onclick="setPositionStatusFilter('unbalanced')">未平<span class="filter-count">${unbalancedCount}</span></button>
-      <button class="status-filter-btn ${sf==='confirmed'?'active':''}" onclick="setPositionStatusFilter('confirmed')">已确认<span class="filter-count">${confirmedCount}</span></button>
+      <button class="status-filter-btn ${sf==='pending'?'active':''}" onclick="setPositionStatusFilter('pending')">待整理<span class="filter-count">${pendingCount}</span></button>
+      <button class="status-filter-btn ${sf==='balanced'?'active':''}" onclick="setPositionStatusFilter('balanced')">已平衡<span class="filter-count">${balancedCount}</span></button>
     </div>
   `;
 
@@ -4173,10 +4165,10 @@ function renderPositionPage() {
 
     <!-- 进度 + 筛选（同一行） -->
     <div class="position-progress-bar">
-      <span class="progress-text">整理进度：<strong>${confirmedCount}</strong> / ${totalCount} 只</span>
+      <span class="progress-text">整理进度：<strong>${balancedCount}</strong> / ${totalCount} 只</span>
       <div class="progress-track"><div class="progress-fill" style="width:${progressPct}%;"></div></div>
-      <span class="progress-text">待处理 <strong style="color:#9A3412;">${pendingCount}</strong> 只</span>
-      ${pendingCount > 0 ? `<button class="jump-btn" onclick="jumpToNextPending()">⏭ 跳转下一个待处理</button>` : ''}
+      <span class="progress-text">待整理 <strong style="color:#9A3412;">${pendingCount}</strong> 只</span>
+      ${pendingCount > 0 ? `<button class="jump-btn" onclick="jumpToNextPending()">⏭ 跳转下一个待整理</button>` : ''}
       <div style="flex:1;"></div>
       ${filterBtns}
     </div>
@@ -4267,21 +4259,21 @@ function doPositionSearch() {
   renderPositionPage();
 }
 
-// 跳转到下一个待处理产品
+// 跳转到下一个待整理产品
 function jumpToNextPending() {
   const onlineCodes = new Set(getOnlineProducts().map(p => p.code));
   const q = positionFilter.trim().toLowerCase();
   const pending = positionData.filter(row => {
     if (!onlineCodes.has(row.code)) return false;
-    if (row.confirmed) return false;
+    if (calcAutoStatus(row) !== 'pending') return false;
     if (!q) return true;
     return row.code.toLowerCase().includes(q) || row.name.toLowerCase().includes(q);
   });
   if (pending.length === 0) {
-    alert('没有待处理的产品了，全部已确认！');
+    alert('没有待整理的产品了，全部已平衡！');
     return;
   }
-  // 找到第一个待处理产品在表格中的行
+  // 找到第一个待整理产品在表格中的行
   const targetCode = pending[0].code;
   const tbody = document.querySelector('.position-table tbody');
   if (tbody) {
