@@ -761,16 +761,11 @@
   .position-table tbody tr.warn-row { background: #FEF2F2 !important; }
   .position-table tbody tr.warn-row:hover { background: #FEE2E2 !important; }
 
-  /* 已平衡行（灰色淡化+删除线） */
+  /* 已平衡行（灰色底色+删除线，表示已整理完成） */
   .position-table tbody tr.confirmed-row { background: #F0F0F0 !important; opacity: 0.65; }
   .position-table tbody tr.confirmed-row:hover { background: #E8E8E8 !important; }
   .position-table tbody tr.confirmed-row td { text-decoration: line-through; text-decoration-color: var(--text-muted); }
   .position-table tbody tr.confirmed-row td.pos-status-cell { text-decoration: none; }
-
-  /* 无申赎行（灰色文字，不加删除线） */
-  .position-table tbody tr.idle-row { background: #FAFAFA !important; }
-  .position-table tbody tr.idle-row:hover { background: #F5F5F5 !important; }
-  .position-table tbody tr.idle-row td { color: var(--text-muted); }
 
   /* 头寸状态标签 */
   .pos-status-tag {
@@ -779,7 +774,6 @@
   }
   .pos-status-tag.balanced { background: #CCFBF1; color: #115E59; }
   .pos-status-tag.pending { background: #FEF3C7; color: #92400E; }
-  .pos-status-tag.idle { background: #F3F4F6; color: #9CA3AF; }
 
   /* 进度条 */
   .position-progress-bar {
@@ -2785,7 +2779,7 @@ function exportData() {
 // ==================== TAB SWITCH ====================
 let currentTab = 'position';
 let positionFilter = '';
-let positionStatusFilter = 'all'; // all / pending(待整理) / balanced(已平衡)
+let positionStatusFilter = 'all'; // all / pending(待整理) / balanced(已平衡，含无申赎)
 let colToggleExpanded = false; // 列切换区域是否展开，默认收缩
 let uploadAreaExpanded = true; // 顶部上传区是否展开，默认展开
 let spvPageIndex = 0;  // 专户分页当前页码（0-based）
@@ -2872,18 +2866,12 @@ function savePositionData() {
   } catch(e) {}
 }
 
-// 自动计算头寸状态：已平衡 / 待整理 / 无申赎
+// 自动计算头寸状态：已平衡 / 待整理（两态）
+// 无申赎的产品归入「已平衡」（都表示不需要操作员处理）
 function calcAutoStatus(row) {
-  // 判断是否有申赎交易：totalSub/totalRed 只要不为 null 就说明有申赎需求
-  // 注意：totalSub 存的是负数（资金流出），不能用 > 0 判断
-  const hasTransaction =
-    row.totalSub != null ||
-    row.totalRed != null ||
-    row.srSum !== 0;
   const gap = calcHeadroomGap(row);
-  if (!hasTransaction) return 'idle';      // 无申赎
   // gap 容差：系统分配金额取整到万元，万元以下差异属正常取整误差
-  if (Math.abs(gap) < 10000) return 'balanced';  // 已平衡
+  if (Math.abs(gap) < 10000) return 'balanced';  // 已平衡（含无申赎）
   return 'pending';                        // 待整理
 }
 
@@ -3952,13 +3940,11 @@ function renderPositionPage() {
     return row.code.toLowerCase().includes(q) || row.name.toLowerCase().includes(q);
   });
 
-  // 统计各状态数量（基于搜索过滤后的全集）
+  // 统计各状态数量（基于搜索过滤后的全集，两态：已平衡/待整理）
   const totalCount = allFiltered.length;
-  // 基于自动状态统计
   const allStatuses = allFiltered.map(r => calcAutoStatus(r));
   const balancedCount = allStatuses.filter(s => s === 'balanced').length;
   const pendingCount = allStatuses.filter(s => s === 'pending').length;
-  const idleCount = allStatuses.filter(s => s === 'idle').length;
 
   // 状态筛选
   let filtered = allFiltered;
@@ -3984,11 +3970,10 @@ function renderPositionPage() {
     headerRow2 += `<th class="spv-sub-col">申购金额</th><th class="spv-red-col">赎回金额</th>`;
   });
 
-  // 头寸状态标签HTML（基于自动判定）
+  // 头寸状态标签HTML（基于自动判定，两态）
   function posStatusTag(autoStatus) {
     if (autoStatus === 'balanced') return '<span class="pos-status-tag balanced">已平衡 ✓</span>';
-    if (autoStatus === 'pending')  return '<span class="pos-status-tag pending">待整理 ⚠️</span>';
-    return '<span class="pos-status-tag idle">无申赎</span>';
+    return '<span class="pos-status-tag pending">待整理 ⚠️</span>';
   }
 
   // 构建表体
@@ -3996,12 +3981,10 @@ function renderPositionPage() {
   filtered.forEach((row, idx) => {
     const autoStatus = calcAutoStatus(row);
     const isBalanced = autoStatus === 'balanced';
-    const isIdle = autoStatus === 'idle';
     const isPending = autoStatus === 'pending';
     let rowClass = '';
     if (isBalanced) rowClass = ' class="confirmed-row"';
     else if (isPending) rowClass = ' class="warn-row"';
-    else if (isIdle) rowClass = ' class="idle-row"';
 
     let cellsHTML = '';
     positionColumns.forEach(col => {
@@ -4328,9 +4311,9 @@ function toggleUploadArea() {
 function openPositionSpvModal(productCode, spvId, type) {
   const product = positionData.find(p => p.code === productCode);
   if (!product) return;
-  // 自动判定：待整理 → 可编辑；已平衡/无申赎 → 只读
+  // 自动判定：待整理 → 可编辑；已平衡 → 只读
   const autoStatus = calcAutoStatus(product);
-  const isConfirmed = autoStatus === 'balanced' || autoStatus === 'idle';
+  const isConfirmed = autoStatus === 'balanced';
   const spv = getOnlineSpvList().find(s => s.id === spvId);
   if (!spv) return;
   const sd = (product._spv && product._spv[spvId]) ? product._spv[spvId] : { sub: null, red: null };
@@ -4384,7 +4367,7 @@ function openPositionSpvModal(productCode, spvId, type) {
           <span style="margin-left:auto;font-size:11px;">渠道：${channel}</span>
         </div>
         <div class="modal-body">
-          ${isConfirmed ? `<div class="spv-readonly-tip">该产品${autoStatus === 'balanced' ? '已平衡' : '无申赎'}，申购/赎回金额为只读状态。</div>` : ''}
+          ${isConfirmed ? `<div class="spv-readonly-tip">该产品已平衡，申购/赎回金额为只读状态。</div>` : ''}
 
           <!-- 申购卡片 -->
           <div class="spv-trade-card card-sub">
