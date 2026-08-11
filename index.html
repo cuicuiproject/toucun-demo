@@ -1712,6 +1712,10 @@ const productLibrary = [
   { code:'EW9001', name:'阳光金平衡示例1号（演示已平衡状态）', type:'开放式', status:'存续' },
   { code:'EW9002', name:'阳光金平衡示例2号（演示已平衡状态）', type:'开放式', status:'存续' },
   { code:'EW9003', name:'阳光金平衡示例3号（演示已平衡状态）', type:'开放式', status:'存续' },
+  { code:'EW9004', name:'阳光金平衡示例4号（演示已平衡状态）', type:'开放式', status:'存续' },
+  { code:'EW9005', name:'阳光金平衡示例5号（演示已平衡状态）', type:'开放式', status:'存续' },
+  { code:'EW9006', name:'阳光金平衡示例6号（演示已平衡状态）', type:'开放式', status:'存续' },
+  { code:'EW9007', name:'阳光金平衡示例7号（演示已平衡状态）', type:'开放式', status:'存续' },
 ];
 
 // ==================== GLOBAL STATE ====================
@@ -2838,6 +2842,11 @@ function loadPositionData() {
     { code:'EW9002', name:'阳光金平衡示例2号(演示已平衡状态)', date:'2026-06-29', dayBegin:2000000, subAll:300000, redAll:-300000, fee:-50000, t1Back:100000, bankExch:0 },
     // 示例3：申赎相等，netSR=0，gap=0
     { code:'EW9003', name:'阳光金平衡示例3号(演示已平衡状态)', date:'2026-06-29', dayBegin:5000000, subAll:200000, redAll:-200000, fee:0, t1Back:0, bankExch:0 },
+    // 示例4-7：更多已平衡产品
+    { code:'EW9004', name:'阳光金平衡示例4号(演示已平衡状态)', date:'2026-06-29', dayBegin:3000000, subAll:800000, redAll:-800000, fee:0, t1Back:0, bankExch:0 },
+    { code:'EW9005', name:'阳光金平衡示例5号(演示已平衡状态)', date:'2026-06-29', dayBegin:2000000, subAll:100000, redAll:-100000, fee:-20000, t1Back:50000, bankExch:0 },
+    { code:'EW9006', name:'阳光金平衡示例6号(演示已平衡状态)', date:'2026-06-29', dayBegin:8000000, subAll:400000, redAll:-400000, fee:0, t1Back:0, bankExch:0 },
+    { code:'EW9007', name:'阳光金平衡示例7号(演示已平衡状态)', date:'2026-06-29', dayBegin:6000000, subAll:1500000, redAll:-1500000, fee:0, t1Back:200000, bankExch:0 },
   ];
   try {
     const saved = localStorage.getItem('position_data');
@@ -3265,7 +3274,11 @@ function calcPositionRow(row) {
       } else if (netSR < -500000) {
         row._spv[spv.id] = { sub: null, red: (seed * 100000 + 500000), subManual: 0, subRebalance: 0, redManual: (seed * 100000 + 500000), redRebalance: 0 };
       } else {
-        row._spv[spv.id] = { sub: null, red: null, subManual: 0, subRebalance: 0, redManual: 0, redRebalance: 0 };
+        // 已平衡示例产品（EW900x）：生成小额专户数据供演示弹窗只读效果
+        const isDemo = /^EW900/.test(row.code);
+        const demoSub = isDemo ? -(seed * 50000 + 200000) : null;
+        const demoRed = isDemo ? (idx % 2 === 0 ? (seed * 30000 + 150000) : null) : null;
+        row._spv[spv.id] = { sub: demoSub, red: demoRed, subManual: isDemo ? demoSub : 0, subRebalance: 0, redManual: isDemo ? (demoRed || 0) : 0, redRebalance: 0 };
       }
     }
   });
@@ -4264,11 +4277,27 @@ function jumpToNextPending() {
     for (const tr of rows) {
       if (tr.dataset.code === targetCode) {
         tr.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        // 闪烁高亮
-        tr.style.transition = 'background 0.3s';
-        const originalBg = tr.style.background;
-        tr.style.background = '#FEF3C7';
-        setTimeout(() => { tr.style.background = originalBg; }, 1500);
+        // 醒目高亮：脉冲闪烁三次
+        tr.style.transition = 'background 0.15s, transform 0.15s';
+        const origBg = tr.style.background;
+        let flashes = 0;
+        const flash = () => {
+          if (flashes >= 3) {
+            tr.style.background = origBg;
+            tr.style.outline = '';
+            tr.style.transform = '';
+            return;
+          }
+          const on = flashes % 2 === 0;
+          tr.style.background = on ? '#FEF3C7' : origBg;
+          tr.style.outline = on ? '3px solid #F59E0B' : '';
+          tr.style.transform = on ? 'scale(1.01)' : '';
+          tr.style.zIndex = on ? '5' : '';
+          tr.style.position = on ? 'relative' : '';
+          flashes++;
+          setTimeout(flash, 350);
+        };
+        flash();
         break;
       }
     }
