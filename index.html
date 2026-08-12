@@ -1047,7 +1047,7 @@
     padding: 8px 12px; border-radius: 6px; margin-bottom: 12px; font-size: 12px;
   }
   .spv-trade-modal {
-    width: 780px;
+    width: 680px;
     max-width: 95vw;
     max-height: 85vh;
     display: flex;
@@ -1071,16 +1071,14 @@
     color: var(--text);
     margin: 0;
   }
-  .spv-trade-modal .modal-header .时效 {
-    font-size: 13px;
-    color: var(--primary-light);
-    font-weight: 500;
-  }
-  .spv-trade-modal .modal-header .nav-date-hint {
+  .spv-trade-modal .modal-header .prod-tag {
+    display: inline-block;
+    padding: 2px 8px;
+    background: var(--primary);
+    color: #fff;
+    border-radius: 3px;
     font-size: 11px;
-    color: var(--text-muted);
-    margin-left: 6px;
-    font-weight: 400;
+    font-weight: 600;
   }
   /* 产品信息副标题 */
   .spv-product-info {
@@ -1093,19 +1091,17 @@
     align-items: center;
     gap: 8px;
   }
-  .spv-product-info .prod-tag {
-    display: inline-block;
-    padding: 2px 8px;
-    background: var(--primary);
-    color: #fff;
-    border-radius: 3px;
-    font-size: 11px;
-    font-weight: 600;
+  .spv-product-info .info-sep {
+    color: var(--border);
+    margin: 0 2px;
   }
   .spv-trade-modal .modal-body {
     padding: 20px 24px;
     overflow-y: auto;
     flex: 1;
+  }
+  .spv-trade-modal .modal-body > .spv-trade-card:last-child {
+    margin-bottom: 0;
   }
   .spv-trade-modal .modal-footer {
     padding: 14px 24px;
@@ -1119,24 +1115,49 @@
 
   /* 操作区卡片（申购/赎回各一张） */
   .spv-trade-card {
-    background: #f8f9fb;
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 16px 18px;
+    border-radius: 4px;
+    padding: 16px 20px;
     margin-bottom: 14px;
+    position: relative;
   }
   .spv-trade-card.card-sub {
-    background: #EFF6FF;
-    border-color: #93C5FD;
+    background: linear-gradient(180deg, #DFE7FD 0%, #FFFFFF 100%);
+    border: 1px solid transparent;
+    background-clip: padding-box;
+  }
+  .spv-trade-card.card-sub::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 4px;
+    padding: 1px;
+    background: linear-gradient(180deg, #F3F5F7, #E4E7ED);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
   }
   .spv-trade-card.card-red {
-    background: #F0FDFA;
-    border-color: #5EEAD4;
+    background: linear-gradient(180deg, #F4EAFC 0%, #FFFFFF 100%);
+    border: 1px solid transparent;
+    background-clip: padding-box;
+  }
+  .spv-trade-card.card-red::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 4px;
+    padding: 1px;
+    background: linear-gradient(180deg, #F3F5F7, #E4E7ED);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
   }
   .spv-trade-card .card-label {
     font-size: 13px;
     font-weight: 600;
-    color: var(--text);
+    color: #374151;
     margin-bottom: 12px;
     display: flex;
     align-items: center;
@@ -1154,11 +1175,10 @@
     color: #fff;
   }
   .spv-trade-card .card-label .card-icon.sub { background: #2563EB; }
-  .spv-trade-card .card-label .card-icon.red { background: #0F766E; }
-
+  .spv-trade-card .card-label .card-icon.red { background: #7C3AED; }
   /* 输入区域 */
   .spv-input-group {
-    margin-bottom: 12px;
+    margin-bottom: 10px;
   }
   .spv-input-group .input-label {
     font-size: 12px;
@@ -1170,43 +1190,45 @@
     display: flex;
     align-items: center;
     gap: 0;
-    border: 1px solid var(--border);
-    border-radius: 6px;
+    border: 1px solid #D1D5DB;
+    border-radius: 4px;
     overflow: hidden;
-    background: #fff;
+    background: #FFFFFF;
   }
   .spv-input-group .input-row:focus-within {
-    border-color: var(--primary);
-    box-shadow: 0 0 0 2px rgba(26,60,109,0.1);
+    border-color: #2563EB;
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.12);
   }
   .spv-input-group .input-row input {
     flex: 1;
-    padding: 9px 12px;
+    padding: 10px 14px;
     border: none;
     outline: none;
     font-size: 14px;
-    font-weight: 500;
+    font-weight: 600;
     text-align: left;
     background: transparent;
     font-variant-numeric: tabular-nums;
+    color: #1F2937;
   }
-  .spv-input-group .input-row input::placeholder { color: #bfbfbf; font-weight: 400; }
+  .spv-input-group .input-row input::placeholder { color: #C0C4CC; font-weight: 400; }
   .spv-input-group .input-row .unit {
-    padding: 9px 12px;
+    padding: 10px 14px;
     font-size: 13px;
-    color: var(--text-muted);
-    background: #f0f1f3;
-    border-left: 1px solid var(--border);
+    color: #6B7280;
+    background: #F5F7FA;
+    border-left: 1px solid #E5E7EB;
     white-space: nowrap;
     font-weight: 500;
   }
   .spv-input-group .input-hint {
     font-size: 12px;
-    color: var(--text-muted);
-    margin-top: 5px;
+    color: #6B7280;
+    margin-top: 6px;
+    font-variant-numeric: tabular-nums;
   }
 
-  /* 快捷按钮行 — 两段式：按钮组(左) + 指标(右) */
+  /* 快捷按钮行 */
   .spv-action-row {
     display: flex;
     align-items: center;
@@ -1215,13 +1237,13 @@
   }
   .spv-action-row:last-child { margin-bottom: 0; }
   .spv-action-btn {
-    padding: 5px 12px;
+    padding: 6px 14px;
     font-size: 12px;
-    border: 1px solid var(--border);
-    border-radius: 5px;
+    border: 1px solid #E5E7EB;
+    border-radius: 4px;
     cursor: pointer;
-    background: #fff;
-    color: var(--text-secondary);
+    background: #FFFFFF;
+    color: #6B7280;
     transition: all 0.15s;
     white-space: nowrap;
     display: inline-flex;
@@ -1229,64 +1251,80 @@
     gap: 4px;
   }
   .spv-action-btn:hover {
-    border-color: var(--primary);
-    color: var(--primary);
-    background: #eef2f8;
+    border-color: #2563EB;
+    color: #2563EB;
+    background: #F0F5FF;
   }
   .spv-action-btn.primary {
-    border-color: var(--primary);
-    color: var(--primary);
+    border-color: #93C5FD;
+    color: #2563EB;
     font-weight: 500;
+    background: #EFF6FF;
   }
   .spv-action-btn.primary:hover {
-    background: var(--primary);
+    background: #2563EB;
     color: #fff;
+    border-color: #2563EB;
   }
   .spv-action-btn.danger {
-    border-color: #F59E0B;
-    color: #B45309;
+    border-color: #DDD6FE;
+    color: #7C3AED;
     font-weight: 500;
+    background: #F5F3FF;
   }
   .spv-action-btn.danger:hover {
-    background: #F59E0B;
+    background: #7C3AED;
     color: #fff;
+    border-color: #7C3AED;
   }
-  .spv-action-info {
+  .spv-action-btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+    pointer-events: none;
+  }
+  /* 辅助信息行（按钮下方） */
+  .spv-action-info-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 20px;
+    margin-top: 8px;
     font-size: 12px;
-    color: var(--text-muted);
-    margin-left: auto;
+    color: #6B7280;
+  }
+  .spv-action-info-row .info-item {
     white-space: nowrap;
   }
-  .spv-action-info .info-value {
-    color: var(--text);
+  .spv-action-info-row .info-value {
+    color: #1F2937;
     font-weight: 600;
+    font-variant-numeric: tabular-nums;
   }
 
   /* 预估赎回份额（内联简化样式） */
   .spv-est-row {
     margin-top: 10px;
     padding-top: 8px;
-    border-top: 1px dashed var(--border);
+    border-top: 1px dashed rgba(124, 58, 237, 0.2);
     font-size: 12px;
-    color: var(--text-muted);
+    color: #6B7280;
     display: flex;
     align-items: baseline;
     gap: 6px;
     flex-wrap: wrap;
   }
   .spv-est-row .est-label {
-    color: var(--text-muted);
+    color: #6B7280;
   }
   .spv-est-row .est-main {
     font-size: 13px;
-    color: var(--text);
+    color: #7C3AED;
     font-weight: 600;
+    font-variant-numeric: tabular-nums;
   }
   .spv-est-row .est-sub {
     font-size: 11px;
-    color: var(--text-muted);
+    color: #9CA3AF;
   }
-
   .spv-trade-modal .modal-footer .spv-btn-cancel {
     min-width: 140px;
     padding: 10px 28px;
@@ -1409,10 +1447,10 @@
 
   /* 头寸概览 */
   .spv-headroom-expand {
-    margin-top: 12px;
-    background: #f4f6fa;
+    margin-top: 14px;
+    background: #FAFBFD;
     border: 1px solid var(--border);
-    border-radius: 8px;
+    border-radius: 4px;
     overflow: hidden;
     display: block;
     font-size: 13px;
@@ -1423,35 +1461,42 @@
     color: var(--text-muted);
     padding: 8px 16px 6px;
     border-bottom: 1px solid var(--border);
-    background: #edf0f5;
+    background: #F3F5F9;
     letter-spacing: 0.5px;
-    text-transform: uppercase;
   }
-  .spv-headroom-expand .hr-row {
+  .spv-headroom-expand .hr-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+  }
+  .spv-headroom-expand .hr-grid .hr-row {
     display: flex;
     justify-content: space-between;
     align-items: center;
     padding: 7px 16px;
     border-bottom: 1px solid #eef0f4;
+    border-right: 1px solid #eef0f4;
   }
-  .spv-headroom-expand .hr-row:last-child {
+  .spv-headroom-expand .hr-grid .hr-row:nth-child(even) {
+    border-right: none;
+  }
+  .spv-headroom-expand .hr-grid .hr-row:nth-last-child(-n+2) {
     border-bottom: none;
   }
-  .spv-headroom-expand .hr-row .hr-label {
+  .spv-headroom-expand .hr-grid .hr-row .hr-label {
     color: var(--text-secondary);
     font-size: 12px;
   }
-  .spv-headroom-expand .hr-row .hr-val {
+  .spv-headroom-expand .hr-grid .hr-row .hr-val {
     font-weight: 600;
     font-size: 13px;
     color: var(--text);
     font-variant-numeric: tabular-nums;
   }
-  .spv-headroom-expand .hr-row.hr-total {
+  .spv-headroom-expand .hr-grid .hr-row.hr-total {
     background: #fff;
-    font-size: 13px;
   }
-  .spv-headroom-expand .hr-row.hr-total .hr-label {
+  .spv-headroom-expand .hr-grid .hr-row.hr-total .hr-label {
     font-weight: 600;
     color: var(--text);
   }
@@ -1486,11 +1531,6 @@
     <div class="sidebar-search">
       <input type="text" id="sidebarSearch" placeholder="搜索专户..." onkeydown="if(event.key==='Enter')doSidebarSearch()">
       <button onclick="doSidebarSearch()" style="margin-top:6px;width:100%;padding:4px 0;font-size:12px;border:1px solid var(--border);border-radius:4px;background:var(--primary);color:#fff;cursor:pointer;">查询</button>
-    </div>
-    <div class="sidebar-stats">
-      <span>✓ 已调 <strong id="sidebarDone">0</strong></span>
-      <span>⏳ 进行中 <strong id="sidebarProgress">0</strong></span>
-      <span>○ 待调 <strong id="sidebarPending">0</strong></span>
     </div>
     <div class="sidebar-list" id="sidebarList"></div>
   </div>
@@ -1719,7 +1759,7 @@ const productLibrary = [
 ];
 
 // ==================== GLOBAL STATE ====================
-// accountState: { accountId: { mode, bpData, feeRatioData, selectedMap, status, feeRateN, bpLoss, totalLoss, baseSize, bpGrowth, accountSize, targetAccount, sourceAccount, lossAdjData, spvHoldingAdj, spvRedSources } }
+// accountState: { accountId: { mode, bpData, feeRatioData, selectedMap, status, feeRateN, bpLoss, totalLoss, baseSize, bpGrowth, accountSize, lossAdjData, lossRedSourceMap, profitTargetMap, spvHoldingAdj } }
 let accountState = {};
 let currentAccountId = null;
 let sidebarFilter = '';
@@ -1742,14 +1782,9 @@ function getState(accountId) {
       lossRedSourceMap: {},        // 调仓逐产品赎回来源专户 { productCode: spvCode }
       bpGrowth: acc.totalBP,
       accountSize: acc.accountSize,
-      targetAccount: allAccounts.find(a => a.id !== acc.id)?.id || allAccounts[0]?.id,
-      sourceAccount: allAccounts.find(a => a.id !== acc.id)?.id || allAccounts[0]?.id,
 
       profitTargetMap: {},          // 拉壳逐产品目标专户 { productCode: spvId }
       spvHoldingAdj: {},           // SPV持仓调减金额 { productCode: { spvId: amount } }
-      spvRedSources: {             // 多专户赎回归集
-        _all: [allAccounts.find(a => a.id !== acc.id)?.id || allAccounts[0]?.id]
-      },
     };
     acc.holdings.forEach(p => {
       state.selectedMap[p.code] = p.defaultSelected;
@@ -1783,10 +1818,17 @@ function getSidebarItems() {
     .sort((a, b) => a.sortOrder - b.sortOrder)
     .map(p => p.id);
   const onlineAccounts = onlineIds.map(id => allAccounts.find(a => a.id === id)).filter(Boolean);
-  return onlineAccounts.filter(acc => {
+  const filtered = onlineAccounts.filter(acc => {
     if (!q) return true;
     return acc.name.toLowerCase().includes(q) || acc.code.toLowerCase().includes(q);
   });
+  // 已同步（done）置顶
+  filtered.sort((a, b) => {
+    const aDone = (getState(a.id) || {}).status === 'done' ? 0 : 1;
+    const bDone = (getState(b.id) || {}).status === 'done' ? 0 : 1;
+    return aDone - bDone;
+  });
+  return filtered;
 }
 
 function renderSidebar() {
@@ -1799,29 +1841,17 @@ function renderSidebar() {
     list.innerHTML = items.map(acc => {
       const st = getState(acc.id);
       const status = st.status;
-      let dotClass = 'pending';
-      if (status === 'done') dotClass = 'done';
-      else if (status === 'progress') dotClass = 'progress';
       const active = acc.id === currentAccountId ? ' active' : '';
-      const modeLabel = st.mode === 'profit' ? '拉壳' : '调仓';
-      const badgeClass = st.mode === 'profit' ? 'profit' : 'loss';
       const canRemove = status !== 'done';
       return `
         <div class="sidebar-item${active}" data-account="${acc.id}" onclick="switchAccount('${acc.id}')">
-          <span class="status-dot ${dotClass}"></span>
           <span class="item-name" title="${acc.name}（${acc.code}）">${acc.name}<span style="color:var(--text-muted);font-size:11px;margin-left:6px;">${acc.code}</span></span>
-          <span class="item-badge ${badgeClass}">${modeLabel}</span>
+          ${status === 'done' ? '<span style="font-size:10px;color:' + (st.mode === 'profit' ? '#685BE7' : '#1A8353') + ';background:' + (st.mode === 'profit' ? '#EDE9FE' : '#DCFCE7') + ';border-radius:3px;padding:1px 6px;flex-shrink:0;margin-left:4px;">' + (st.mode === 'profit' ? '拉壳' : '调仓') + '</span>' : ''}
           <span class="item-remove" title="${canRemove ? '移除该专户' : '已同步，需先撤销同步才能移除'}" onclick="event.stopPropagation();removeAccount('${acc.id}')">×</span>
         </div>
       `;
     }).join('');
   }
-
-  // stats
-  const allSt = allAccounts.map(a => getState(a.id));
-  document.getElementById('sidebarDone').textContent = allSt.filter(s => s.status === 'done').length;
-  document.getElementById('sidebarProgress').textContent = allSt.filter(s => s.status === 'progress').length;
-  document.getElementById('sidebarPending').textContent = allSt.filter(s => s.status === 'pending').length;
 }
 
 // ==================== ACCOUNT SWITCH ====================
@@ -1850,32 +1880,11 @@ function saveCurrentState() {
   const st = getState(currentAccountId);
   // read current form values
   const bpGrowthEl = document.getElementById('bpGrowth');
-  const accountSizeEl = document.getElementById('accountSize');
-  const feeRateNEl = document.getElementById('feeRateN');
-  const targetAccountEl = document.getElementById('targetAccount');
   const bpLossEl = document.getElementById('bpLoss');
   const totalLossEl = document.getElementById('totalLoss');
 
   if (bpGrowthEl) st.bpGrowth = parseFloat(bpGrowthEl.value) || st.bpGrowth;
-  if (accountSizeEl) st.accountSize = parseFloat(accountSizeEl.value) || st.accountSize;
-  if (feeRateNEl) st.feeRateN = parseFloat(feeRateNEl.value) || st.feeRateN;
-  if (targetAccountEl) st.targetAccount = targetAccountEl.value;
-  // 拉壳逐产品目标专户：从表格行内下拉框收集
-  const targetSpvSelects = document.querySelectorAll('select[id^="targetSpv_"]');
-  targetSpvSelects.forEach(sel => {
-    const code = sel.id.replace('targetSpv_', '');
-    if (sel.value) {
-      st.profitTargetMap[code] = sel.value;
-    } else {
-      delete st.profitTargetMap[code];
-    }
-  });
-  // 赎回来源专户：收集所有勾选的checkbox
-  const redSourceChecks = document.querySelectorAll('input[name="redSource"]:checked');
-  const redSources = Array.from(redSourceChecks).map(cb => cb.value);
-  st.spvRedSources._all = redSources;
-  const fallbackSource = allAccounts.find(a => a.id !== currentAccountId)?.id || allAccounts[0]?.id;
-  st.sourceAccount = redSources.length > 0 ? redSources[0] : fallbackSource;
+  // 拉壳逐产品目标专户：已由 selectTargetSpv 实时更新 profitTargetMap
   if (bpLossEl) st.bpLoss = parseFloat(bpLossEl.value) || st.bpLoss;
   if (totalLossEl) st.totalLoss = parseFloat(totalLossEl.value) || st.totalLoss;
 }
@@ -1916,16 +1925,17 @@ function renderContent(acc, st) {
           </td>
           <td class="num" id="ratio_${p.code}">${sel ? '--' : ''}</td>
           <td class="num" style="font-weight:600;" id="F_${p.code}">${sel ? '--' : ''}</td>
-          <td>
-            <select class="table-input" id="targetSpv_${p.code}"
+          <td style="position:relative;">
+            <input type="text" class="table-input" id="targetSpvInput_${p.code}"
+              value="${(st.profitTargetMap[p.code] ? (() => { const ta = allAccounts.find(a => a.id === st.profitTargetMap[p.code]); return ta ? ta.name + '（' + ta.code + '）' : ''; })() : '')}"
+              placeholder="搜索选择目标专户..."
               ${sel && !isLocked ? '' : 'disabled'}
-              onchange="onTargetSpvChange('${p.code}', this.value)" style="width:160px;font-size:12px;">
-              <option value="">请选择目标专户</option>
-              ${allAccounts.filter(a => a.id !== acc.id).map(a => {
-                const selected = (st.profitTargetMap[p.code] === a.id) ? 'selected' : '';
-                return `<option value="${a.id}" ${selected}>${a.name}（${a.code}）</option>`;
-              }).join('')}
-            </select>
+              oninput="onTargetSpvSearch('${p.code}', this.value)"
+              onfocus="onTargetSpvFocus('${p.code}')"
+              onblur="setTimeout(() => closeTargetSpvDropdown('${p.code}'), 200)"
+              autocomplete="off"
+              style="width:180px;font-size:12px;text-align:left;">
+            <div id="targetSpvDropdown_${p.code}" style="display:none;position:absolute;top:100%;left:0;z-index:100;background:#fff;border:1px solid var(--border);border-radius:6px;max-height:200px;overflow-y:auto;width:320px;box-shadow:0 4px 12px rgba(0,0,0,.1);"></div>
           </td>
           <td class="num" id="nav_${p.code}" style="color:var(--primary);">${sel ? '--' : ''}</td>
           <td class="num" id="L_${p.code}">${sel ? '--' : ''}</td>
@@ -1938,7 +1948,9 @@ function renderContent(acc, st) {
       const sizeYi = (p.size / 100000000).toFixed(4);
       return `
         <tr data-code="${p.code}">
-          <td class="chk-cell">--</td>
+          <td class="chk-cell">
+            <input type="checkbox" ${(st.lossSelectedMap && st.lossSelectedMap[p.code] !== false) ? 'checked' : ''} ${disabled} onchange="onLossToggleSelect('${p.code}', this.checked)">
+          </td>
           <td style="font-weight:500;">${p.code}</td>
           <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${p.name}">${p.name}</td>
           <td class="num">${sizeYi}</td>
@@ -1971,12 +1983,16 @@ function renderContent(acc, st) {
     }).join('');
   }
 
-  const selCount = isProfit ? acc.holdings.filter(p => st.selectedMap[p.code]).length : acc.holdings.length;
+  const selCount = isProfit
+    ? acc.holdings.filter(p => st.selectedMap[p.code]).length
+    : acc.holdings.filter(p => {
+        return (st.lossSelectedMap && st.lossSelectedMap[p.code] !== undefined) ? st.lossSelectedMap[p.code] : true;
+      }).length;
   const totalCount = acc.holdings.length;
   const tableTitle = `持有${acc.name}的理财产品 & ${isLoss ? '亏损分摊' : '收益分配'}`;
 
   container.innerHTML = `
-    ${isLocked ? `<div style="background:#FFF3CD;border:1px solid #FFC107;color:#856404;padding:8px 16px;border-radius:4px;margin-bottom:12px;font-size:13px;">该专户已同步至头寸管理计算，当前为<strong>只读</strong>状态。</div>` : ''}
+    ${isLocked ? `<div style="background:#FFF3CD;border:1px solid #FFC107;color:#856404;padding:8px 16px;border-radius:4px;margin-bottom:12px;font-size:13px;">该专户已同步至头寸管理计算，当前为<strong>只读</strong>状态。如需调整，请点击下方<strong>重置</strong>按钮。</div>` : ''}
     <!-- Mode selector & key params -->
     <div class="top-bar" style="align-items:center;gap:12px;padding:8px 16px;">
       <span style="font-weight:700;font-size:14px;color:var(--primary);white-space:nowrap;">${acc.name}</span>
@@ -2035,7 +2051,7 @@ function renderContent(acc, st) {
           <table>
             <thead>
               <tr>
-                <th class="chk-cell">${isLoss ? '' : '<input type="checkbox" id="headerChk" title="全选/取消全选" onchange="onHeaderCheck(this.checked)">'}</th>
+                <th class="chk-cell"><input type="checkbox" id="headerChk" title="全选/取消全选" onchange="onHeaderCheck(this.checked)"></th>
                 <th>产品代码</th>
                 <th>产品名称</th>
                 <th>最新规模（亿）</th>
@@ -2100,10 +2116,6 @@ function renderContent(acc, st) {
 function getAccountName(sel) {
   const acc = allAccounts.find(a => a.id === sel);
   return acc ? acc.name : (allAccounts[0] ? allAccounts[0].name : '');
-}
-
-function getTargetName(st) {
-  return getAccountName(st.targetAccount);
 }
 
 // ==================== CALC ====================
@@ -2181,11 +2193,14 @@ function recalcLossMode(acc, st) {
   const totalLoss = parseFloat(document.getElementById('totalLoss')?.value) || st.totalLoss || 1;
   const baseSize = parseFloat(document.getElementById('baseSize')?.value) || st.baseSize;
 
-  let totalBP = 0;
+  let totalBP = 0, selCount = 0;
   const rows = document.querySelectorAll('#mainTbody tr[data-code]');
   rows.forEach(row => {
     const code = row.dataset.code;
+    const sel = (st.lossSelectedMap && st.lossSelectedMap[code] !== undefined) ? st.lossSelectedMap[code] : true;
+    if (!sel) return;
     totalBP += st.bpData[code] || 0;
+    selCount++;
   });
 
   let sumF = 0, sumI = 0;
@@ -2280,6 +2295,15 @@ function onLossAdjChange(code, value) {
   recalcCurrent();
 }
 
+// 调仓模式勾选产品
+function onLossToggleSelect(code, checked) {
+  const st = getState(currentAccountId);
+  if (!st) return;
+  if (!st.lossSelectedMap) st.lossSelectedMap = {};
+  st.lossSelectedMap[code] = checked;
+  recalcCurrent();
+}
+
 // 调仓模式逐产品赎回来源专户选择
 function onLossRedSourceChange(code, spvCode) {
   const st = getState(currentAccountId);
@@ -2301,7 +2325,43 @@ function onAdjChange(code, value) {
   recalcCurrent();
 }
 
-// 拉壳模式逐产品目标专户选择
+// 拉壳模式逐产品目标专户搜索
+function onTargetSpvSearch(code, query) {
+  const st = getState(currentAccountId);
+  const acc = getAccount(currentAccountId);
+  if (!st || !acc) return;
+  const dropdown = document.getElementById('targetSpvDropdown_' + code);
+  if (!dropdown) return;
+  const q = query.trim().toLowerCase();
+  const list = allAccounts.filter(a => a.id !== acc.id && (!q || a.name.toLowerCase().includes(q) || a.code.toLowerCase().includes(q)));
+  dropdown.innerHTML = list.length > 0
+    ? list.map(a => `<div onclick="selectTargetSpv('${code}','${a.id}','${escHtml(a.name + '（' + a.code + '）')}')" style="padding:6px 10px;font-size:12px;cursor:pointer;border-bottom:1px solid #f0f0f0;white-space:nowrap;" onmouseover="this.style.background='#F0F4FF'" onmouseout="this.style.background=''">${escHtml(a.name)} <span style="color:var(--text-muted);font-size:11px;">${a.code}</span></div>`).join('')
+    : '<div style="padding:8px 10px;font-size:12px;color:var(--text-muted);">未找到匹配专户</div>';
+  dropdown.style.display = 'block';
+  delete st.profitTargetMap[code];
+}
+
+function onTargetSpvFocus(code) {
+  const input = document.getElementById('targetSpvInput_' + code);
+  if (input) { input.select(); onTargetSpvSearch(code, input.value); }
+}
+
+function closeTargetSpvDropdown(code) {
+  const dropdown = document.getElementById('targetSpvDropdown_' + code);
+  if (dropdown) dropdown.style.display = 'none';
+}
+
+function selectTargetSpv(code, spvId, display) {
+  const st = getState(currentAccountId);
+  if (!st) return;
+  st.profitTargetMap[code] = spvId;
+  const input = document.getElementById('targetSpvInput_' + code);
+  if (input) input.value = display;
+  closeTargetSpvDropdown(code);
+  recalcCurrent();
+}
+
+// 拉壳模式逐产品目标专户选择（兼容旧调用）
 function onTargetSpvChange(code, spvId) {
   const st = getState(currentAccountId);
   if (!st) return;
@@ -2335,7 +2395,12 @@ function onHeaderCheck(checked) {
   const acc = getAccount(currentAccountId);
   const st = getState(currentAccountId);
   if (!acc || !st) return;
-  acc.holdings.forEach(p => { st.selectedMap[p.code] = checked; });
+  if (st.mode === 'profit') {
+    acc.holdings.forEach(p => { st.selectedMap[p.code] = checked; });
+  } else if (st.mode === 'loss') {
+    if (!st.lossSelectedMap) st.lossSelectedMap = {};
+    acc.holdings.forEach(p => { st.lossSelectedMap[p.code] = checked; });
+  }
   updateHeaderCheckbox();
   saveCurrentState();
   renderContent(acc, st);
@@ -2349,7 +2414,11 @@ function updateHeaderCheckbox() {
   const st = getState(currentAccountId);
   if (!acc || !st) return;
   const total = acc.holdings.length;
-  const selCount = acc.holdings.filter(p => st.selectedMap[p.code]).length;
+  const selCount = st.mode === 'profit'
+    ? acc.holdings.filter(p => st.selectedMap[p.code]).length
+    : acc.holdings.filter(p => {
+        return (st.lossSelectedMap && st.lossSelectedMap[p.code] !== undefined) ? st.lossSelectedMap[p.code] : true;
+      }).length;
   hdr.checked = (total > 0 && selCount === total);
   hdr.indeterminate = (selCount > 0 && selCount < total);
 }
@@ -2594,19 +2663,26 @@ function syncToSystem() {
     if ((st.totalLoss || 0) <= 0) {
       errors.push('总目标亏损金额未设置。');
     }
-    const hasBp = acc.holdings.some(p => (st.bpData[p.code] ?? p.defaultBP) > 0);
-    if (!hasBp) {
-      errors.push('所有产品目标承担亏损 BP 均为 0，请至少设置一只。');
-    }
-    // 有 BP 的产品需选择赎回来源专户
-    const activeProds = acc.holdings.filter(p => {
-      const bp = st.bpData[p.code] ?? p.defaultBP;
-      const ratio = (st.totalLoss || 1) > 0 ? bp / (st.totalLoss || 1) : 0;
-      const F = Math.round(ratio * st.baseSize) * 10000;
-      return bp > 0 && F > 0 && !st.lossRedSourceMap[p.code];
+    const selected = acc.holdings.filter(p => {
+      const sel = (st.lossSelectedMap && st.lossSelectedMap[p.code] !== undefined) ? st.lossSelectedMap[p.code] : true;
+      return sel;
     });
-    if (activeProds.length > 0) {
-      errors.push('以下产品未选择赎回来源专户：' + activeProds.map(p => p.code).join('、'));
+    if (selected.length === 0) {
+      errors.push('未勾选任何产品，请至少勾选一只参与亏损分摊。');
+    } else {
+      const hasBp = selected.some(p => (st.bpData[p.code] ?? p.defaultBP) > 0);
+      if (!hasBp) {
+        errors.push('已勾选产品的目标承担亏损 BP 均为 0，请至少设置一只。');
+      }
+      const missingSrc = selected.filter(p => {
+        const bp = st.bpData[p.code] ?? p.defaultBP;
+        const ratio = (st.totalLoss || 1) > 0 ? bp / (st.totalLoss || 1) : 0;
+        const F = Math.round(ratio * st.baseSize) * 10000;
+        return bp > 0 && F > 0 && !st.lossRedSourceMap[p.code];
+      });
+      if (missingSrc.length > 0) {
+        errors.push('以下产品未选择赎回来源专户：' + missingSrc.map(p => p.code).join('、'));
+      }
     }
   }
 
@@ -2647,6 +2723,8 @@ function syncToSystem() {
   } else if (st.mode === 'loss') {
     const totalLoss = st.totalLoss || 1;
     acc.holdings.forEach(p => {
+      const sel = (st.lossSelectedMap && st.lossSelectedMap[p.code] !== undefined) ? st.lossSelectedMap[p.code] : true;
+      if (!sel) return;
       const bp = st.bpData[p.code] ?? p.defaultBP;
       const adj = st.lossAdjData[p.code] || 0;
       const ratio = totalLoss > 0 ? bp / totalLoss : 0;
@@ -2838,15 +2916,15 @@ function loadPositionData() {
     // === 已平衡示例（gap=0，有申赎但专户轧差=0）===
     // 示例1：申赎相等，netSR=0，totalSub=null、totalRed=null，gap=0
     { code:'EW9001', name:'阳光金平衡示例1号(演示已平衡状态)', date:'2026-06-29', dayBegin:1000000, subAll:500000, redAll:-500000, fee:0, t1Back:0, bankExch:0 },
-    // 示例2：申赎相等+少量fee和T+1回款，netSR=50000在区间内，gap=0
-    { code:'EW9002', name:'阳光金平衡示例2号(演示已平衡状态)', date:'2026-06-29', dayBegin:2000000, subAll:300000, redAll:-300000, fee:-50000, t1Back:100000, bankExch:0 },
+    // 示例2：申赎相等+fee和T+1回款对冲后netSR=0，totalSub=null、totalRed=null，gap=0
+    { code:'EW9002', name:'阳光金平衡示例2号(演示已平衡状态)', date:'2026-06-29', dayBegin:2000000, subAll:300000, redAll:-300000, fee:-100000, t1Back:100000, bankExch:0 },
     // 示例3：申赎相等，netSR=0，gap=0
     { code:'EW9003', name:'阳光金平衡示例3号(演示已平衡状态)', date:'2026-06-29', dayBegin:5000000, subAll:200000, redAll:-200000, fee:0, t1Back:0, bankExch:0 },
     // 示例4-7：更多已平衡产品
     { code:'EW9004', name:'阳光金平衡示例4号(演示已平衡状态)', date:'2026-06-29', dayBegin:3000000, subAll:800000, redAll:-800000, fee:0, t1Back:0, bankExch:0 },
-    { code:'EW9005', name:'阳光金平衡示例5号(演示已平衡状态)', date:'2026-06-29', dayBegin:2000000, subAll:100000, redAll:-100000, fee:-20000, t1Back:50000, bankExch:0 },
+    { code:'EW9005', name:'阳光金平衡示例5号(演示已平衡状态)', date:'2026-06-29', dayBegin:2000000, subAll:100000, redAll:-100000, fee:-50000, t1Back:50000, bankExch:0 },
     { code:'EW9006', name:'阳光金平衡示例6号(演示已平衡状态)', date:'2026-06-29', dayBegin:8000000, subAll:400000, redAll:-400000, fee:0, t1Back:0, bankExch:0 },
-    { code:'EW9007', name:'阳光金平衡示例7号(演示已平衡状态)', date:'2026-06-29', dayBegin:6000000, subAll:1500000, redAll:-1500000, fee:0, t1Back:200000, bankExch:0 },
+    { code:'EW9007', name:'阳光金平衡示例7号(演示已平衡状态)', date:'2026-06-29', dayBegin:6000000, subAll:1500000, redAll:-1500000, fee:0, t1Back:0, bankExch:0 },
   ];
   try {
     const saved = localStorage.getItem('position_data');
@@ -2854,8 +2932,10 @@ function loadPositionData() {
       const savedData = JSON.parse(saved);
       if (Array.isArray(savedData) && savedData.length > 0) {
         // 合并默认值与已保存数据：保存的覆盖默认，默认中新增的补充进去
+        // 注意：EW900x 系列是已平衡示例，始终使用默认值，防止旧缓存导致数据不一致
         const savedMap = new Map(savedData.map(d => [d.code, d]));
         const merged = defaultData.map(d => {
+          if (/^EW900/.test(d.code)) return { ...d }; // 已平衡示例：强制用默认值
           const s = savedMap.get(d.code);
           return s ? { ...d, ...s } : { ...d };
         }).concat(
@@ -3107,6 +3187,66 @@ function openProductInfoModal(code, name) {
     `<div class="pi-cell"><span class="pi-label">${n.name}占比</span><span class="pi-value t0">${n.pct.toFixed(2)}%</span></div>`
   ).join('<span class="pi-sep"></span>');
 
+  // 头寸看板数据
+  const posRowData = row;
+  const dayBegin = posRowData.dayBegin || 0;
+  const srSum = posRowData.srSum || 0;
+  const gap = calcHeadroomGap(posRowData);
+  const status = calcAutoStatus(posRowData);
+  const spvOps = [];
+  if (posRowData._spv) {
+    Object.keys(posRowData._spv).forEach(sid => {
+      const sd = posRowData._spv[sid];
+      const spvName = (getOnlineSpvList().find(s => s.id === sid) || {}).name || sid;
+      if (sd.sub || sd.red) {
+        spvOps.push({
+          spv: spvName.substring(0, 12),
+          sub: sd.sub,
+          red: sd.red,
+          fromRebalance: !!(sd.subRebalance || sd.redRebalance)
+        });
+      }
+    });
+  }
+
+  const dashHTML = `
+    <div class="pi-dash-cards" style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:14px;">
+      <div class="pi-dash-card" style="flex:1;min-width:130px;background:#F8FAFC;border:1px solid #E2E8F0;border-radius:8px;padding:12px 16px;text-align:center;">
+        <div style="font-size:11px;color:#64748B;margin-bottom:4px;">日初头寸</div>
+        <div style="font-size:20px;font-weight:700;color:#1E293B;">${fmtMoney(dayBegin)}</div>
+      </div>
+      <div class="pi-dash-card" style="flex:1;min-width:130px;background:#F8FAFC;border:1px solid #E2E8F0;border-radius:8px;padding:12px 16px;text-align:center;">
+        <div style="font-size:11px;color:#64748B;margin-bottom:4px;">申赎合计</div>
+        <div style="font-size:20px;font-weight:700;color:${srSum>=0?'#DC2626':'#059669'};">${fmtMoney(srSum)}</div>
+      </div>
+      <div class="pi-dash-card" style="flex:1;min-width:130px;background:#F8FAFC;border:1px solid #E2E8F0;border-radius:8px;padding:12px 16px;text-align:center;">
+        <div style="font-size:11px;color:#64748B;margin-bottom:4px;">头寸缺口</div>
+        <div style="font-size:20px;font-weight:700;color:${Math.abs(gap)<10000?'#059669':'#DC2626'};">${fmtMoney(gap)}</div>
+      </div>
+      <div class="pi-dash-card" style="flex:1;min-width:130px;background:#F8FAFC;border:1px solid #E2E8F0;border-radius:8px;padding:12px 16px;text-align:center;">
+        <div style="font-size:11px;color:#64748B;margin-bottom:4px;">状态</div>
+        <div style="font-size:16px;font-weight:700;color:${status==='balanced'?'#059669':'#C2410C'};">${status==='balanced'?'已平衡 ✓':'待整理 ⚠️'}</div>
+      </div>
+    </div>
+    ${spvOps.length > 0 ? `
+    <table class="pi-table" style="margin-top:0;">
+      <thead><tr>
+        <th>专户</th><th style="text-align:right;">申购金额（元）</th><th style="text-align:right;">赎回金额（元）</th><th style="text-align:center;">来源</th>
+      </tr></thead>
+      <tbody>
+        ${spvOps.map(o => `
+          <tr>
+            <td>${escHtml(o.spv)}</td>
+            <td class="pi-num" style="color:#DC2626;">${o.sub ? fmtMoneyNeg(o.sub) : '--'}</td>
+            <td class="pi-num" style="color:#059669;">${o.red ? fmtMoneyPos(o.red) : '--'}</td>
+            <td style="text-align:center;">${o.fromRebalance ? '<span style="font-size:10px;background:#DBEAFE;color:#1D4ED8;padding:2px 6px;border-radius:3px;">专户调仓</span>' : '<span style="font-size:10px;background:#F3F4F6;color:#6B7280;padding:2px 6px;border-radius:3px;">手动调整</span>'}</td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+    ` : '<div class="pi-empty">暂无专户操作数据</div>'}
+  `;
+
   const bodyHTML = `
     <div class="pi-header">
       <div class="pi-header-grid">
@@ -3133,14 +3273,28 @@ function openProductInfoModal(code, name) {
     <div class="modal-overlay show" id="productInfoModal" onclick="closeProductInfoModal(event)">
       <div class="modal product-info-modal" onclick="event.stopPropagation()">
         <div class="modal-header">
-          <h3>产品信息</h3>
+          <h3>产品信息 - ${escHtml(code)}</h3>
           <span class="modal-close" onclick="closeProductInfoModal()" style="display:flex;cursor:pointer;font-size:20px;color:var(--text-muted);padding:4px;line-height:1;" title="关闭">×</span>
         </div>
-        <div class="modal-body">${bodyHTML}</div>
+        <div class="pi-tabs" style="display:flex;gap:0;border-bottom:1px solid #E5E7EB;padding:0 20px;">
+          <div class="pi-tab active" onclick="switchPiTab('holdings')" id="piTabH" style="padding:8px 18px;font-size:13px;cursor:pointer;border-bottom:2px solid #1A3C6D;color:#1A3C6D;font-weight:600;">持仓明细</div>
+          <div class="pi-tab" onclick="switchPiTab('dash')" id="piTabD" style="padding:8px 18px;font-size:13px;cursor:pointer;border-bottom:2px solid transparent;color:#6B7280;">头寸看板</div>
+        </div>
+        <div class="modal-body">
+          <div id="piTabHoldings">${bodyHTML}</div>
+          <div id="piTabDash" style="display:none;">${dashHTML}</div>
+        </div>
       </div>
     </div>
   `;
   document.body.insertAdjacentHTML('beforeend', modalHTML);
+}
+
+function switchPiTab(tab) {
+  document.getElementById('piTabH').style.cssText = tab==='holdings' ? 'padding:8px 18px;font-size:13px;cursor:pointer;border-bottom:2px solid #1A3C6D;color:#1A3C6D;font-weight:600;' : 'padding:8px 18px;font-size:13px;cursor:pointer;border-bottom:2px solid transparent;color:#6B7280;';
+  document.getElementById('piTabD').style.cssText = tab==='dash' ? 'padding:8px 18px;font-size:13px;cursor:pointer;border-bottom:2px solid #1A3C6D;color:#1A3C6D;font-weight:600;' : 'padding:8px 18px;font-size:13px;cursor:pointer;border-bottom:2px solid transparent;color:#6B7280;';
+  document.getElementById('piTabHoldings').style.display = tab==='holdings' ? '' : 'none';
+  document.getElementById('piTabDash').style.display = tab==='dash' ? '' : 'none';
 }
 
 // 关闭产品信息弹窗
@@ -3275,9 +3429,11 @@ function calcPositionRow(row) {
         row._spv[spv.id] = { sub: null, red: (seed * 100000 + 500000), subManual: 0, subRebalance: 0, redManual: (seed * 100000 + 500000), redRebalance: 0 };
       } else {
         // 已平衡示例产品（EW900x）：生成小额专户数据供演示弹窗只读效果
+        // 申购与赎回金额设为相等值，确保 gap=0 始终判定为已平衡
         const isDemo = /^EW900/.test(row.code);
-        const demoSub = isDemo ? -(seed * 50000 + 200000) : null;
-        const demoRed = isDemo ? (idx % 2 === 0 ? (seed * 30000 + 150000) : null) : null;
+        const demoAmt = isDemo ? (seed * 50000 + 200000) : 0;
+        const demoSub = isDemo ? -demoAmt : null;
+        const demoRed = isDemo ? demoAmt : null;
         row._spv[spv.id] = { sub: demoSub, red: demoRed, subManual: isDemo ? demoSub : 0, subRebalance: 0, redManual: isDemo ? (demoRed || 0) : 0, redRebalance: 0 };
       }
     }
@@ -3301,6 +3457,28 @@ function goSpvPage(dir) {
 function init() {
   try {
     console.log('init start');
+    // 演示：预填宁聚5号（拉壳）和鑫和14号（调仓）的示例数据
+    (() => {
+      const stNingju = getState('ningju5');
+      if (stNingju && stNingju.status === 'pending') {
+        stNingju.status = 'done';
+        const acc = getAccount('ningju5');
+        const targets = allAccounts.filter(a => a.id !== 'ningju5').map(a => a.id);
+        acc.holdings.filter(p => p.defaultSelected).forEach((p, i) => {
+          stNingju.profitTargetMap[p.code] = targets[i % targets.length];
+        });
+      }
+      const stXinhe = getState('xinhe14');
+      if (stXinhe && stXinhe.status === 'pending') {
+        stXinhe.status = 'done';
+        const acc = getAccount('xinhe14');
+        const spvCodes = ['ZTQX08', '2021-1147'];
+        acc.holdings.forEach((p, i) => {
+          stXinhe.lossRedSourceMap[p.code] = spvCodes[i % spvCodes.length];
+          stXinhe.bpData[p.code] = p.defaultBP;
+        });
+      }
+    })();
     // 初始化头寸管理 Tab
     currentTab = 'position';
     positionColumns.forEach(c => { visibleColumns[c.key] = c.defaultShow; });
@@ -3713,7 +3891,9 @@ function renderSpvMaintPage() {
         <td style="width:130px;">
           <input type="text" class="table-input" value="${p.shortName || acc.shortName || acc.name}" style="width:120px;text-align:left;font-size:12px;"
             ${p.online ? '' : 'disabled'}
-            oninput="onSpvShortNameChange(${realIdx}, this.value)">
+            data-prev="${escHtml(p.shortName || acc.shortName || acc.name)}"
+            onfocus="this.select();this.dataset.prev=this.value;"
+            onblur="if(this.value!==this.dataset.prev)onSpvShortNameChange(${realIdx}, this.value)">
         </td>
         <td style="width:80px;text-align:center;">
           ${p.online ? `<select class="table-input" style="width:72px;font-size:11px;text-align:center;padding:3px 4px;"
@@ -3813,6 +3993,7 @@ function onSpvMaintFilterChange() {
 }
 
 function onSpvShortNameChange(idx, val) {
+  if (!spvMaintList[idx].online) return;
   spvMaintList[idx].shortName = val;
   saveSpvMaintList();
 }
@@ -4340,9 +4521,8 @@ function toggleUploadArea() {
 function openPositionSpvModal(productCode, spvId, type) {
   const product = positionData.find(p => p.code === productCode);
   if (!product) return;
-  // 自动判定：待整理 → 可编辑；已平衡 → 只读
-  const autoStatus = calcAutoStatus(product);
-  const isConfirmed = autoStatus === 'balanced';
+  // 弹窗始终可编辑（客户反馈：已平衡也可调整）
+  const isConfirmed = false;
   const spv = getOnlineSpvList().find(s => s.id === spvId);
   if (!spv) return;
   const sd = (product._spv && product._spv[spvId]) ? product._spv[spvId] : { sub: null, red: null };
@@ -4385,22 +4565,24 @@ function openPositionSpvModal(productCode, spvId, type) {
       <div class="modal spv-trade-modal" onclick="event.stopPropagation()">
         <div class="modal-header">
           <div class="header-left">
-            <h3>${spv.name}</h3>
-            <span class="时效">时效：${tVal}</span>
+            <h3>${product.name}</h3>
+            <span class="prod-tag">${product.code}</span>
           </div>
           <span class="modal-close" onclick="closeSpvAmountModal()" style="display:flex;cursor:pointer;font-size:20px;color:var(--text-muted);padding:4px;line-height:1;" title="关闭">×</span>
         </div>
         <div class="spv-product-info">
-          <span class="prod-tag">${product.code}</span>
-          <span>${product.name}</span>
-          <span style="margin-left:auto;font-size:11px;">渠道：${channel}</span>
+          <span>${spv.name}</span>
+          <span class="info-sep">|</span>
+          <span>时效：${tVal}</span>
+          <span class="info-sep">|</span>
+          <span>渠道：${channel}</span>
         </div>
         <div class="modal-body">
           ${isConfirmed ? `<div class="spv-readonly-tip">该产品已平衡，申购/赎回金额为只读状态。</div>` : ''}
 
           <!-- 申购卡片 -->
           <div class="spv-trade-card card-sub">
-            <div class="card-label"><span class="card-icon sub">申</span>申购金额</div>
+            <div class="card-label"><span class="card-icon sub">申</span>输入申购金额</div>
             <div class="spv-input-group">
               <div class="input-row">
                 <input type="text" id="spvSubInput" value="${currentSub !== 0 ? Math.abs(currentSub).toLocaleString('zh-CN') : ''}"
@@ -4410,15 +4592,17 @@ function openPositionSpvModal(productCode, spvId, type) {
               <div class="input-hint" id="subHint">${currentSub !== 0 ? fmtWanYuan(Math.abs(currentSub)) : ''}</div>
             </div>
             <div class="spv-action-row">
-              <button class="spv-action-btn primary" onclick="fillTotalSub('${productCode}','${spvId}')">📥 带入总申购款</button>
-              <button class="spv-action-btn danger" onclick="fillSubHeadroom('${productCode}','${spvId}')">⚡ 一键平头寸</button>
-              <span class="spv-action-info">可申购：<span class="info-value" id="remainSub">${fmtMoney(remainSub)}</span></span>
+              <button class="spv-action-btn primary" onclick="fillTotalSub('${productCode}','${spvId}')" ${isConfirmed ? 'disabled' : ''}>📥 带入总申购款</button>
+              <button class="spv-action-btn danger" onclick="fillSubHeadroom('${productCode}','${spvId}')" ${isConfirmed ? 'disabled' : ''}>⚡ 一键平头寸</button>
+            </div>
+            <div class="spv-action-info-row">
+              <span class="info-item">剩余可申购金额（元）：<span class="info-value">${fmtMoney(remainSub)}</span></span>
             </div>
           </div>
 
           <!-- 赎回卡片 -->
           <div class="spv-trade-card card-red">
-            <div class="card-label"><span class="card-icon red">赎</span>赎回金额</div>
+            <div class="card-label"><span class="card-icon red">赎</span>输入赎回金额</div>
             <div class="spv-input-group">
               <div class="input-row">
                 <input type="text" id="spvRedInput" value="${currentRed !== 0 ? currentRed.toLocaleString('zh-CN') : ''}"
@@ -4428,38 +4612,51 @@ function openPositionSpvModal(productCode, spvId, type) {
               <div class="input-hint" id="redHint">${currentRed !== 0 ? fmtWanYuan(currentRed) : ''}</div>
             </div>
             <div class="spv-action-row">
-              <button class="spv-action-btn" onclick="fillAllRed('${productCode}','${spvId}',${scale})">📤 全部赎回</button>
-              <button class="spv-action-btn primary" onclick="fillTotalRed('${productCode}','${spvId}')">📥 带入总赎回款</button>
-              <button class="spv-action-btn danger" onclick="fillRedHeadroom('${productCode}','${spvId}')">⚡ 一键平头寸</button>
-              <span class="spv-action-info">预估全部：<span class="info-value">${fmtMoney(estRedAll)}</span></span>
+              <button class="spv-action-btn" onclick="fillAllRed('${productCode}','${spvId}',${scale})" ${isConfirmed ? 'disabled' : ''}>📤 全部赎回</button>
+              <button class="spv-action-btn primary" onclick="fillTotalRed('${productCode}','${spvId}')" ${isConfirmed ? 'disabled' : ''}>📥 带入总赎回款</button>
+              <button class="spv-action-btn danger" onclick="fillRedHeadroom('${productCode}','${spvId}')" ${isConfirmed ? 'disabled' : ''}>⚡ 一键平头寸</button>
+            </div>
+            <div class="spv-action-info-row">
+              <span class="info-item">预估全部金额（元）：<span class="info-value">${fmtMoney(estRedAll)}</span></span>
+              <span class="info-item">剩余总赎回款（元）：<span class="info-value">${fmtMoney(remainRed)}</span></span>
             </div>
 
-            <!-- 预估赎回份额（内联简化） -->
+            <!-- 预估赎回份额 -->
             <div class="spv-est-row">
               <span class="est-label">预估赎回份额</span>
               <span class="est-main" id="estRedQty">${estRedQty > 0 ? estRedQty.toLocaleString('zh-CN') + ' 份' : '—'}</span>
-              <span class="est-sub">按净值 ${nav.toFixed(4)} 计算 · 最多赎回 ${maxRedQty.toLocaleString('zh-CN')} 份 · 剩余可赎 <span class="info-value" id="remainRed">${fmtMoney(remainRed)}</span></span>
+              <span class="est-sub">按净值 ${nav.toFixed(4)} 计算 · 最多赎回 ${maxRedQty.toLocaleString('zh-CN')} 份</span>
             </div>
           </div>
 
           <!-- 明细信息 -->
           <div class="spv-headroom-expand" id="headroomDetail">
             <div class="hr-title">明细信息</div>
-            <div class="hr-row">
-              <span class="hr-label">净值日期</span>
-              <span class="hr-val">${navDate}</span>
-            </div>
-            <div class="hr-row">
-              <span class="hr-label">单位净值</span>
-              <span class="hr-val">${nav.toFixed(4)}</span>
-            </div>
-            <div class="hr-row">
-              <span class="hr-label">持有规模</span>
-              <span class="hr-val">${fmtMoney(scale)}</span>
-            </div>
-            <div class="hr-row hr-total">
-              <span class="hr-label">预估专户头寸</span>
-              <span class="hr-val" style="color:var(--primary);">${fmtMoney(estHeadroom)}</span>
+            <div class="hr-grid">
+              <div class="hr-row">
+                <span class="hr-label">净值日期</span>
+                <span class="hr-val">${navDate}</span>
+              </div>
+              <div class="hr-row">
+                <span class="hr-label">单位净值</span>
+                <span class="hr-val">${nav.toFixed(4)}</span>
+              </div>
+              <div class="hr-row">
+                <span class="hr-label">持有数量</span>
+                <span class="hr-val">${qty > 0 ? qty.toLocaleString('zh-CN') + ' 份' : '—'}</span>
+              </div>
+              <div class="hr-row">
+                <span class="hr-label">总规模（元）</span>
+                <span class="hr-val">${fmtMoney(scale)}</span>
+              </div>
+              <div class="hr-row hr-total">
+                <span class="hr-label">预估专户头寸（元）</span>
+                <span class="hr-val" style="color:var(--primary);font-weight:600;">${fmtMoney(estHeadroom)}</span>
+              </div>
+              <div class="hr-row">
+                <span class="hr-label">渠道</span>
+                <span class="hr-val">${channel}</span>
+              </div>
             </div>
           </div>
 
@@ -4560,8 +4757,8 @@ function calcHeadroomGap(product) {
       const isT0 = spvItem ? spvItem.tVal === 'T+0' : true;
       if (!isT0) return;
       const sd = product._spv[sid] || {};
-      t0SubSum += Math.abs(sd.sub || 0) + Math.abs(sd.subRebalance || 0) - Math.abs(sd.subManual || 0);
-      t0RedSum += Math.abs(sd.red || 0) + Math.abs(sd.redRebalance || 0) - Math.abs(sd.redManual || 0);
+      t0SubSum += Math.abs(sd.sub || 0);
+      t0RedSum += Math.abs(sd.red || 0);
     });
   }
   return totalSub - t0SubSum + t0RedSum - totalRed;
