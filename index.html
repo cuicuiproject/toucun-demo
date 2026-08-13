@@ -1937,8 +1937,8 @@ function renderContent(acc, st) {
               style="width:180px;font-size:12px;text-align:left;">
             <div id="targetSpvDropdown_${p.code}" style="display:none;position:absolute;top:100%;left:0;z-index:100;background:#fff;border:1px solid var(--border);border-radius:6px;max-height:200px;overflow-y:auto;width:320px;box-shadow:0 4px 12px rgba(0,0,0,.1);"></div>
           </td>
-          <td class="num" id="nav_${p.code}" style="color:var(--primary);">${sel ? '--' : ''}</td>
-          <td class="num" id="L_${p.code}">${sel ? '--' : ''}</td>
+          <td class="num" id="redQty_${p.code}" style="color:var(--danger);">${sel ? '--' : ''}</td>
+          <td class="num" id="subAmt_${p.code}" style="font-weight:600;color:var(--primary-light);">${sel ? '--' : ''}</td>
         </tr>`;
     }).join('');
   } else if (isLoss) {
@@ -1973,10 +1973,13 @@ function renderContent(acc, st) {
               <option value="">选择赎回来源</option>
               ${getSPVData(p.code).map(s => {
                 const sel = (st.lossRedSourceMap[p.code] === s.spvCode) ? 'selected' : '';
-                return `<option value="${s.spvCode}" ${sel}>${s.spvName.substring(0,12)}（${s.spvCode}）</option>`;
+                const spvMaint2 = spvMaintList.find(m => { const a = allAccounts.find(ac => ac.id === m.id); return a && a.code === s.spvCode; });
+                const svTval = spvMaint2 ? spvMaint2.tVal : 'T+0';
+                return `<option value="${s.spvCode}" ${sel}>${s.spvName.substring(0,12)}（${s.spvCode}）${svTval}</option>`;
               }).join('')}
             </select>
           </td>
+          <td style="text-align:center;" id="lossRedTval_${p.code}">--</td>
           <td class="num" style="font-weight:600;" id="I_${p.code}">--</td>
           <td class="num" id="lossRedQty_${p.code}" style="color:var(--success);">--</td>
         </tr>`;
@@ -1997,6 +2000,7 @@ function renderContent(acc, st) {
     <div class="top-bar" style="align-items:center;gap:12px;padding:8px 16px;">
       <span style="font-weight:700;font-size:14px;color:var(--primary);white-space:nowrap;">${acc.name}</span>
       <span style="font-size:11px;color:var(--text-muted);">${acc.code}</span>
+      <span style="font-size:10px;color:${acc.tVal === 'T+0' ? '#1D4ED8' : '#C2410C'};background:${acc.tVal === 'T+0' ? '#DBEAFE' : '#FFF7ED'};border-radius:3px;padding:1px 5px;margin-left:4px;">${acc.tVal || 'T+0'}</span>
       <span style="color:var(--border);margin:0 4px;">|</span>
       <span style="font-size:12px;color:var(--text-muted);">规模</span>
       <span style="font-weight:700;font-size:14px;color:var(--text);">${(acc.accountSize / 100000000).toFixed(2)}亿</span>
@@ -2010,8 +2014,8 @@ function renderContent(acc, st) {
       <span style="color:var(--border);margin:0 4px;">|</span>
       <span style="font-size:12px;color:var(--text-muted);">总目标亏损</span>
       <input type="number" id="totalLoss" value="${st.totalLoss}" step="1" ${disabled} oninput="recalcCurrent()"
-        style="width:110px;padding:6px 10px;font-size:14px;font-weight:700;text-align:center;border:1px solid var(--border);border-radius:6px;">
-      <span style="font-size:12px;color:var(--text-muted);">万元</span>
+        style="width:90px;padding:8px 12px;font-size:18px;font-weight:800;text-align:center;color:#1A3C6D;background:linear-gradient(135deg,#FFF7ED,#FFEDD5);border:2px solid #FDBA74;border-radius:8px;outline:none;">
+      <span style="font-size:12px;font-weight:600;color:#C2410C;">BP</span>
       ` : ''}
       <div style="flex:1;"></div>
       <div class="mode-selector" id="modeSelector">
@@ -2056,12 +2060,11 @@ function renderContent(acc, st) {
                 <th>产品名称</th>
                 <th>最新规模（亿）</th>
                 <th>${isLoss ? '目标承担亏损（BP）' : '目标净值增长（BP）'}</th>
-                <th>占比</th>
+                <th>占比 <span title="${isLoss ? '占比 = 产品BP ÷ 总目标亏损 × 100%' : '占比 = 应分配收益金额 ÷ 产品规模 × 100%'}" style="display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;border-radius:50%;background:#E2E8F0;color:#64748B;font-size:10px;font-weight:600;cursor:help;">?</span></th>
                 <th>${isLoss ? '分摊金额（元）' : '应分配收益金额（元）'}</th>
-                ${isLoss ? '<th>调减金额（元）</th><th>赎回来源专户</th><th>实际金额（元）</th><th>赎回份额（份）</th>' : ''}
+                ${isLoss ? '<th>调减金额（元）</th><th>赎回来源专户</th><th>专户时效</th><th>实际金额（元）</th><th>赎回份额（份）</th>' : ''}
                 ${isLoss ? '' : '<th>申购目标专户</th>'}
-                ${isLoss ? '' : '<th>最新净值</th>'}
-                ${isLoss ? '' : '<th>申购份额（份）</th>'}
+                ${isLoss ? '' : '<th>赎回份额（份）</th><th>申购金额（元）</th>'}
               </tr>
             </thead>
             <tbody id="mainTbody">${tableRows}</tbody>
@@ -2152,27 +2155,26 @@ function recalcProfitMode(acc, st) {
   acc.holdings.forEach(p => {
     const sel = st.selectedMap[p.code];
     if (!sel) {
-      ['ratio','F','L','nav'].forEach(col => setCell(col + '_' + p.code, ''));
+      ['ratio','F','redQty','subAmt'].forEach(col => setCell(col + '_' + p.code, ''));
       return;
     }
     const bp = st.bpData[p.code] ?? 0;
     const ratio = TOTAL_BP > 0 ? bp / TOTAL_BP : 0;
     // 应分配收益 = CEIL(产品规模 × BP/总BP / 10000) × 10000
     const F = Math.ceil(ratio * p.size / 10000) * 10000;
-    // 最新净值：从头寸管理"上传SPV持仓"获取，只读展示
-    const spvData = getSPVData(p.code);
-    const nav = spvData.length > 0 ? (spvData[0].nav || 0) : 0;
-    // 申购份额 = 申购金额 ÷ 单位净值（专户无认购费）
-    const L = nav > 0 ? Math.round(F / nav) : 0;
-
+    // 赎回份额（源专户）= 金额 ÷ 源专户净值
+    const srcSpvData = getSPVData(p.code);
+    const srcNav = srcSpvData.length > 0 ? (srcSpvData[0].nav || 0) : 0;
+    const redQty = srcNav > 0 ? Math.round(F / srcNav) : 0;
     // 占比 = F ÷ 产品规模（以客户手工文档为准）
     setCell('ratio_' + p.code, p.size > 0 ? ((F / p.size) * 100).toFixed(2) + '%' : '--');
     setCell('F_' + p.code, fmtNum(F));
-    setCell('nav_' + p.code, nav > 0 ? nav.toFixed(4) : '--');
-    setCell('L_' + p.code, fmtNum(L));
+    setCell('redQty_' + p.code, redQty.toLocaleString('zh-CN'));
+    // 申购金额 = F（申购按金额下单，不需要÷净值）
+    setCell('subAmt_' + p.code, fmtNum(F));
 
 
-    sumF += F; sumL += L;
+    sumF += F; sumL += redQty;
   });
 
   const selCount = acc.holdings.filter(p => st.selectedMap[p.code]).length;
@@ -2221,6 +2223,14 @@ function recalcLossMode(acc, st) {
     setCell('ratio_' + code, ratioPct.toFixed(2) + '%');
     setCell('F_' + code, fmtNum(F));
     setCell('I_' + code, fmtNum(I_val));
+
+    // 专户时效显示
+    if (st.lossRedSourceMap[code]) {
+      const spvMaint2 = spvMaintList.find(m => { const a = allAccounts.find(ac => ac.id === m.id); return a && a.code === st.lossRedSourceMap[code]; });
+      setCell('lossRedTval_' + code, spvMaint2 ? spvMaint2.tVal : 'T+0');
+    } else {
+      setCell('lossRedTval_' + code, '--');
+    }
 
     // 赎回份额 = 实际金额 ÷ 所选赎回来源专户的单位净值，超持标红预警
     const redSpvCode = st.lossRedSourceMap[code];
@@ -2310,8 +2320,13 @@ function onLossRedSourceChange(code, spvCode) {
   if (!st) return;
   if (spvCode) {
     st.lossRedSourceMap[code] = spvCode;
+    // 更新专户时效列
+    const spvMaint2 = spvMaintList.find(m => { const a = allAccounts.find(ac => ac.id === m.id); return a && a.code === spvCode; });
+    const tVal = spvMaint2 ? spvMaint2.tVal : 'T+0';
+    setCell('lossRedTval_' + code, tVal);
   } else {
     delete st.lossRedSourceMap[code];
+    setCell('lossRedTval_' + code, '--');
   }
   recalcCurrent();
 }
@@ -2335,7 +2350,7 @@ function onTargetSpvSearch(code, query) {
   const q = query.trim().toLowerCase();
   const list = allAccounts.filter(a => a.id !== acc.id && (!q || a.name.toLowerCase().includes(q) || a.code.toLowerCase().includes(q)));
   dropdown.innerHTML = list.length > 0
-    ? list.map(a => `<div onclick="selectTargetSpv('${code}','${a.id}','${escHtml(a.name + '（' + a.code + '）')}')" style="padding:6px 10px;font-size:12px;cursor:pointer;border-bottom:1px solid #f0f0f0;white-space:nowrap;" onmouseover="this.style.background='#F0F4FF'" onmouseout="this.style.background=''">${escHtml(a.name)} <span style="color:var(--text-muted);font-size:11px;">${a.code}</span></div>`).join('')
+    ? list.map(a => `<div onclick="selectTargetSpv('${code}','${a.id}','${escHtml(a.name + '（' + a.code + '）')}')" style="padding:6px 10px;font-size:12px;cursor:pointer;border-bottom:1px solid #f0f0f0;white-space:nowrap;display:flex;justify-content:space-between;align-items:center;" onmouseover="this.style.background='#F0F4FF'" onmouseout="this.style.background=''"><span>${escHtml(a.name)} <span style="color:var(--text-muted);font-size:11px;">${a.code}</span></span><span style="font-size:10px;color:${a.tVal==='T+0'?'#1D4ED8':'#C2410C'};background:${a.tVal==='T+0'?'#DBEAFE':'#FFF7ED'};border-radius:2px;padding:0 4px;">${a.tVal||'T+0'}</span></div>`).join('')
     : '<div style="padding:8px 10px;font-size:12px;color:var(--text-muted);">未找到匹配专户</div>';
   dropdown.style.display = 'block';
   delete st.profitTargetMap[code];
@@ -2535,7 +2550,45 @@ function confirmRevoke() {
 function resetAll() {
   const acc = getAccount(currentAccountId);
   if (!acc) return;
-  // reset state for current account
+  showResetModal(acc);
+}
+
+function showResetModal(acc) {
+  const old = document.getElementById('resetModal');
+  if (old) old.remove();
+  const html = `
+    <div class="modal-overlay show" id="resetModal" onclick="closeResetModal(event)">
+      <div class="modal" style="width:420px;max-width:90vw;" onclick="event.stopPropagation()">
+        <div class="modal-header">
+          <h3>重置调仓配置</h3>
+          <span class="modal-close" onclick="closeResetModal()" style="display:flex;cursor:pointer;font-size:20px;color:var(--text-muted);padding:4px;line-height:1;">×</span>
+        </div>
+        <div class="modal-body">
+          <p style="font-size:14px;color:var(--text);margin-bottom:12px;">确认重置「<strong>${escHtml(acc.name)}</strong>」的调仓配置？</p>
+          <div style="background:#FEF2F2;border:1px solid #FECACA;border-radius:6px;padding:10px 12px;font-size:13px;color:#991B1B;">
+            ⚠️ 重置将恢复头寸管理中的额度，已同步的调仓指令将被撤销。
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-outline" onclick="closeResetModal()">取消</button>
+          <button class="btn" style="background:var(--danger);color:#fff;" onclick="confirmReset()">确认重置</button>
+        </div>
+      </div>
+    </div>`;
+  document.body.insertAdjacentHTML('beforeend', html);
+}
+
+function closeResetModal(e) {
+  if (e && e.target && e.target.id !== 'resetModal') return;
+  const modal = document.getElementById('resetModal');
+  if (modal) modal.remove();
+}
+
+function confirmReset() {
+  const acc = getAccount(currentAccountId);
+  const modal = document.getElementById('resetModal');
+  if (modal) modal.remove();
+  if (!acc) return;
   accountState[currentAccountId] = null;
   const st = getState(currentAccountId);
   st.status = 'progress';
@@ -2661,7 +2714,7 @@ function syncToSystem() {
 
   if (st.mode === 'loss') {
     if ((st.totalLoss || 0) <= 0) {
-      errors.push('总目标亏损金额未设置。');
+      errors.push('总目标亏损（BP）未设置。');
     }
     const selected = acc.holdings.filter(p => {
       const sel = (st.lossSelectedMap && st.lossSelectedMap[p.code] !== undefined) ? st.lossSelectedMap[p.code] : true;
@@ -2800,6 +2853,17 @@ function confirmSync() {
   const data = pendingSyncData;
   if (!data) return;
   const { acc, st, syncedProducts } = data;
+
+  // 同步前：确保所有产品在产品维护中上线
+  syncedProducts.forEach(p => {
+    const maintItem = productMaintList.find(m => m.code === p.code);
+    if (!maintItem) {
+      productMaintList.push({ code: p.code, name: p.name, online: true, sortOrder: productMaintList.length + 1, calcLive: true });
+    } else if (!maintItem.online) {
+      maintItem.online = true;
+    }
+  });
+  saveProductMaintList();
 
   // 写入 positionData._spv，标记来源为专户调仓
   syncedProducts.forEach(p => {
@@ -4869,7 +4933,7 @@ function fmtWanYuan(v) {
   } else if (v >= 10000) {
     return (v / 10000).toFixed(2) + '万';
   } else if (v >= 1000) {
-    return (v / 1000).toFixed(0) + '千';
+    return (v / 1000).toFixed(2) + '千';
   }
   return v.toString();
 }
