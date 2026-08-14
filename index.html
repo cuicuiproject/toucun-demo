@@ -1554,7 +1554,7 @@
     display: inline-block; padding: 2px 8px; border-radius: 3px;
     font-size: 11px; font-weight: 500;
   }
-  .spvq-status-tag.online { background: #DCFCE7; color: #166534; }
+  .spvq-status-tag.online { background: #EDE9FE; color: #6D28D9; }
   .spvq-status-tag.offline { background: #F3F4F6; color: #6B7280; }
   .spvq-status-tag.unmaint { background: #FFF7ED; color: #C2410C; }
   /* 展开行动画 */
@@ -3057,6 +3057,16 @@ function loadPositionData() {
     { code:'EW9005', name:'阳光金平衡示例5号(演示已平衡状态)', date:'2026-06-29', dayBegin:2000000, subAll:100000, redAll:-100000, fee:-50000, t1Back:50000, bankExch:0 },
     { code:'EW9006', name:'阳光金平衡示例6号(演示已平衡状态)', date:'2026-06-29', dayBegin:8000000, subAll:400000, redAll:-400000, fee:0, t1Back:0, bankExch:0 },
     { code:'EW9007', name:'阳光金平衡示例7号(演示已平衡状态)', date:'2026-06-29', dayBegin:6000000, subAll:1500000, redAll:-1500000, fee:0, t1Back:0, bankExch:0 },
+    // === 未维护示例产品（导入但未在理财产品维护中上线）===
+    { code:'EW9101', name:'阳光金增利稳健天天购101号（未维护示例）', date:'2026-08-14', dayBegin:1200000, subAll:300000, redAll:-200000, fee:0, t1Back:0, bankExch:0 },
+    { code:'EW9102', name:'阳光金私享增利周开102号（未维护示例）', date:'2026-08-14', dayBegin:3500000, subAll:0, redAll:-800000, fee:-10000, t1Back:0, bankExch:0 },
+    { code:'EW9103', name:'阳光金安心计划103号（未维护示例）', date:'2026-08-14', dayBegin:800000, subAll:500000, redAll:0, fee:0, t1Back:200000, bankExch:0 },
+    { code:'EW9104', name:'阳光金丰利104期（未维护示例）', date:'2026-08-14', dayBegin:5000000, subAll:0, redAll:-1500000, fee:0, t1Back:0, bankExch:1000000 },
+    { code:'EW9105', name:'阳光金同利105号（未维护示例）', date:'2026-08-14', dayBegin:2000000, subAll:100000, redAll:-600000, fee:-50000, t1Back:0, bankExch:0 },
+    // === 已下线示例产品（在理财产品维护中已下线）===
+    { code:'EW9201', name:'阳光金增利稳健天天购201号（已下线示例）', date:'2026-08-14', dayBegin:1500000, subAll:0, redAll:-500000, fee:0, t1Back:0, bankExch:0 },
+    { code:'EW9202', name:'阳光金私享增利周开202号（已下线示例）', date:'2026-08-14', dayBegin:2800000, subAll:400000, redAll:0, fee:-20000, t1Back:0, bankExch:0 },
+    { code:'EW9203', name:'阳光金安心计划203号（已下线示例）', date:'2026-08-14', dayBegin:900000, subAll:0, redAll:-300000, fee:0, t1Back:100000, bankExch:0 },
   ];
   try {
     const saved = localStorage.getItem('position_data');
@@ -3629,6 +3639,19 @@ function init() {
         });
       }
     })();
+    // 演示：将未上线示例产品（EW9101~EW9105）从产品维护列表移除，标记为"未上线"
+    const unmaintCodes = ['EW9101','EW9102','EW9103','EW9104','EW9105'];
+    productMaintList = productMaintList.filter(m => !unmaintCodes.includes(m.code));
+    // 演示：将已下线示例产品（EW9201~EW9203）加入产品维护列表并标记为下线
+    const offlineCodes = ['EW9201','EW9202','EW9203'];
+    offlineCodes.forEach(code => {
+      const existing = productMaintList.find(m => m.code === code);
+      if (existing) { existing.online = false; }
+      else {
+        const p = positionData.find(r => r.code === code);
+        if (p) productMaintList.push({ code: p.code, name: p.name, online: false, sortOrder: productMaintList.length + 1, calcLive: true });
+      }
+    });
     // 初始化头寸管理 Tab
     currentTab = 'position';
     positionColumns.forEach(c => { visibleColumns[c.key] = c.defaultShow; });
@@ -4195,7 +4218,7 @@ function renderSpvQueryByProduct() {
       let statusLabel, statusClass;
       if (maintItem && maintItem.online) { statusLabel = '已上线'; statusClass = 'online'; }
       else if (maintItem && !maintItem.online) { statusLabel = '已下线'; statusClass = 'offline'; }
-      else { statusLabel = '未维护'; statusClass = 'unmaint'; }
+      else { statusLabel = '未上线'; statusClass = 'unmaint'; }
 
       // 持仓总规模
       const totalScale = holdings.reduce((sum, h) => sum + (h.scale || (h.qty * h.nav) || 0), 0);
@@ -4290,7 +4313,7 @@ function renderSpvQueryByProduct() {
       </div>
       <div class="spvq-summary-bar">
         <div class="ss-item">共 <span class="ss-value">${totalProducts}</span> 个理财产品</div>
-        <div class="ss-item">已上线 <span class="ss-value" style="color:#166534;">${onlineCount}</span></div>
+        <div class="ss-item">已上线 <span class="ss-value" style="color:#6D28D9;">${onlineCount}</span></div>
         <div class="ss-item">未上线 <span class="ss-value" style="color:#C2410C;">${totalProducts - onlineCount}</span></div>
         <div class="ss-item">专户持仓明细 <span class="ss-value">${totalSpvRows}</span> 条</div>
       </div>
@@ -4331,6 +4354,24 @@ function toggleSpvQuerySpv(code) {
   renderSpvQueryPage();
 }
 
+// 专户维护状态（真实逻辑从 spvMaintList 判断；Demo 模拟部分专户状态）
+function getSpvMaintStatus(spvCode) {
+  const spvMaint = spvMaintList.find(m => {
+    const a = allAccounts.find(ac => ac.id === m.id);
+    return a && a.code === spvCode;
+  });
+  if (spvMaint && spvMaint.online) return { label: '已上线', cls: 'online' };
+  if (spvMaint && !spvMaint.online) return { label: '已下线', cls: 'offline' };
+  const demoMap = {
+    'ZTQX08': 'online', 'ZTYS19': 'online',
+    '2021-1147': 'offline', 'B42146': 'offline',
+  };
+  const s = demoMap[spvCode];
+  if (s === 'online') return { label: '已上线', cls: 'online' };
+  if (s === 'offline') return { label: '已下线', cls: 'offline' };
+  return { label: '未上线', cls: 'unmaint' };
+}
+
 // 按专户维度渲染
 function renderSpvQueryBySpv() {
   const container = document.getElementById('spvQueryContent');
@@ -4360,15 +4401,17 @@ function renderSpvQueryBySpv() {
 
   let rowsHTML = '';
   if (spvList.length === 0) {
-    rowsHTML = '<tr><td colspan="7" class="spvq-empty">未找到匹配专户</td></tr>';
+    rowsHTML = '<tr><td colspan="8" class="spvq-empty">未找到匹配专户</td></tr>';
   } else {
     rowsHTML = spvList.map(s => {
       const isExpanded = spvQueryExpandedSpv[s.spvCode];
       const totalScale = s.products.reduce((sum, p) => sum + p.scale, 0);
+      const st = getSpvMaintStatus(s.spvCode);
       let row = `
         <tr class="spvq-lv1-row${isExpanded ? ' expanded' : ''}" onclick="toggleSpvQuerySpv('${escHtml(s.spvCode)}')" style="cursor:pointer;">
           <td><span class="toggle-icon">▶</span> <span class="prod-code">${escHtml(s.spvCode)}</span></td>
           <td style="max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${escHtml(s.spvName)}">${escHtml(s.spvName)}</td>
+          <td class="center"><span class="spvq-status-tag ${st.cls}">${st.label}</span></td>
           <td class="num">${s.nav ? s.nav.toFixed(4) : '--'}</td>
           <td class="num">${s.products.length}</td>
           <td class="num">${fmtNum(totalScale)}</td>
@@ -4382,6 +4425,7 @@ function renderSpvQueryBySpv() {
             <tr class="spvq-lv2-row">
               <td class="indent" style="font-weight:500;color:var(--primary);">${escHtml(p.code)}</td>
               <td style="max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${escHtml(p.name)}">${escHtml(p.name)}</td>
+              <td></td>
               <td></td>
               <td></td>
               <td class="num">${fmtNum(p.scale)}</td>
@@ -4423,6 +4467,7 @@ function renderSpvQueryBySpv() {
             <tr>
               <th style="width:160px;">专户代码</th>
               <th>专户名称</th>
+              <th class="center" style="width:90px;">维护状态</th>
               <th class="num" style="width:100px;">单位净值</th>
               <th class="num" style="width:90px;">持有产品数</th>
               <th class="num" style="width:140px;">持有规模（元）</th>
