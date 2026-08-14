@@ -1500,6 +1500,76 @@
     font-weight: 600;
     color: var(--text);
   }
+
+  /* ============ SPV持仓查询 - 一二级表头折叠表格 ============ */
+  .spvq-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  /* 一级表头 */
+  .spvq-table thead.lv1 th {
+    background: #1A3C6D; color: #fff; font-weight: 600;
+    padding: 10px 12px; text-align: left; white-space: nowrap; font-size: 12px;
+    border-right: 1px solid rgba(255,255,255,0.12);
+  }
+  .spvq-table thead.lv1 th:last-child { border-right: none; }
+  .spvq-table thead.lv1 th.center { text-align: center; }
+  .spvq-table thead.lv1 th.num { text-align: right; }
+  /* 二级表头 */
+  .spvq-table thead.lv2 th {
+    background: #F0F4FA; color: #475569; font-weight: 600;
+    padding: 7px 12px; text-align: left; white-space: nowrap; font-size: 11px;
+    border-bottom: 2px solid #CBD5E1; border-right: 1px solid #E2E8F0;
+  }
+  .spvq-table thead.lv2 th:last-child { border-right: none; }
+  .spvq-table thead.lv2 th.center { text-align: center; }
+  .spvq-table thead.lv2 th.num { text-align: right; }
+  /* 一级行（产品维度） */
+  .spvq-table tbody tr.spvq-lv1-row {
+    background: #fff; cursor: pointer;
+    border-bottom: 1px solid #E5E7EB;
+    transition: background 0.15s;
+  }
+  .spvq-table tbody tr.spvq-lv1-row:hover { background: #F8FAFC; }
+  .spvq-table tbody tr.spvq-lv1-row.expanded { background: #F0F4FA; }
+  .spvq-table tbody tr.spvq-lv1-row td {
+    padding: 10px 12px; font-weight: 600; font-size: 13px;
+    border-bottom: 1px solid #E5E7EB;
+  }
+  .spvq-table tbody tr.spvq-lv1-row .toggle-icon {
+    display: inline-block; width: 18px; text-align: center;
+    color: var(--primary); font-size: 12px; transition: transform 0.2s;
+  }
+  .spvq-table tbody tr.spvq-lv1-row.expanded .toggle-icon { transform: rotate(90deg); }
+  .spvq-table tbody tr.spvq-lv1-row .prod-code { color: var(--primary); }
+  /* 二级行（专户维度） */
+  .spvq-table tbody tr.spvq-lv2-row {
+    background: #FAFBFC; border-bottom: 1px solid #F0F1F5;
+  }
+  .spvq-table tbody tr.spvq-lv2-row:hover { background: #F1F5F9; }
+  .spvq-table tbody tr.spvq-lv2-row td {
+    padding: 7px 12px; font-size: 12px; color: #334155;
+  }
+  .spvq-table tbody tr.spvq-lv2-row td.indent { padding-left: 32px; }
+  .spvq-table tbody tr.spvq-lv2-row td.num { font-family: 'Consolas','Monaco',monospace; text-align: right; }
+  /* 状态标签 */
+  .spvq-status-tag {
+    display: inline-block; padding: 2px 8px; border-radius: 3px;
+    font-size: 11px; font-weight: 500;
+  }
+  .spvq-status-tag.online { background: #DCFCE7; color: #166534; }
+  .spvq-status-tag.offline { background: #F3F4F6; color: #6B7280; }
+  .spvq-status-tag.unmaint { background: #FFF7ED; color: #C2410C; }
+  /* 展开行动画 */
+  .spvq-lv2-row { animation: spvqSlideDown 0.2s ease; }
+  @keyframes spvqSlideDown { from { opacity: 0; } to { opacity: 1; } }
+  /* 空数据提示 */
+  .spvq-empty { padding: 40px; text-align: center; color: var(--text-muted); font-size: 13px; }
+  /* 汇总栏 */
+  .spvq-summary-bar {
+    display: flex; align-items: center; gap: 16px;
+    padding: 8px 16px; background: #F0F4FA; border-radius: 0 0 var(--radius) var(--radius);
+    font-size: 12px; color: var(--text-secondary); flex-wrap: wrap;
+  }
+  .spvq-summary-bar .ss-item { display: flex; align-items: center; gap: 4px; }
+  .spvq-summary-bar .ss-value { font-weight: 600; color: var(--text); }
 </style>
 </head>
 <body>
@@ -1514,6 +1584,7 @@
     <div class="nav-tab" data-tab="adjust" onclick="switchTab('adjust')">专户调仓</div>
     <div class="nav-tab" data-tab="product" onclick="switchTab('product')">理财产品维护</div>
     <div class="nav-tab" data-tab="spv" onclick="switchTab('spv')">专户产品维护</div>
+    <div class="nav-tab" data-tab="spvQuery" onclick="switchTab('spvQuery')">SPV持仓查询</div>
   </div>
 </div>
 
@@ -1551,6 +1622,13 @@
 <!-- ============ 专户产品维护 Tab 页面 ============ -->
 <div class="layout" id="tabSpv" style="display:none;">
   <div class="content product-maint-page" id="spvMaintContent">
+    <!-- 动态渲染 -->
+  </div>
+</div>
+
+<!-- ============ SPV持仓查询 Tab 页面 ============ -->
+<div class="layout" id="tabSpvQuery" style="display:none;">
+  <div class="content product-maint-page" id="spvQueryContent">
     <!-- 动态渲染 -->
   </div>
 </div>
@@ -2854,18 +2932,8 @@ function confirmSync() {
   if (!data) return;
   const { acc, st, syncedProducts } = data;
 
-  // 同步前：确保所有产品在产品维护中上线
-  syncedProducts.forEach(p => {
-    const maintItem = productMaintList.find(m => m.code === p.code);
-    if (!maintItem) {
-      productMaintList.push({ code: p.code, name: p.name, online: true, sortOrder: productMaintList.length + 1, calcLive: true });
-    } else if (!maintItem.online) {
-      maintItem.online = true;
-    }
-  });
-  saveProductMaintList();
-
-  // 写入 positionData._spv，标记来源为专户调仓
+  // 同步：不修改理财产品维护的固定上线清单，仅写入 positionData
+  // 头寸管理渲染时按"上线产品 ∪ 当天有调仓数据的产品"临时展示
   syncedProducts.forEach(p => {
     let posRow = positionData.find(r => r.code === p.code);
     if (!posRow) {
@@ -3127,12 +3195,30 @@ function getSPVData(productCode) {
   if (spvHoldingsData[productCode]) return spvHoldingsData[productCode];
   // 前 4 只产品持仓较少，用于展示超额赎回预警效果
   const demoWarnCodes = ['EW3517','EW0599','EW4217','EW2911'];
-  const qtyZTQX = demoWarnCodes.includes(productCode) ? 5000000 : 200000000;
-  const qty1147 = demoWarnCodes.includes(productCode) ? 3000000 : 150000000;
-  return [
-    { spvCode:'ZTQX08', spvName:'中铁信托-乾鑫8号', navDate:'2026-06-27', nav:1.11146787, channel:'直销', qty:qtyZTQX, scale:5557339.35, subAmt:0, redAmt:0 },
-    { spvCode:'2021-1147', spvName:'华润信托·招利33号', navDate:'2026-06-27', nav:1.10354761, channel:'直销', qty:qty1147, scale:3310642.83, subAmt:0, redAmt:0 },
+  const isWarn = demoWarnCodes.includes(productCode);
+
+  // 模拟 6 个专户，净值/渠道各不相同
+  const baseSpv = [
+    { spvCode:'ZTQX08', spvName:'中铁信托-乾鑫8号集合资金信托计划', nav:1.11146787, channel:'直销' },
+    { spvCode:'2021-1147', spvName:'华润信托·招利33号集合资金信托', nav:1.10354761, channel:'直销' },
+    { spvCode:'ZTYS19', spvName:'中铁信托-云升19号集合资金信托计划', nav:1.02370411, channel:'直销' },
+    { spvCode:'6666666666', spvName:'国联光盈多策略18号集合资产管理计划', nav:1.0257, channel:'基煜' },
+    { spvCode:'SAGP35', spvName:'光大期货阳光甄选8号集合资产管理计划', nav:1.0111, channel:'基煜' },
+    { spvCode:'B42146', spvName:'国联光盈多策略19号集合资产管理计划', nav:1.0513, channel:'基煜' },
   ];
+
+  // 用产品代码生成种子，决定每只产品持有几个专户、多少份额
+  let seed = 0;
+  for (let i = 0; i < productCode.length; i++) seed = (seed * 31 + productCode.charCodeAt(i)) % 997;
+  const holdCount = 4 + (seed % 3); // 持有 4~6 个专户
+
+  return baseSpv.slice(0, holdCount).map((spv, i) => {
+    const qty = isWarn
+      ? (i + 1) * 5000000
+      : Math.round((seed % 8 + 1) * 20000000 + i * 8000000);
+    const scale = Math.round(qty * spv.nav);
+    return { ...spv, navDate:'2026-06-27', qty, scale, subAmt:0, redAmt:0 };
+  });
 }
 
 // 产品信息弹窗状态
@@ -3568,7 +3654,7 @@ function switchTab(tab) {
     el.classList.toggle('active', el.dataset.tab === tab);
   });
   // 更新 badge
-  const badgeMap = { position: '头寸管理', adjust: '专户调仓', product: '理财产品维护', spv: '专户产品维护' };
+  const badgeMap = { position: '头寸管理', adjust: '专户调仓', product: '理财产品维护', spv: '专户产品维护', spvQuery: 'SPV持仓查询' };
   document.getElementById('headerBadge').textContent = badgeMap[tab] || '';
 
   // 切换显示
@@ -3576,6 +3662,7 @@ function switchTab(tab) {
   document.getElementById('tabAdjust').style.display = tab === 'adjust' ? 'flex' : 'none';
   document.getElementById('tabProduct').style.display = tab === 'product' ? 'flex' : 'none';
   document.getElementById('tabSpv').style.display = tab === 'spv' ? 'flex' : 'none';
+  document.getElementById('tabSpvQuery').style.display = tab === 'spvQuery' ? 'flex' : 'none';
 
   if (tab === 'position') {
     renderPositionPage();
@@ -3594,6 +3681,8 @@ function switchTab(tab) {
     renderProductMaintPage();
   } else if (tab === 'spv') {
     renderSpvMaintPage();
+  } else if (tab === 'spvQuery') {
+    renderSpvQueryPage();
   }
 }
 
@@ -4050,6 +4139,304 @@ function switchSpvMaintTab(tab) {
   renderSpvMaintPage();
 }
 
+// ==================== SPV持仓查询 ====================
+let spvQueryFilter = '';
+let spvQueryExpanded = {}; // { productCode: true }
+let spvQueryExpandedSpv = {}; // { spvCode: true }
+let spvQueryDate = '2026-08-14'; // 当前选中日期
+let spvQueryDimension = 'product'; // 'product' 按理财产品 / 'spv' 按专户产品
+const spvQueryDateList = ['2026-08-11', '2026-08-12', '2026-08-13', '2026-08-14'];
+
+// 模拟历史日期快照：不同日期包含不同数量的产品（Demo 演示用）
+function getSpvQueryDateCodes(date) {
+  const total = positionData.length;
+  const idx = spvQueryDateList.indexOf(date);
+  const count = total - (spvQueryDateList.length - 1 - idx) * 6;
+  return positionData.slice(0, Math.max(8, count)).map(p => p.code);
+}
+
+function renderSpvQueryPage() {
+  if (spvQueryDimension === 'product') {
+    renderSpvQueryByProduct();
+  } else {
+    renderSpvQueryBySpv();
+  }
+}
+
+function renderSpvQueryByProduct() {
+  const container = document.getElementById('spvQueryContent');
+  const q = spvQueryFilter.trim().toLowerCase();
+  // 按日期过滤 + 搜索过滤
+  const dateCodes = getSpvQueryDateCodes(spvQueryDate);
+  const products = positionData.filter(p => {
+    if (!dateCodes.includes(p.code)) return false;
+    if (!q) return true;
+    return p.code.toLowerCase().includes(q) || p.name.toLowerCase().includes(q);
+  });
+
+  // 统计汇总
+  const totalProducts = products.length;
+  const onlineCount = products.filter(p => {
+    const m = productMaintList.find(m => m.code === p.code);
+    return m && m.online;
+  }).length;
+  const totalSpvRows = products.reduce((sum, p) => sum + getSPVData(p.code).length, 0);
+
+  let rowsHTML = '';
+  if (products.length === 0) {
+    rowsHTML = '<tr><td colspan="10" class="spvq-empty">未找到匹配产品</td></tr>';
+  } else {
+    rowsHTML = products.map(p => {
+      const holdings = getSPVData(p.code);
+      const isExpanded = spvQueryExpanded[p.code];
+
+      // 维护状态
+      const maintItem = productMaintList.find(m => m.code === p.code);
+      let statusLabel, statusClass;
+      if (maintItem && maintItem.online) { statusLabel = '已上线'; statusClass = 'online'; }
+      else if (maintItem && !maintItem.online) { statusLabel = '已下线'; statusClass = 'offline'; }
+      else { statusLabel = '未维护'; statusClass = 'unmaint'; }
+
+      // 持仓总规模
+      const totalScale = holdings.reduce((sum, h) => sum + (h.scale || (h.qty * h.nav) || 0), 0);
+
+      // 一级行
+      let row = `
+        <tr class="spvq-lv1-row${isExpanded ? ' expanded' : ''}" data-code="${escHtml(p.code)}" onclick="toggleSpvQuery('${escHtml(p.code)}')">
+          <td><span class="toggle-icon">▶</span> <span class="prod-code">${escHtml(p.code)}</span></td>
+          <td>${escHtml(p.name)}</td>
+          <td class="center"><span class="spvq-status-tag ${statusClass}">${statusLabel}</span></td>
+          <td class="center">${escHtml(p.date || '--')}</td>
+          <td class="num">${holdings.length}</td>
+          <td class="num">${fmtNum(totalScale)}</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+        </tr>`;
+
+      // 二级行（展开时显示）
+      if (isExpanded) {
+        if (holdings.length === 0) {
+          row += `
+            <tr class="spvq-lv2-row">
+              <td colspan="10" class="indent" style="color:var(--text-muted);font-style:italic;">暂无专户持仓数据</td>
+            </tr>`;
+        } else {
+          holdings.forEach(h => {
+            const scale = h.scale || (h.qty * h.nav) || 0;
+            const pct = totalScale > 0 ? (scale / totalScale * 100).toFixed(2) + '%' : '--';
+            row += `
+              <tr class="spvq-lv2-row">
+                <td class="indent" style="font-weight:500;color:var(--primary);">${escHtml(h.spvCode)}</td>
+                <td style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${escHtml(h.spvName)}">${escHtml(h.spvName)}</td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td class="num">${h.nav ? h.nav.toFixed(4) : '--'}</td>
+                <td class="num">${fmtNum(scale)}</td>
+                <td class="num">${fmtNum(h.qty || 0)}</td>
+                <td class="num">${pct}</td>
+              </tr>`;
+          });
+        }
+      }
+      return row;
+    }).join('');
+  }
+
+  container.innerHTML = `
+    <div class="maint-tabs" style="margin-bottom:12px;">
+      <div class="maint-tab ${spvQueryDimension === 'product' ? 'active' : ''}" onclick="switchSpvQueryDimension('product')">按理财产品</div>
+      <div class="maint-tab ${spvQueryDimension === 'spv' ? 'active' : ''}" onclick="switchSpvQueryDimension('spv')">按专户产品</div>
+    </div>
+    <div class="product-maint-notice">
+      <span class="notice-icon">💡</span>
+      <div><strong>说明：</strong>本页展示每日导入《SPV持仓》文件中的全部理财产品及对应专户持仓，为只读数据记录，不做任何操作。点击行可展开/收起明细。<br><span style="color:#C2410C;">当前为 Demo 模拟数据，实际对接《SPV持仓》文件导入接口后自动填充全量产品。</span></div>
+    </div>
+    <div class="product-maint-toolbar">
+      <label style="font-size:12px;color:var(--text-secondary);">导入日期</label>
+      <select class="form-select" id="spvQueryDate" onchange="spvQueryDate=this.value;renderSpvQueryPage()" style="width:130px;">
+        ${spvQueryDateList.map(d => `<option value="${d}" ${d === spvQueryDate ? 'selected' : ''}>${d}</option>`).join('')}
+      </select>
+      <span class="toolbar-divider"></span>
+      <input type="text" class="form-input" id="spvQueryFilter" placeholder="搜索产品代码或名称" value="${escHtml(spvQueryFilter)}"
+        style="width:260px;" onkeydown="if(event.key==='Enter')doSpvQuerySearch()">
+      <button onclick="doSpvQuerySearch()" style="padding:6px 14px;font-size:12px;border:1px solid var(--border);border-radius:4px;background:var(--primary);color:#fff;cursor:pointer;">查询</button>
+      <span style="flex:1;"></span>
+      <button onclick="expandAllSpvQuery(true)" style="padding:4px 10px;font-size:12px;border:1px solid var(--border);border-radius:4px;background:#fff;cursor:pointer;">全部展开</button>
+      <button onclick="expandAllSpvQuery(false)" style="padding:4px 10px;font-size:12px;border:1px solid var(--border);border-radius:4px;background:#fff;cursor:pointer;">全部收起</button>
+    </div>
+    <div class="section-card" style="margin-top:12px;">
+      <div class="table-container" style="max-height:65vh;">
+        <table class="spvq-table">
+          <thead class="lv1">
+            <tr>
+              <th style="width:160px;">产品代码</th>
+              <th>产品名称</th>
+              <th class="center" style="width:90px;">维护状态</th>
+              <th class="center" style="width:110px;">导入日期</th>
+              <th class="num" style="width:80px;">专户数</th>
+              <th class="num" style="width:140px;">持仓总规模（元）</th>
+              <th class="num" style="width:100px;">单位净值</th>
+              <th class="num" style="width:140px;">持有规模（元）</th>
+              <th class="num" style="width:100px;">持有份额</th>
+              <th class="num" style="width:100px;">占比</th>
+            </tr>
+          </thead>
+          <tbody>${rowsHTML}</tbody>
+        </table>
+      </div>
+      <div class="spvq-summary-bar">
+        <div class="ss-item">共 <span class="ss-value">${totalProducts}</span> 个理财产品</div>
+        <div class="ss-item">已上线 <span class="ss-value" style="color:#166534;">${onlineCount}</span></div>
+        <div class="ss-item">未上线 <span class="ss-value" style="color:#C2410C;">${totalProducts - onlineCount}</span></div>
+        <div class="ss-item">专户持仓明细 <span class="ss-value">${totalSpvRows}</span> 条</div>
+      </div>
+    </div>
+  `;
+}
+
+function toggleSpvQuery(code) {
+  spvQueryExpanded[code] = !spvQueryExpanded[code];
+  renderSpvQueryPage();
+}
+
+function doSpvQuerySearch() {
+  spvQueryFilter = document.getElementById('spvQueryFilter')?.value || '';
+  renderSpvQueryPage();
+}
+
+function expandAllSpvQuery(expand) {
+  if (spvQueryDimension === 'product') {
+    if (expand) { positionData.forEach(p => { spvQueryExpanded[p.code] = true; }); }
+    else { spvQueryExpanded = {}; }
+  } else {
+    if (expand) {
+      positionData.forEach(p => { getSPVData(p.code).forEach(h => { spvQueryExpandedSpv[h.spvCode] = true; }); });
+    } else { spvQueryExpandedSpv = {}; }
+  }
+  renderSpvQueryPage();
+}
+
+function switchSpvQueryDimension(dim) {
+  spvQueryDimension = dim;
+  spvQueryFilter = '';
+  renderSpvQueryPage();
+}
+
+function toggleSpvQuerySpv(code) {
+  spvQueryExpandedSpv[code] = !spvQueryExpandedSpv[code];
+  renderSpvQueryPage();
+}
+
+// 按专户维度渲染
+function renderSpvQueryBySpv() {
+  const container = document.getElementById('spvQueryContent');
+  const q = spvQueryFilter.trim().toLowerCase();
+  const dateCodes = getSpvQueryDateCodes(spvQueryDate);
+
+  // 提取所有专户（去重），聚合被哪些产品持有
+  const spvMap = {};
+  positionData.forEach(p => {
+    if (!dateCodes.includes(p.code)) return;
+    const holdings = getSPVData(p.code);
+    holdings.forEach(h => {
+      if (!spvMap[h.spvCode]) {
+        spvMap[h.spvCode] = { spvCode: h.spvCode, spvName: h.spvName, nav: h.nav, products: [] };
+      }
+      const scale = h.scale || (h.qty * h.nav) || 0;
+      spvMap[h.spvCode].products.push({ code: p.code, name: p.name, scale, qty: h.qty || 0 });
+    });
+  });
+
+  let spvList = Object.values(spvMap);
+  if (q) {
+    spvList = spvList.filter(s =>
+      (s.spvCode || '').toLowerCase().includes(q) || (s.spvName || '').toLowerCase().includes(q)
+    );
+  }
+
+  let rowsHTML = '';
+  if (spvList.length === 0) {
+    rowsHTML = '<tr><td colspan="7" class="spvq-empty">未找到匹配专户</td></tr>';
+  } else {
+    rowsHTML = spvList.map(s => {
+      const isExpanded = spvQueryExpandedSpv[s.spvCode];
+      const totalScale = s.products.reduce((sum, p) => sum + p.scale, 0);
+      let row = `
+        <tr class="spvq-lv1-row${isExpanded ? ' expanded' : ''}" onclick="toggleSpvQuerySpv('${escHtml(s.spvCode)}')" style="cursor:pointer;">
+          <td><span class="toggle-icon">▶</span> <span class="prod-code">${escHtml(s.spvCode)}</span></td>
+          <td style="max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${escHtml(s.spvName)}">${escHtml(s.spvName)}</td>
+          <td class="num">${s.nav ? s.nav.toFixed(4) : '--'}</td>
+          <td class="num">${s.products.length}</td>
+          <td class="num">${fmtNum(totalScale)}</td>
+          <td></td><td></td>
+        </tr>`;
+
+      if (isExpanded) {
+        s.products.forEach(p => {
+          const pct = totalScale > 0 ? (p.scale / totalScale * 100).toFixed(2) + '%' : '--';
+          row += `
+            <tr class="spvq-lv2-row">
+              <td class="indent" style="font-weight:500;color:var(--primary);">${escHtml(p.code)}</td>
+              <td style="max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${escHtml(p.name)}">${escHtml(p.name)}</td>
+              <td></td>
+              <td></td>
+              <td class="num">${fmtNum(p.scale)}</td>
+              <td class="num">${fmtNum(p.qty)}</td>
+              <td class="num">${pct}</td>
+            </tr>`;
+        });
+      }
+      return row;
+    }).join('');
+  }
+
+  container.innerHTML = `
+    <div class="maint-tabs" style="margin-bottom:12px;">
+      <div class="maint-tab ${spvQueryDimension === 'product' ? 'active' : ''}" onclick="switchSpvQueryDimension('product')">按理财产品</div>
+      <div class="maint-tab ${spvQueryDimension === 'spv' ? 'active' : ''}" onclick="switchSpvQueryDimension('spv')">按专户产品</div>
+    </div>
+    <div class="product-maint-notice">
+      <span class="notice-icon">💡</span>
+      <div><strong>说明：</strong>本页展示每日导入《SPV持仓》文件中的全部专户及被哪些理财产品持有，为只读数据记录。点击专户行可展开查看持有该专户的产品明细。<br><span style="color:#C2410C;">当前为 Demo 模拟数据，实际对接《SPV持仓》文件导入接口后自动填充全量数据。</span></div>
+    </div>
+    <div class="product-maint-toolbar">
+      <label style="font-size:12px;color:var(--text-secondary);">导入日期</label>
+      <select class="form-select" onchange="spvQueryDate=this.value;renderSpvQueryPage()" style="width:130px;">
+        ${spvQueryDateList.map(d => `<option value="${d}" ${d === spvQueryDate ? 'selected' : ''}>${d}</option>`).join('')}
+      </select>
+      <span class="toolbar-divider"></span>
+      <input type="text" class="form-input" id="spvQueryFilter" placeholder="搜索专户代码或名称" value="${escHtml(spvQueryFilter)}"
+        style="width:260px;" onkeydown="if(event.key==='Enter')doSpvQuerySearch()">
+      <button onclick="doSpvQuerySearch()" style="padding:6px 14px;font-size:12px;border:1px solid var(--border);border-radius:4px;background:var(--primary);color:#fff;cursor:pointer;">查询</button>
+      <span style="flex:1;"></span>
+      <button onclick="expandAllSpvQuery(true)" style="padding:4px 10px;font-size:12px;border:1px solid var(--border);border-radius:4px;background:#fff;cursor:pointer;">全部展开</button>
+      <button onclick="expandAllSpvQuery(false)" style="padding:4px 10px;font-size:12px;border:1px solid var(--border);border-radius:4px;background:#fff;cursor:pointer;">全部收起</button>
+    </div>
+    <div class="section-card" style="margin-top:12px;">
+      <div class="table-container" style="max-height:65vh;">
+        <table class="spvq-table">
+          <thead class="lv1">
+            <tr>
+              <th style="width:160px;">专户代码</th>
+              <th>专户名称</th>
+              <th class="num" style="width:100px;">单位净值</th>
+              <th class="num" style="width:90px;">持有产品数</th>
+              <th class="num" style="width:140px;">持有规模（元）</th>
+              <th class="num" style="width:100px;">持有份额</th>
+              <th class="num" style="width:100px;">占比</th>
+            </tr>
+          </thead>
+          <tbody>${rowsHTML}</tbody>
+        </table>
+      </div>
+    </div>
+  `;
+}
+
 function onSpvMaintFilterChange() {
   spvMaintFilter = document.getElementById('spvMaintFilter').value;
   spvMaintPageIdx = 0;
@@ -4189,11 +4576,11 @@ function renderPositionPage() {
   // 计算所有行
   positionData.forEach(row => calcPositionRow(row));
 
-  // 过滤：只显示已上线的产品 + 搜索过滤
+  // 过滤：上线产品 ∪ 当天有调仓数据的产品 + 搜索过滤
   const onlineCodes = new Set(getOnlineProducts().map(p => p.code));
   const q = positionFilter.trim().toLowerCase();
   const allFiltered = positionData.filter(row => {
-    if (!onlineCodes.has(row.code)) return false;
+    if (!onlineCodes.has(row.code) && !hasRebalanceData(row)) return false;
     if (!q) return true;
     return row.code.toLowerCase().includes(q) || row.name.toLowerCase().includes(q);
   });
@@ -4500,12 +4887,18 @@ function doPositionSearch() {
   renderPositionPage();
 }
 
+// 判断产品当天是否有专户调仓数据（_spv 中任一专户有 subRebalance/redRebalance）
+function hasRebalanceData(row) {
+  if (!row._spv) return false;
+  return Object.values(row._spv).some(sd => (sd.subRebalance || 0) !== 0 || (sd.redRebalance || 0) !== 0);
+}
+
 // 跳转到下一个待整理产品
 function jumpToNextPending() {
   const onlineCodes = new Set(getOnlineProducts().map(p => p.code));
   const q = positionFilter.trim().toLowerCase();
   const pending = positionData.filter(row => {
-    if (!onlineCodes.has(row.code)) return false;
+    if (!onlineCodes.has(row.code) && !hasRebalanceData(row)) return false;
     if (calcAutoStatus(row) !== 'pending') return false;
     if (!q) return true;
     return row.code.toLowerCase().includes(q) || row.name.toLowerCase().includes(q);
