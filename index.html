@@ -3617,6 +3617,22 @@ function goSpvPage(dir) {
 function init() {
   try {
     console.log('init start');
+    // 动态生成模拟产品，模拟真实规模（约100只）
+    (() => {
+      for (let i = 1; i <= 70; i++) {
+        const code = 'EW93' + String(i).padStart(3, '0');
+        if (positionData.some(p => p.code === code)) continue;
+        positionData.push({
+          code,
+          name: '阳光金模拟产品' + i + '号',
+          date: '2026-08-14',
+          dayBegin: Math.round((i * 137500 + 500000) / 1000) * 1000,
+          subAll: i % 3 === 0 ? i * 100000 : 0,
+          redAll: i % 2 === 0 ? -i * 80000 : 0,
+          fee: 0, t1Back: 0, bankExch: 0,
+        });
+      }
+    })();
     // 演示：预填宁聚5号（拉壳）和鑫和14号（调仓）的示例数据
     (() => {
       const stNingju = getState('ningju5');
@@ -4197,6 +4213,17 @@ function renderSpvQueryByProduct() {
     return p.code.toLowerCase().includes(q) || p.name.toLowerCase().includes(q);
   });
 
+  // 按维护状态排序：已上线(0) > 未上线(1) > 已下线(2)
+  products.sort((a, b) => {
+    const rank = (p) => {
+      const m = productMaintList.find(x => x.code === p.code);
+      if (m && m.online) return 0;
+      if (m && !m.online) return 2;
+      return 1;
+    };
+    return rank(a) - rank(b);
+  });
+
   // 统计汇总
   const totalProducts = products.length;
   const onlineCount = products.filter(p => {
@@ -4287,6 +4314,7 @@ function renderSpvQueryByProduct() {
       <input type="text" class="form-input" id="spvQueryFilter" placeholder="搜索产品代码或名称" value="${escHtml(spvQueryFilter)}"
         style="width:260px;" onkeydown="if(event.key==='Enter')doSpvQuerySearch()">
       <button onclick="doSpvQuerySearch()" style="padding:6px 14px;font-size:12px;border:1px solid var(--border);border-radius:4px;background:var(--primary);color:#fff;cursor:pointer;">查询</button>
+      <span style="font-size:13px;color:var(--text-secondary);">共 <strong style="color:var(--text);">${totalProducts}</strong> 只理财产品</span>
       <span style="flex:1;"></span>
       <button onclick="expandAllSpvQuery(true)" style="padding:4px 10px;font-size:12px;border:1px solid var(--border);border-radius:4px;background:#fff;cursor:pointer;">全部展开</button>
       <button onclick="expandAllSpvQuery(false)" style="padding:4px 10px;font-size:12px;border:1px solid var(--border);border-radius:4px;background:#fff;cursor:pointer;">全部收起</button>
@@ -4399,6 +4427,23 @@ function renderSpvQueryBySpv() {
     );
   }
 
+  // 按维护状态排序：已上线(0) > 未上线(1) > 已下线(2)
+  spvList.sort((a, b) => {
+    const rank = (s) => {
+      const st = getSpvMaintStatus(s.spvCode);
+      if (st.cls === 'online') return 0;
+      if (st.cls === 'offline') return 2;
+      return 1;
+    };
+    return rank(a) - rank(b);
+  });
+
+  // 汇总统计
+  const spvCount = spvList.length;
+  const onlineSpvCount = spvList.filter(s => getSpvMaintStatus(s.spvCode).cls === 'online').length;
+  const unmaintSpvCount = spvList.filter(s => getSpvMaintStatus(s.spvCode).cls === 'unmaint').length;
+  const totalProductRows = spvList.reduce((sum, s) => sum + s.products.length, 0);
+
   let rowsHTML = '';
   if (spvList.length === 0) {
     rowsHTML = '<tr><td colspan="8" class="spvq-empty">未找到匹配专户</td></tr>';
@@ -4456,6 +4501,7 @@ function renderSpvQueryBySpv() {
       <input type="text" class="form-input" id="spvQueryFilter" placeholder="搜索专户代码或名称" value="${escHtml(spvQueryFilter)}"
         style="width:260px;" onkeydown="if(event.key==='Enter')doSpvQuerySearch()">
       <button onclick="doSpvQuerySearch()" style="padding:6px 14px;font-size:12px;border:1px solid var(--border);border-radius:4px;background:var(--primary);color:#fff;cursor:pointer;">查询</button>
+      <span style="font-size:13px;color:var(--text-secondary);">共 <strong style="color:var(--text);">${spvCount}</strong> 个专户</span>
       <span style="flex:1;"></span>
       <button onclick="expandAllSpvQuery(true)" style="padding:4px 10px;font-size:12px;border:1px solid var(--border);border-radius:4px;background:#fff;cursor:pointer;">全部展开</button>
       <button onclick="expandAllSpvQuery(false)" style="padding:4px 10px;font-size:12px;border:1px solid var(--border);border-radius:4px;background:#fff;cursor:pointer;">全部收起</button>
@@ -4477,6 +4523,12 @@ function renderSpvQueryBySpv() {
           </thead>
           <tbody>${rowsHTML}</tbody>
         </table>
+      </div>
+      <div class="spvq-summary-bar">
+        <div class="ss-item">共 <span class="ss-value">${spvCount}</span> 个专户</div>
+        <div class="ss-item">已上线 <span class="ss-value" style="color:#6D28D9;">${onlineSpvCount}</span></div>
+        <div class="ss-item">未上线 <span class="ss-value" style="color:#C2410C;">${unmaintSpvCount}</span></div>
+        <div class="ss-item">理财产品持仓明细 <span class="ss-value">${totalProductRows}</span> 条</div>
       </div>
     </div>
   `;
