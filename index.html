@@ -2108,7 +2108,8 @@ function getState(accountId) {
     const acc = allAccounts.find(a => a.id === accountId);
     if (!acc) return null;
     const state = {
-      mode: acc.defaultMode,
+      mode: 'loss',                 // 统一为单一「调仓」场景（原拉壳已合并）
+      subMode: 'bp',                // 分摊模式：bp=BP分摊，wan=万元金额分摊
       bpData: {},
       feeRatioData: {},
       selectedMap: {},
@@ -2116,6 +2117,7 @@ function getState(accountId) {
       feeRateN: 0.0066,
       bpLoss: 149,
       totalLoss: 149,
+      totalWan: 0,                  // 万元金额分摊模式：输入的总金额（万元）
       baseSize: 26400,
       lossAdjData: {},
       lossSelectedMap: {},         // 调仓左栏勾选状态 { productCode: boolean }
@@ -2196,7 +2198,7 @@ function renderSidebar() {
       return `
         <div class="sidebar-item${active}" data-account="${acc.id}" onclick="switchAccount('${acc.id}')">
           <span class="item-name" title="${acc.name}（${acc.code}）">${acc.name}<span style="color:var(--text-muted);font-size:11px;margin-left:6px;">${acc.code}</span></span>
-          ${status === 'done' ? '<span style="font-size:10px;color:' + (st.mode === 'profit' ? '#685BE7' : '#1A8353') + ';background:' + (st.mode === 'profit' ? '#EDE9FE' : '#DCFCE7') + ';border-radius:3px;padding:1px 6px;flex-shrink:0;margin-left:4px;">' + (st.mode === 'profit' ? '拉壳' : '调仓') + '</span>' : ''}
+          ${status === 'done' ? '<span style="font-size:10px;color:#1A8353;background:#DCFCE7;border-radius:3px;padding:1px 6px;flex-shrink:0;margin-left:4px;">' + (st.subMode === 'bp' ? 'BP分摊' : '万元分摊') + '</span>' : ''}
           <span class="item-remove" title="${canRemove ? '移除该专户' : '已同步，需先撤销同步才能移除'}" onclick="event.stopPropagation();removeAccount('${acc.id}')">×</span>
         </div>
       `;
@@ -2232,11 +2234,13 @@ function saveCurrentState() {
   const bpGrowthEl = document.getElementById('bpGrowth');
   const bpLossEl = document.getElementById('bpLoss');
   const totalLossEl = document.getElementById('totalLoss');
+  const totalWanEl = document.getElementById('totalWan');
 
   if (bpGrowthEl) st.bpGrowth = parseFloat(bpGrowthEl.value) || st.bpGrowth;
   // 拉壳逐产品目标专户：已由 selectTargetSpv 实时更新 profitTargetMap
   if (bpLossEl) st.bpLoss = parseFloat(bpLossEl.value) || st.bpLoss;
   if (totalLossEl) st.totalLoss = parseFloat(totalLossEl.value) || st.totalLoss;
+  if (totalWanEl) st.totalWan = parseFloat(totalWanEl.value) || st.totalWan;
 }
 
 // ==================== RENDER CONTENT ====================
@@ -2314,23 +2318,23 @@ function renderContent(acc, st) {
       <span style="color:var(--border);margin:0 4px;">|</span>
       <span style="font-size:12px;color:var(--text-muted);">规模</span>
       <span style="font-weight:700;font-size:14px;color:var(--text);">${(acc.accountSize / 100000000).toFixed(2)}亿</span>
-      ${isProfit ? `
-      <span style="color:var(--border);margin:0 4px;">|</span>
-      <span style="font-size:12px;color:var(--text-muted);">净值增长</span>
-      <input type="number" id="bpGrowth" value="${st.bpGrowth}" step="1" ${disabled} oninput="recalcCurrent()"
-        style="width:90px;padding:8px 12px;font-size:18px;font-weight:800;text-align:center;color:#1A3C6D;background:linear-gradient(135deg,#EFF6FF,#DBEAFE);border:2px solid #93C5FD;border-radius:8px;outline:none;">
-      <span style="font-size:12px;font-weight:600;color:#1A3C6D;">BP</span>
-      ` : isLoss ? `
+      ${st.subMode === 'bp' ? `
       <span style="color:var(--border);margin:0 4px;">|</span>
       <span style="font-size:12px;color:var(--text-muted);">总目标亏损</span>
       <input type="number" id="totalLoss" value="${st.totalLoss}" step="1" ${disabled} oninput="recalcCurrent()"
         style="width:90px;padding:8px 12px;font-size:18px;font-weight:800;text-align:center;color:#1A3C6D;background:linear-gradient(135deg,#FFF7ED,#FFEDD5);border:2px solid #FDBA74;border-radius:8px;outline:none;">
       <span style="font-size:12px;font-weight:600;color:#C2410C;">BP</span>
-      ` : ''}
+      ` : `
+      <span style="color:var(--border);margin:0 4px;">|</span>
+      <span style="font-size:12px;color:var(--text-muted);">总金额</span>
+      <input type="number" id="totalWan" value="${st.totalWan || ''}" step="1" ${disabled} oninput="recalcCurrent()"
+        style="width:110px;padding:8px 12px;font-size:18px;font-weight:800;text-align:center;color:#1A3C6D;background:linear-gradient(135deg,#F0FDF4,#DCFCE7);border:2px solid #86EFAC;border-radius:8px;outline:none;">
+      <span style="font-size:12px;font-weight:600;color:#16A34A;">万元</span>
+      `}
       <div style="flex:1;"></div>
       <div class="mode-selector" id="modeSelector">
-        <button class="mode-btn ${isProfit ? 'active' : ''}" data-mode="profit" ${disabled}>收益分配型（拉壳）</button>
-        <button class="mode-btn ${isLoss ? 'active' : ''}" data-mode="loss" ${disabled}>亏损分摊型（调仓）</button>
+        <button class="mode-btn ${st.subMode === 'bp' ? 'active' : ''}" data-submode="bp" ${disabled}>BP分摊</button>
+        <button class="mode-btn ${st.subMode === 'wan' ? 'active' : ''}" data-submode="wan" ${disabled}>万元金额分摊</button>
       </div>
     </div>
 
@@ -2405,6 +2409,19 @@ function renderContent(acc, st) {
                 oninput="onLossRedeemAmtChange('${p.code}', this.value)" onfocus="this.select()"
                 style="width:120px;">
             </td>
+            <td>
+              <select class="table-input" id="lossRedSource_${p.code}"
+                ${disabled ? 'disabled' : ''}
+                onchange="onLossRedSourceChange('${p.code}', this.value)" style="width:130px;font-size:11px;text-align:left;">
+                <option value="">选择赎回来源</option>
+                ${getSPVData(p.code).map(s => {
+                  const sel2 = (st.lossRedSourceMap[p.code] === s.spvCode) ? 'selected' : '';
+                  const spvMaint2 = spvMaintList.find(m => { const a = allAccounts.find(ac => ac.id === m.id); return a && a.code === s.spvCode; });
+                  const svTval = spvMaint2 ? spvMaint2.tVal : 'T+0';
+                  return `<option value="${s.spvCode}" ${sel2}>${s.spvName.substring(0,12)}（${s.spvCode}）${svTval}</option>`;
+                }).join('')}
+              </select>
+            </td>
           </tr>`;
       }).join('');
 
@@ -2419,32 +2436,18 @@ function renderContent(acc, st) {
             </td>
             <td style="font-weight:500;">${p.code}</td>
             <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${p.name}">${p.name}</td>
+            ${st.subMode === 'bp' ? `
             <td class="col-bp">
               <input type="number" class="table-input" value="${bp}" step="1" min="0"
                 ${disabled ? 'disabled' : ''}
                 oninput="onBPChange('${p.code}', this.value)" onfocus="this.select()" style="width:60px;">
-            </td>
+            </td>` : ''}
             <td class="num" id="ratio_${p.code}">--</td>
             <td class="num" style="font-weight:600;" id="F_${p.code}">--</td>
-            <td class="num" id="lossMyRed_${p.code}">--</td>
-            <td class="num" id="lossDiff_${p.code}">--</td>
             <td>
               <input type="text" inputmode="numeric" class="table-input" value="${adj ? adj.toLocaleString('zh-CN') : ''}"
                 ${disabled ? 'disabled' : ''}
                 oninput="onLossAdjChange('${p.code}', this.value)" onfocus="onLossAdjFocus(this)" onblur="onLossAdjBlur(this)" style="width:100px;">
-            </td>
-            <td>
-              <select class="table-input" id="lossRedSource_${p.code}"
-                ${disabled ? 'disabled' : ''}
-                onchange="onLossRedSourceChange('${p.code}', this.value)" style="width:130px;font-size:11px;text-align:left;">
-                <option value="">选择赎回来源</option>
-                ${getSPVData(p.code).map(s => {
-                  const sel2 = (st.lossRedSourceMap[p.code] === s.spvCode) ? 'selected' : '';
-                  const spvMaint2 = spvMaintList.find(m => { const a = allAccounts.find(ac => ac.id === m.id); return a && a.code === s.spvCode; });
-                  const svTval = spvMaint2 ? spvMaint2.tVal : 'T+0';
-                  return `<option value="${s.spvCode}" ${sel2}>${s.spvName.substring(0,12)}（${s.spvCode}）${svTval}</option>`;
-                }).join('')}
-              </select>
             </td>
             <td style="text-align:center;" id="lossRedTval_${p.code}">--</td>
             <td class="num" style="font-weight:600;" id="I_${p.code}">--</td>
@@ -2456,12 +2459,12 @@ function renderContent(acc, st) {
     <div class="section-card" style="padding:0;">
       <div class="section-header" style="padding:8px 12px;">
         <div class="section-title" style="font-size:13px;">
-          <span class="icon">📊</span> 持有${acc.name}的理财产品 — 亏损分摊（调仓）
-          <span class="section-subtitle">— 左侧输入赎回金额累计，右侧按BP比例分配到各专户</span>
+          <span class="icon">📊</span> 持有${acc.name}的理财产品 — 调仓
+          <span class="section-subtitle">— 左侧输入赎回金额累计，右侧${st.subMode === 'bp' ? '按BP比例' : '按规模比例'}分摊申购进当前专户</span>
         </div>
         <div class="section-actions">
           <span style="font-size:12px;color:var(--text-muted);">产品 <strong id="selectedCount">${selCount}</strong> / <strong id="totalProductCount">${totalCount}</strong> 只</span>
-          <span style="font-size:12px;color:var(--text-muted);margin-left:8px;">总目标亏损 <strong id="totalBPDisplay">${st.totalLoss || acc.totalBP}</strong></span>
+          <span style="font-size:12px;color:var(--text-muted);margin-left:8px;">${st.subMode === 'bp' ? '总目标亏损' : '总金额(万元)'} <strong id="totalBPDisplay">${st.subMode === 'bp' ? (st.totalLoss || acc.totalBP) : (st.totalWan || 0)}</strong></span>
           <button class="btn" onclick="exportData()" style="background:#E6A23C;color:#fff;border:none;font-size:12px;padding:5px 14px;border-radius:4px;cursor:pointer;margin-left:12px;">导出 Excel</button>
         </div>
       </div>
@@ -2470,6 +2473,7 @@ function renderContent(acc, st) {
         <div class="loss-left-panel">
           <div class="loss-panel-header">
             <span>🔴 赎回端 — 我的赎回决策（逐产品输入）</span>
+            <button class="btn" onclick="onAllRedeem()" ${disabled} style="font-size:11px;padding:3px 10px;background:#DC2626;color:#fff;border:none;border-radius:4px;cursor:pointer;">一键全部赎回</button>
             <span style="font-size:11px;font-weight:400;color:#64748B;">累计赎回 →</span>
           </div>
           <div class="loss-panel-body">
@@ -2481,6 +2485,7 @@ function renderContent(acc, st) {
                   <th>产品名称</th>
                   <th style="text-align:right;">最新规模（亿）</th>
                   <th style="text-align:right;">实际赎回金额（元）</th>
+                  <th>赎回来源专户</th>
                 </tr>
               </thead>
               <tbody>${leftRows}</tbody>
@@ -2502,8 +2507,8 @@ function renderContent(acc, st) {
         <!-- ===== 右栏：申购端 ===== -->
         <div class="loss-right-panel">
           <div class="loss-panel-header">
-            <span style="font-weight:400;color:#64748B;">← BP标准参考</span>
-            <span>🔵 申购端 — 按BP比例的标准分摊</span>
+            <span style="font-weight:400;color:#64748B;">← ${st.subMode === 'bp' ? 'BP标准参考' : '规模占比参考'}</span>
+            <span>🔵 申购端 — ${st.subMode === 'bp' ? '按BP比例的标准分摊' : '按规模比例的金额分摊'}</span>
           </div>
           <div class="loss-panel-body">
             <table>
@@ -2512,15 +2517,12 @@ function renderContent(acc, st) {
                   <th class="chk-cell" style="text-align:center;"><input type="checkbox" title="全选/取消全选" onchange="onHeaderCheck(this.checked)" ${disabled}></th>
                   <th>产品代码</th>
                   <th>产品名称</th>
-                  <th style="text-align:center;">BP</th>
-                  <th style="text-align:right;">占比 <span title="占比 = 该产品BP ÷ 总目标亏损BP × 100%&#10;（总目标亏损为顶栏输入值）" style="display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;border-radius:50%;background:#E2E8F0;color:#64748B;font-size:10px;font-weight:600;cursor:help;">?</span></th>
-                  <th style="text-align:right;">BP标准分摊（元） <span title="BP标准分摊 = 占比 × 申购分配基数，四舍五入取整到万元后换算为元&#10;申购分配基数 = 左栏累计赎回金额 ÷ 10000（万元）&#10;因此左栏输入变化时，本列会联动重算" style="display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;border-radius:50%;background:#E2E8F0;color:#64748B;font-size:10px;font-weight:600;cursor:help;">?</span></th>
-                  <th style="text-align:right;">我的赎回（元） <span title="我的赎回 = 左栏赎回端中该产品输入的赎回金额&#10;此处为镜像显示，方便与BP标准分摊逐行对比&#10;左栏未输入或未勾选该产品时显示为0" style="display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;border-radius:50%;background:#E2E8F0;color:#64748B;font-size:10px;font-weight:600;cursor:help;">?</span></th>
-                  <th style="text-align:right;">差异（元） <span title="差异 = 我的赎回 − BP标准分摊" style="display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;border-radius:50%;background:#E2E8F0;color:#64748B;font-size:10px;font-weight:600;cursor:help;">?</span></th>
+                  ${st.subMode === 'bp' ? '<th style="text-align:center;">BP</th>' : ''}
+                  <th style="text-align:right;">${st.subMode === 'bp' ? '占比' : '规模占比'} <span title="${st.subMode === 'bp' ? '占比 = 该产品BP ÷ 总目标亏损BP × 100%' : '规模占比 = 该产品规模 ÷ 全部产品规模合计 × 100%'}" style="display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;border-radius:50%;background:#E2E8F0;color:#64748B;font-size:10px;font-weight:600;cursor:help;">?</span></th>
+                  <th style="text-align:right;">${st.subMode === 'bp' ? 'BP标准分摊（元）' : '分摊金额（元）'} <span title="${st.subMode === 'bp' ? 'BP标准分摊 = 占比 × 申购分配基数' : '分摊金额 = 规模占比 × 总金额'}" style="display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;border-radius:50%;background:#E2E8F0;color:#64748B;font-size:10px;font-weight:600;cursor:help;">?</span></th>
                   <th style="text-align:right;">调减金额（元）</th>
-                  <th>赎回来源专户</th>
                   <th style="text-align:center;">时效</th>
-                  <th style="text-align:right;">实际金额（元） <span title="实际金额 = BP标准分摊 − 调减金额&#10;调减金额为本行手工输入的调整值，不调减则为0&#10;实际金额为最终同步至头寸管理的执行金额" style="display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;border-radius:50%;background:#E2E8F0;color:#64748B;font-size:10px;font-weight:600;cursor:help;">?</span></th>
+                  <th style="text-align:right;">实际金额（元） <span title="实际金额 = 分摊金额 − 调减金额&#10;实际金额为最终同步至头寸管理的执行金额" style="display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;border-radius:50%;background:#E2E8F0;color:#64748B;font-size:10px;font-weight:600;cursor:help;">?</span></th>
                 </tr>
               </thead>
               <tbody>${rightRows}</tbody>
@@ -2571,12 +2573,12 @@ function renderContent(acc, st) {
         </div>
   `;
 
-  // bind mode selector
+  // bind mode selector（切换分摊模式 subMode，不再切换拉壳/调仓场景）
   document.getElementById('modeSelector').addEventListener('click', function(e) {
     if (!e.target.classList.contains('mode-btn')) return;
     if (e.target.disabled) return;
     saveCurrentState();
-    st.mode = e.target.dataset.mode;
+    st.subMode = e.target.dataset.submode;
     renderContent(acc, st);
     recalcCurrent();
   });
@@ -2673,8 +2675,12 @@ function recalcLossMode(acc, st) {
     }
   });
 
-  // baseSize = 左栏累计赎回金额（元）÷ 10000 = 万元
-  const baseSize = totalRedeemAmt > 0 ? totalRedeemAmt / 10000 : (st.baseSize || 0);
+  // 分摊基数（万元）：BP模式 = 左栏累计赎回÷10000；万元模式 = 顶部输入总金额
+  const totalWan = parseFloat(document.getElementById('totalWan')?.value) || st.totalWan || 0;
+  st.totalWan = totalWan;
+  const baseSize = st.subMode === 'wan'
+    ? totalWan
+    : (totalRedeemAmt > 0 ? totalRedeemAmt / 10000 : (st.baseSize || 0));
   st.baseSize = baseSize;
 
   // 更新左栏汇总
@@ -2687,12 +2693,13 @@ function recalcLossMode(acc, st) {
   const baseSizeEl = document.getElementById('baseSizeDisplay');
   if (baseSizeEl) baseSizeEl.textContent = baseSize.toLocaleString('zh-CN', {minimumFractionDigits: 2, maximumFractionDigits: 2});
 
-  // ===== 右栏：按BP占比分配 =====
-  let totalBP = 0, selCount = 0;
+  // ===== 右栏：按占比分配（BP模式按BP占比，万元模式按规模占比）=====
+  let totalBP = 0, totalSizeSum = 0, selCount = 0;
   acc.holdings.forEach(p => {
     const sel = (st.lossSelectedMap && st.lossSelectedMap[p.code] !== undefined) ? st.lossSelectedMap[p.code] : true;
     if (!sel) return;
     totalBP += st.bpData[p.code] || 0;
+    totalSizeSum += p.size || 0;
     selCount++;
   });
 
@@ -2703,8 +2710,6 @@ function recalcLossMode(acc, st) {
     if (!sel) {
       setCell('ratio_' + code, '--');
       setCell('F_' + code, '--');
-      setCell('lossMyRed_' + code, '--');
-      setCell('lossDiff_' + code, '--');
       setCell('I_' + code, '--');
       setCell('lossRedTval_' + code, '--');
       return;
@@ -2712,24 +2717,23 @@ function recalcLossMode(acc, st) {
     const bp = st.bpData[code] || 0;
     const adj = st.lossAdjData[code] || 0;
 
-    // 占比 = BP / 总目标亏损 × 100
-    const ratio = totalLoss > 0 ? bp / totalLoss : 0;
-    const ratioPct = totalLoss > 0 ? (bp / totalLoss) * 100 : 0;
-
-    // F列：分摊金额 = ROUND(占比 × 基准规模(万元)) × 10000
-    const F = (totalLoss > 0 && baseSize > 0) ? Math.round(ratio * baseSize) * 10000 : 0;
-    // I列 = F - 调减金额
+    // 占比与分摊金额：BP模式按BP占比，万元模式按产品规模占比
+    let ratio = 0, ratioPct = 0, F = 0;
+    if (st.subMode === 'wan') {
+      const totalSize = totalSizeSum > 0 ? totalSizeSum : 1;
+      ratio = p.size / totalSize;
+      ratioPct = ratio * 100;
+      F = baseSize > 0 ? Math.round(ratio * baseSize) * 10000 : 0;
+    } else {
+      ratio = totalLoss > 0 ? bp / totalLoss : 0;
+      ratioPct = totalLoss > 0 ? (bp / totalLoss) * 100 : 0;
+      F = (totalLoss > 0 && baseSize > 0) ? Math.round(ratio * baseSize) * 10000 : 0;
+    }
+    // 实际金额 = 分摊金额 − 调减金额（最终同步至头寸管理的执行金额）
     const I_val = F - adj;
 
     setCell('ratio_' + code, ratioPct.toFixed(2) + '%');
     setCell('F_' + code, fmtNum(F));
-    // 我的赎回（左栏输入）与差异（我的赎回 - BP标准分摊）
-    const myRed = st.lossRedeemAmt?.[code] || 0;
-    const diff = myRed - F;
-    setCell('lossMyRed_' + code, fmtNum(myRed));
-    const diffEl = document.getElementById('lossDiff_' + code);
-    setCell('lossDiff_' + code, (diff >= 0 ? '+' : '') + fmtNum(diff));
-    if (diffEl) diffEl.style.color = diff === 0 ? '#1E293B' : '#C2410C';
     setCell('I_' + code, fmtNum(I_val));
 
     // 专户时效显示
@@ -2808,6 +2812,22 @@ function onLossRedeemAmtChange(code, value) {
   if (!st.lossRedeemAmt) st.lossRedeemAmt = {};
   const raw = String(value).replace(/,/g, '');
   st.lossRedeemAmt[code] = parseFloat(raw) || 0;
+  recalcCurrent();
+}
+
+// 一键全部赎回：勾选全部产品并带入各自全部持仓金额（可二次修改）
+function onAllRedeem() {
+  const acc = getAccount(currentAccountId);
+  const st = getState(currentAccountId);
+  if (!acc || !st) return;
+  if (!st.lossSelectedMap) st.lossSelectedMap = {};
+  if (!st.lossRedeemAmt) st.lossRedeemAmt = {};
+  acc.holdings.forEach(p => {
+    st.lossSelectedMap[p.code] = true;
+    st.lossRedeemAmt[p.code] = p.size || 0;
+  });
+  updateHeaderCheckbox();
+  renderContent(acc, st);
   recalcCurrent();
 }
 
@@ -3219,25 +3239,41 @@ function syncToSystem() {
   }
 
   if (st.mode === 'loss') {
-    if ((st.totalLoss || 0) <= 0) {
-      errors.push('总目标亏损（BP）未设置。');
+    if (st.subMode === 'bp') {
+      if ((st.totalLoss || 0) <= 0) {
+        errors.push('总目标亏损（BP）未设置。');
+      }
+    } else {
+      if ((st.totalWan || 0) <= 0) {
+        errors.push('总金额（万元）未设置。');
+      }
     }
     const selected = acc.holdings.filter(p => {
       const sel = (st.lossSelectedMap && st.lossSelectedMap[p.code] !== undefined) ? st.lossSelectedMap[p.code] : true;
       return sel;
     });
     if (selected.length === 0) {
-      errors.push('未勾选任何产品，请至少勾选一只参与亏损分摊。');
+      errors.push('未勾选任何产品，请至少勾选一只参与调仓。');
     } else {
-      const hasBp = selected.some(p => (st.bpData[p.code] ?? p.defaultBP) > 0);
-      if (!hasBp) {
-        errors.push('已勾选产品的目标承担亏损 BP 均为 0，请至少设置一只。');
+      if (st.subMode === 'bp') {
+        const hasBp = selected.some(p => (st.bpData[p.code] ?? p.defaultBP) > 0);
+        if (!hasBp) {
+          errors.push('已勾选产品的目标承担亏损 BP 均为 0，请至少设置一只。');
+        }
       }
       const missingSrc = selected.filter(p => {
-        const bp = st.bpData[p.code] ?? p.defaultBP;
-        const ratio = (st.totalLoss || 1) > 0 ? bp / (st.totalLoss || 1) : 0;
-        const F = Math.round(ratio * st.baseSize) * 10000;
-        return bp > 0 && F > 0 && !st.lossRedSourceMap[p.code];
+        let F = 0;
+        if (st.subMode === 'wan') {
+          const totalSize = selected.reduce((s, q) => s + (q.size || 0), 0);
+          const ratio = totalSize > 0 ? (p.size / totalSize) : 0;
+          F = Math.round(ratio * (st.totalWan || 0)) * 10000;
+          return F > 0 && !st.lossRedSourceMap[p.code];
+        } else {
+          const bp = st.bpData[p.code] ?? p.defaultBP;
+          const ratio = (st.totalLoss || 1) > 0 ? bp / (st.totalLoss || 1) : 0;
+          F = Math.round(ratio * st.baseSize) * 10000;
+          return bp > 0 && F > 0 && !st.lossRedSourceMap[p.code];
+        }
       });
       if (missingSrc.length > 0) {
         errors.push('以下产品未选择赎回来源专户：' + missingSrc.map(p => p.code).join('、'));
@@ -3281,13 +3317,27 @@ function syncToSystem() {
     });
   } else if (st.mode === 'loss') {
     const totalLoss = st.totalLoss || 1;
+    // 万元模式：先算选中产品的规模合计，用于按规模比例分摊
+    let totalSizeSumSync = 0;
+    if (st.subMode === 'wan') {
+      acc.holdings.forEach(p => {
+        const sel = (st.lossSelectedMap && st.lossSelectedMap[p.code] !== undefined) ? st.lossSelectedMap[p.code] : true;
+        if (sel) totalSizeSumSync += p.size || 0;
+      });
+    }
     acc.holdings.forEach(p => {
       const sel = (st.lossSelectedMap && st.lossSelectedMap[p.code] !== undefined) ? st.lossSelectedMap[p.code] : true;
       if (!sel) return;
       const bp = st.bpData[p.code] ?? p.defaultBP;
       const adj = st.lossAdjData[p.code] || 0;
-      const ratio = totalLoss > 0 ? bp / totalLoss : 0;
-      const F = totalLoss > 0 ? Math.round(ratio * st.baseSize) * 10000 : 0;
+      let F = 0;
+      if (st.subMode === 'wan') {
+        const ratio = totalSizeSumSync > 0 ? (p.size / totalSizeSumSync) : 0;
+        F = st.baseSize > 0 ? Math.round(ratio * st.baseSize) * 10000 : 0;
+      } else {
+        const ratio = totalLoss > 0 ? bp / totalLoss : 0;
+        F = totalLoss > 0 ? Math.round(ratio * st.baseSize) * 10000 : 0;
+      }
       const I_val = F - adj;
       const redSpvCode = st.lossRedSourceMap[p.code] || '';
       const redSpvName = redSpvCode ? (getSPVData(p.code).find(s => s.spvCode === redSpvCode) || {}).spvName || redSpvCode : '';
@@ -3385,7 +3435,8 @@ function confirmSync() {
       srcSpv.redRebalance += p.F;
       srcSpv.red = (srcSpv.red || 0) + p.F;
     } else if (st.mode === 'loss') {
-      // 调仓：赎回来源专户赎回 = +实际金额（资金流入）
+      // 调仓：资金来源于其他专户赎回，申购目标为当前操作专户
+      // 1) 赎回来源专户（其他专户）写赎回
       const redSpvId = p.redSpvCode;
       if (redSpvId && redSpvId in getOnlineSpvList().reduce((m, s) => ({...m, [s.id]: true}), {})) {
         // 需映射 spvCode → spvId
@@ -3395,6 +3446,11 @@ function confirmSync() {
         spv.redRebalance += p.I_val;
         spv.red = (spv.red || 0) + p.I_val;
       }
+      // 2) 申购目标（当前操作专户）写申购
+      if (!posRow._spv[acc.id]) posRow._spv[acc.id] = { sub: null, red: null, subManual: 0, subRebalance: 0, redManual: 0, redRebalance: 0 };
+      const curSpv = posRow._spv[acc.id];
+      curSpv.subRebalance += p.I_val;
+      curSpv.sub = (curSpv.sub || 0) - p.I_val;
     }
   });
 
