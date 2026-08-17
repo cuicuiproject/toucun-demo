@@ -80,7 +80,50 @@
     position: sticky;
     top: 58px;
     height: calc(100vh - 58px);
+    overflow: visible;
+    z-index: 5;
+    transition: width 0.2s ease, min-width 0.2s ease;
+  }
+  .sidebar.collapsed {
+    width: 36px;
+    min-width: 36px;
+  }
+  .sidebar-collapse-btn {
+    position: absolute;
+    top: 10px;
+    right: 6px;
+    z-index: 11;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    cursor: pointer;
+    color: #64748B;
+    font-size: 11px;
+    font-weight: 700;
+    flex-shrink: 0;
+    background: #fff;
+    border: 1px solid #CBD5E1;
+    border-radius: 50%;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    user-select: none;
+    transition: all 0.15s;
+  }
+  .sidebar-collapse-btn:hover {
+    background: var(--primary);
+    color: #fff;
+    border-color: var(--primary);
+    box-shadow: 0 2px 6px rgba(26,60,109,0.25);
+  }
+  .sidebar-inner {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
     overflow: hidden;
+  }
+  .sidebar.collapsed .sidebar-inner {
+    display: none;
   }
   .sidebar-search {
     padding: 12px;
@@ -88,7 +131,7 @@
   }
   .sidebar-search input {
     width: 100%;
-    padding: 8px 12px;
+    padding: 8px 32px 8px 12px;
     border: 1px solid var(--border);
     border-radius: var(--radius-sm);
     font-size: 13px;
@@ -380,6 +423,141 @@
     font-weight: 500;
   }
   .config-group select:focus { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(26,60,109,0.12); }
+
+  /* 调仓模式左右两栏布局 */
+  .loss-split-container {
+    display: flex;
+    gap: 12px;
+    align-items: stretch;
+    min-height: 420px;
+  }
+  .loss-left-panel,
+  .loss-right-panel {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    background: #fff;
+    border: 1px solid #E2E8F0;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  }
+  /* 左栏5列较窄、右栏12列较宽，按 2:3 分配 */
+  .loss-left-panel {
+    flex: 2 1 0%;
+    min-width: 400px;
+  }
+  .loss-right-panel {
+    flex: 3 1 0%;
+  }
+  .loss-panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 16px;
+    border-bottom: 1px solid #E2E8F0;
+    font-size: 14px;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+  .loss-left-panel .loss-panel-header {
+    background: linear-gradient(135deg, #FEF2F2, #FFF5F5);
+    color: #B91C1C;
+  }
+  .loss-right-panel .loss-panel-header {
+    background: linear-gradient(135deg, #EFF6FF, #F8FAFF);
+    color: #1D4ED8;
+  }
+  .loss-panel-body {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: auto;
+    padding: 0;
+  }
+  .loss-panel-body table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+  }
+  .loss-panel-body th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    padding: 8px 10px;
+    text-align: left;
+    font-weight: 600;
+    font-size: 11px;
+    white-space: nowrap;
+    border-bottom: 1px solid #E2E8F0;
+  }
+  .loss-left-panel .loss-panel-body th {
+    background: #FEF2F2;
+    color: #9F1239;
+  }
+  .loss-right-panel .loss-panel-body th {
+    background: #EFF6FF;
+    color: #1E40AF;
+  }
+  .loss-panel-body td {
+    padding: 7px 10px;
+    border-bottom: 1px solid #F1F5F9;
+    white-space: nowrap;
+    vertical-align: middle;
+  }
+  .loss-panel-body tbody tr:hover td {
+    background: #FAFBFC;
+  }
+  .loss-panel-summary {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    border-top: 1px solid #E2E8F0;
+    font-size: 12px;
+    flex-shrink: 0;
+  }
+  .loss-left-panel .loss-panel-summary {
+    background: #FEF2F2;
+  }
+  .loss-right-panel .loss-panel-summary {
+    background: #EFF6FF;
+  }
+  .loss-arrow-bridge {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    flex-shrink: 0;
+  }
+  .loss-arrow-bridge::before {
+    content: '→';
+    font-size: 22px;
+    color: #94A3B8;
+    font-weight: 700;
+  }
+  .loss-red-input {
+    width: 120px;
+    padding: 5px 8px;
+    border: 1px solid #D1D5DB;
+    border-radius: 6px;
+    font-size: 12px;
+    text-align: right;
+    background: #fff;
+    color: #1F2937;
+    font-weight: 600;
+    outline: none;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  .loss-red-input:focus {
+    border-color: #2563EB;
+    box-shadow: 0 0 0 2px rgba(37,99,235,0.1);
+  }
+  .loss-red-input:disabled {
+    background: #F5F5F5;
+    color: #999;
+  }
 
   /* 赎回来源专户复选框组 */
   .red-source-group {
@@ -714,6 +892,14 @@
     color: var(--text);
     font-weight: 600;
   }
+  .position-table .spv-group-header .spv-code {
+    display: block;
+    font-size: 10px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    margin-top: 1px;
+    letter-spacing: 0.3px;
+  }
   .position-table .spv-sub-col { background: #FFF7ED; }
   .position-table .spv-red-col { background: #F0FDFA; }
   .position-table th.spv-sub-col,
@@ -774,6 +960,23 @@
   }
   .pos-status-tag.balanced { background: #CCFBF1; color: #115E59; }
   .pos-status-tag.pending { background: #FEF3C7; color: #92400E; }
+
+  /* 临时产品标签（不在产品维护清单、因当日调仓数据临时展示） */
+  .temp-product-tag {
+    display: inline-flex; align-items: center;
+    margin-left: 5px; padding: 1px 7px; border-radius: 10px;
+    font-size: 10px; font-weight: 600; white-space: nowrap;
+    background: #FFEDD5; color: #9A3412; vertical-align: middle;
+  }
+  /* 产品名称链接：自身承担截断（ellipsis），让名称后的「临时」徽章不被单元格 overflow 裁掉 */
+  .position-table td .product-link.pos-name-link {
+    display: inline-block;
+    max-width: 165px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    vertical-align: bottom;
+  }
 
   /* 进度条 */
   .position-progress-bar {
@@ -1114,6 +1317,89 @@
   }
 
   /* 操作区卡片（申购/赎回各一张） */
+  /* 卡片头部标题条（生产环境样式） */
+  .spv-trade-card .card-header {
+    margin: -16px -20px 16px -20px;
+    padding: 10px 16px;
+    background: #2563EB;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 600;
+    border-radius: 4px 4px 0 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .spv-trade-card.card-red .card-header { background: #7C3AED; }
+  .card-header .header-tag {
+    font-size: 11px;
+    padding: 2px 10px;
+    background: rgba(255, 255, 255, 0.22);
+    border-radius: 12px;
+    font-weight: 500;
+  }
+  /* 操作区卡片网格 */
+  .spv-action-grid {
+    display: flex;
+    gap: 12px;
+    margin-top: 14px;
+  }
+  .spv-action-col {
+    flex: 1;
+    min-width: 0;
+    background: #EFF6FF;
+    border-radius: 6px;
+    padding: 14px 12px;
+    text-align: center;
+  }
+  .spv-trade-card.card-red .spv-action-col { background: #F5F3FF; }
+  .spv-action-col.warning { background: #FFFBEB; }
+  .spv-action-col .col-btn {
+    width: 100%;
+    padding: 8px 0;
+    font-size: 13px;
+    border: 1px solid rgba(0, 0, 0, 0.04);
+    border-radius: 4px;
+    background: #fff;
+    color: #1F2937;
+    cursor: pointer;
+    margin-bottom: 8px;
+    font-weight: 500;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+    transition: all .15s;
+    white-space: nowrap;
+  }
+  .spv-action-col .col-btn:hover {
+    border-color: #93C5FD;
+    color: #2563EB;
+    box-shadow: 0 2px 6px rgba(37, 99, 235, 0.10);
+  }
+  .spv-action-col.warning .col-btn { color: #B45309; }
+  .spv-action-col.warning .col-btn:hover {
+    border-color: #FCD34D;
+    color: #D97706;
+    box-shadow: 0 2px 6px rgba(245, 158, 11, 0.12);
+  }
+  .spv-action-col .col-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+  }
+  .spv-action-col .col-info {
+    font-size: 12px;
+    color: #6B7280;
+    line-height: 1.5;
+  }
+  .spv-action-col .col-info .val {
+    color: #1F2937;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+  /* 单栏场景（如赎回一键平头寸独占一行）自动占满 */
+  .spv-action-grid > .spv-action-col:only-child {
+    flex: 1 1 100%;
+  }
+
   .spv-trade-card {
     border-radius: 4px;
     padding: 16px 20px;
@@ -1599,11 +1885,14 @@
 <div class="layout" id="tabAdjust" style="display:none;">
   <!-- 左侧专户导航 -->
   <div class="sidebar" id="sidebar">
-    <div class="sidebar-search">
-      <input type="text" id="sidebarSearch" placeholder="搜索专户..." onkeydown="if(event.key==='Enter')doSidebarSearch()">
-      <button onclick="doSidebarSearch()" style="margin-top:6px;width:100%;padding:4px 0;font-size:12px;border:1px solid var(--border);border-radius:4px;background:var(--primary);color:#fff;cursor:pointer;">查询</button>
+    <div class="sidebar-collapse-btn" id="sidebarCollapseBtn" onclick="toggleSidebar()" title="收起专户列表">◀</div>
+    <div class="sidebar-inner">
+      <div class="sidebar-search">
+        <input type="text" id="sidebarSearch" placeholder="搜索专户..." onkeydown="if(event.key==='Enter')doSidebarSearch()">
+        <button onclick="doSidebarSearch()" style="margin-top:6px;width:100%;padding:4px 0;font-size:12px;border:1px solid var(--border);border-radius:4px;background:var(--primary);color:#fff;cursor:pointer;">查询</button>
+      </div>
+      <div class="sidebar-list" id="sidebarList"></div>
     </div>
-    <div class="sidebar-list" id="sidebarList"></div>
   </div>
 
   <!-- 右侧主操作区 -->
@@ -1803,38 +2092,10 @@ const allAccounts = [
   },
 ];
 
-// ==================== 理财产品全量库 ====================
-const productLibrary = [
-  { code:'EW0599', name:'阳光金私享增利稳健天天购（300天最低持有）', type:'开放式', status:'存续' },
-  { code:'EW0580', name:'阳光金私享增利周开（182天最低持有）2号', type:'开放式', status:'存续' },
-  { code:'EW1340', name:'阳光金私享增利周开（9个月最低持有）2号', type:'开放式', status:'存续' },
-  { code:'EW0515', name:'阳光金私享增利周开（182天最低持有）', type:'开放式', status:'存续' },
-  { code:'EW7746', name:'阳光金增利稳健天天购46号（14天最低持有）', type:'开放式', status:'存续' },
-  { code:'EW7748', name:'阳光金增利稳健天天购52号（30天最低持有）', type:'开放式', status:'存续' },
-  { code:'EW4659', name:'阳光金增利稳健天天购16号（90天最低持有）', type:'开放式', status:'存续' },
-  { code:'EW6287', name:'阳光金增利稳健乐享天天购49号（14天最低持有）', type:'开放式', status:'存续' },
-  { code:'EW5208', name:'阳光金增利稳健天天购27号（7天最低持有）', type:'开放式', status:'存续' },
-  { code:'EW3517', name:'阳光金增利稳健天天购13号（7天最低持有）', type:'开放式', status:'存续' },
-  { code:'EW4217', name:'阳光金丰利617期', type:'封闭式', status:'存续' },
-  { code:'EW2911', name:'阳光金增利稳健乐享天天购9号（30天最低持有）', type:'开放式', status:'存续' },
-  { code:'EW1390', name:'阳光金安心计划-存单存款策略（60天最低持有）', type:'开放式', status:'存续' },
-  { code:'EW5322', name:'阳光金增利稳健天天购22号（90天最低持有）', type:'开放式', status:'存续' },
-  { code:'EW0767', name:'阳光金增利稳健天天购定制（100天最低持有）', type:'开放式', status:'存续' },
-  { code:'EW2847', name:'阳光金增利稳健天天购定制（7天最低持有）2号', type:'开放式', status:'存续' },
-  { code:'EW4512', name:'阳光金丰利682期', type:'封闭式', status:'存续' },
-  { code:'EW6075', name:'阳光金丰利874期', type:'封闭式', status:'存续' },
-  { code:'EW2923', name:'阳光金丰利臻享C083期', type:'封闭式', status:'存续' },
-  { code:'EW5231', name:'颐享阳光金安享如意日开1号（180天最低持有）', type:'开放式', status:'存续' },
-  { code:'EW5218', name:'阳光金增利稳健天天购15号（180天最低持有）', type:'开放式', status:'存续' },
-  // 以下为「已平衡」示例产品（gap=0，申赎轧差为零）
-  { code:'EW9001', name:'阳光金平衡示例1号（演示已平衡状态）', type:'开放式', status:'存续' },
-  { code:'EW9002', name:'阳光金平衡示例2号（演示已平衡状态）', type:'开放式', status:'存续' },
-  { code:'EW9003', name:'阳光金平衡示例3号（演示已平衡状态）', type:'开放式', status:'存续' },
-  { code:'EW9004', name:'阳光金平衡示例4号（演示已平衡状态）', type:'开放式', status:'存续' },
-  { code:'EW9005', name:'阳光金平衡示例5号（演示已平衡状态）', type:'开放式', status:'存续' },
-  { code:'EW9006', name:'阳光金平衡示例6号（演示已平衡状态）', type:'开放式', status:'存续' },
-  { code:'EW9007', name:'阳光金平衡示例7号（演示已平衡状态）', type:'开放式', status:'存续' },
-];
+// ==================== 理财产品候选来源 ====================
+// 2026-08-17 起不再维护独立产品库：拉壳/调仓「添加理财产品」候选
+// 统一取自「SPV持仓查询」页数据（positionData），见 getAddableProducts()
+// 已下线产品排除、未维护产品可添加（标注"未上线"）、规模带出持仓总规模
 
 // ==================== GLOBAL STATE ====================
 // accountState: { accountId: { mode, bpData, feeRatioData, selectedMap, status, feeRateN, bpLoss, totalLoss, baseSize, bpGrowth, accountSize, lossAdjData, lossRedSourceMap, profitTargetMap, spvHoldingAdj } }
@@ -1857,7 +2118,9 @@ function getState(accountId) {
       totalLoss: 149,
       baseSize: 26400,
       lossAdjData: {},
+      lossSelectedMap: {},         // 调仓左栏勾选状态 { productCode: boolean }
       lossRedSourceMap: {},        // 调仓逐产品赎回来源专户 { productCode: spvCode }
+      lossRedeemAmt: {},           // 调仓左栏赎回金额 { productCode: amount }
       bpGrowth: acc.totalBP,
       accountSize: acc.accountSize,
 
@@ -1866,6 +2129,7 @@ function getState(accountId) {
     };
     acc.holdings.forEach(p => {
       state.selectedMap[p.code] = p.defaultSelected;
+      state.lossSelectedMap[p.code] = true;  // 调仓模式默认全选
       state.bpData[p.code] = p.defaultBP;
       state.feeRatioData[p.code] = p.feeRatio;
       // 初始化调减金额（模拟从SPV持仓自动回填）
@@ -1886,6 +2150,14 @@ function getAccount(accountId) {
 function doSidebarSearch() {
   sidebarFilter = document.getElementById('sidebarSearch')?.value || '';
   renderSidebar();
+}
+
+function toggleSidebar() {
+  const sidebar = document.getElementById('sidebar');
+  const btn = document.getElementById('sidebarCollapseBtn');
+  const collapsed = sidebar.classList.toggle('collapsed');
+  btn.textContent = collapsed ? '▶' : '◀';
+  btn.title = collapsed ? '展开专户列表' : '收起专户列表';
 }
 
 function getSidebarItems() {
@@ -2020,48 +2292,8 @@ function renderContent(acc, st) {
         </tr>`;
     }).join('');
   } else if (isLoss) {
-    tableRows = acc.holdings.map(p => {
-      const bp = st.bpData[p.code] ?? p.defaultBP;
-      const adj = st.lossAdjData[p.code] ?? 0;
-      const sizeYi = (p.size / 100000000).toFixed(4);
-      return `
-        <tr data-code="${p.code}">
-          <td class="chk-cell">
-            <input type="checkbox" ${(st.lossSelectedMap && st.lossSelectedMap[p.code] !== false) ? 'checked' : ''} ${disabled} onchange="onLossToggleSelect('${p.code}', this.checked)">
-          </td>
-          <td style="font-weight:500;">${p.code}</td>
-          <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${p.name}">${p.name}</td>
-          <td class="num">${sizeYi}</td>
-          <td class="col-bp">
-            <input type="number" class="table-input" value="${bp}" step="1" min="0"
-              ${disabled ? 'disabled' : ''}
-              oninput="onBPChange('${p.code}', this.value)" onfocus="this.select()">
-          </td>
-          <td class="num" id="ratio_${p.code}">--</td>
-          <td class="num" style="font-weight:600;" id="F_${p.code}">--</td>
-          <td>
-            <input type="text" inputmode="numeric" class="table-input" value="${adj ? adj.toLocaleString('zh-CN') : ''}"
-              ${disabled ? 'disabled' : ''}
-              oninput="onLossAdjChange('${p.code}', this.value)" onfocus="onLossAdjFocus(this)" onblur="onLossAdjBlur(this)" style="width:120px;">
-          </td>
-          <td>
-            <select class="table-input" id="lossRedSource_${p.code}"
-              ${disabled ? 'disabled' : ''}
-              onchange="onLossRedSourceChange('${p.code}', this.value)" style="width:140px;font-size:11px;text-align:left;">
-              <option value="">选择赎回来源</option>
-              ${getSPVData(p.code).map(s => {
-                const sel = (st.lossRedSourceMap[p.code] === s.spvCode) ? 'selected' : '';
-                const spvMaint2 = spvMaintList.find(m => { const a = allAccounts.find(ac => ac.id === m.id); return a && a.code === s.spvCode; });
-                const svTval = spvMaint2 ? spvMaint2.tVal : 'T+0';
-                return `<option value="${s.spvCode}" ${sel}>${s.spvName.substring(0,12)}（${s.spvCode}）${svTval}</option>`;
-              }).join('')}
-            </select>
-          </td>
-          <td style="text-align:center;" id="lossRedTval_${p.code}">--</td>
-          <td class="num" style="font-weight:600;" id="I_${p.code}">--</td>
-          <td class="num" id="lossRedQty_${p.code}" style="color:var(--success);">--</td>
-        </tr>`;
-    }).join('');
+    // 调仓模式：构建左右两栏（赎回端 + 申购端）
+    tableRows = ''; // 调仓模式不用 tableRows，改用 lossSplitHtml
   }
 
   const selCount = isProfit
@@ -2102,22 +2334,22 @@ function renderContent(acc, st) {
       </div>
     </div>
 
+      ${isLoss ? '' : `
     <!-- Main Table -->
     <div class="section-card">
       <div class="section-header">
         <div class="section-title">
           <span class="icon">📊</span> ${tableTitle}
-          <span class="section-subtitle">— ${isLoss ? '按产品BP比例分摊亏损金额' : '勾选参与分配的产品，填写目标BP，逐行选择申购目标专户'}</span>
+          <span class="section-subtitle">— 勾选参与分配的产品，填写目标BP，逐行选择申购目标专户</span>
         </div>
         <div class="section-actions">
-          <span style="font-size:12px;color:var(--text-muted);">${isLoss ? '产品' : '已选'} <strong id="selectedCount">${selCount}</strong> / <strong id="totalProductCount">${totalCount}</strong> 只</span>
-          <span style="font-size:12px;color:var(--text-muted);margin-left:8px;">${isLoss ? '总目标亏损' : '总BP'} <strong id="totalBPDisplay">${isLoss ? (st.totalLoss || acc.totalBP) : acc.totalBP}</strong></span>
+          <span style="font-size:12px;color:var(--text-muted);">已选 <strong id="selectedCount">${selCount}</strong> / <strong id="totalProductCount">${totalCount}</strong> 只</span>
+          <span style="font-size:12px;color:var(--text-muted);margin-left:8px;">总BP <strong id="totalBPDisplay">${acc.totalBP}</strong></span>
           <button class="btn" onclick="exportData()" style="background:#E6A23C;color:#fff;border:none;font-size:12px;padding:5px 14px;border-radius:4px;cursor:pointer;margin-left:12px;">导出 Excel</button>
         </div>
       </div>
       <div class="section-body" style="padding:0;">
 
-        ${isLoss ? '' : `
         <!-- 产品搜索添加区 -->
         <div style="padding:5px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
           <span style="font-size:11px;color:var(--text-muted);">搜索添加：</span>
@@ -2126,8 +2358,8 @@ function renderContent(acc, st) {
             oninput="onProductSearch(this.value)" onfocus="this.select()">
           <div id="productSearchDropdown" style="display:none;position:absolute;top:100%;left:0;z-index:100;background:#fff;border:1px solid var(--border);border-radius:6px;max-height:200px;overflow-y:auto;width:200px;box-shadow:0 4px 12px rgba(0,0,0,.1);"></div>
           <button onclick="addCustomProduct()" style="padding:4px 10px;font-size:11px;border:1px dashed var(--border);border-radius:4px;background:var(--bg);color:var(--primary);cursor:pointer;">+ 添加理财产品</button>
-          <span style="font-size:10px;color:var(--text-muted);margin-left:auto;">产品库 <strong id="libTotalCount">${productLibrary.length}</strong> 只</span>
-        </div>`}
+          <span style="font-size:10px;color:var(--text-muted);margin-left:auto;" title="候选来源：SPV持仓查询页数据（已下线产品除外）">持仓产品 <strong id="libTotalCount">${getAddableProducts().length}</strong> 只</span>
+        </div>
 
         <div class="table-container">
           <table>
@@ -2137,19 +2369,178 @@ function renderContent(acc, st) {
                 <th>产品代码</th>
                 <th>产品名称</th>
                 <th>最新规模（亿）</th>
-                <th>${isLoss ? '目标承担亏损（BP）' : '目标净值增长（BP）'}</th>
-                <th>占比 <span title="${isLoss ? '占比 = 产品BP ÷ 总目标亏损 × 100%' : '占比 = 应分配收益金额 ÷ 产品规模 × 100%'}" style="display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;border-radius:50%;background:#E2E8F0;color:#64748B;font-size:10px;font-weight:600;cursor:help;">?</span></th>
-                <th>${isLoss ? '分摊金额（元）' : '应分配收益金额（元）'}</th>
-                ${isLoss ? '<th>调减金额（元）</th><th>赎回来源专户</th><th>专户时效</th><th>实际金额（元）</th><th>赎回份额（份）</th>' : ''}
-                ${isLoss ? '' : '<th>申购目标专户</th>'}
-                ${isLoss ? '' : '<th>赎回份额（份）</th><th>申购金额（元）</th>'}
+                <th>目标净值增长（BP）</th>
+                <th>占比 <span title="占比 = 应分配收益金额 ÷ 产品规模 × 100%" style="display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;border-radius:50%;background:#E2E8F0;color:#64748B;font-size:10px;font-weight:600;cursor:help;">?</span></th>
+                <th>应分配收益金额（元）</th>
+                <th>申购目标专户</th>
+                <th>赎回份额（份）</th>
+                <th>申购金额（元）</th>
               </tr>
             </thead>
             <tbody id="mainTbody">${tableRows}</tbody>
           </table>
         </div>
       </div>
-    </div>
+    </div>`}
+
+    ${isLoss ? (() => {
+      // ====== 调仓模式：左右两栏 ======
+      const leftRows = acc.holdings.map(p => {
+        const bp = st.bpData[p.code] ?? p.defaultBP;
+        const redAmt = st.lossRedeemAmt?.[p.code] ?? 0;
+        const sel = (st.lossSelectedMap && st.lossSelectedMap[p.code] !== false);
+        const sizeYi = (p.size / 100000000).toFixed(4);
+        return `
+          <tr data-code="${p.code}" class="${sel ? 'selected' : 'not-selected'}">
+            <td class="chk-cell">
+              <input type="checkbox" ${sel ? 'checked' : ''} ${disabled} onchange="onLossToggleSelect('${p.code}', this.checked)">
+            </td>
+            <td style="font-weight:500;">${p.code}</td>
+            <td style="max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${p.name}">${p.name}</td>
+            <td class="num">${sizeYi}</td>
+            <td>
+              <input type="text" inputmode="numeric" class="loss-red-input" value="${redAmt ? redAmt.toLocaleString('zh-CN') : ''}"
+                placeholder="输入赎回金额"
+                ${disabled || !sel ? 'disabled' : ''}
+                oninput="onLossRedeemAmtChange('${p.code}', this.value)" onfocus="this.select()"
+                style="width:120px;">
+            </td>
+          </tr>`;
+      }).join('');
+
+      const rightRows = acc.holdings.map(p => {
+        const bp = st.bpData[p.code] ?? p.defaultBP;
+        const adj = st.lossAdjData[p.code] ?? 0;
+        const sel = (st.lossSelectedMap && st.lossSelectedMap[p.code] !== false);
+        return `
+          <tr data-code="${p.code}" class="${sel ? 'selected' : 'not-selected'}">
+            <td class="chk-cell">
+              <input type="checkbox" ${sel ? 'checked' : ''} ${disabled} onchange="onLossToggleSelect('${p.code}', this.checked)">
+            </td>
+            <td style="font-weight:500;">${p.code}</td>
+            <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${p.name}">${p.name}</td>
+            <td class="col-bp">
+              <input type="number" class="table-input" value="${bp}" step="1" min="0"
+                ${disabled ? 'disabled' : ''}
+                oninput="onBPChange('${p.code}', this.value)" onfocus="this.select()" style="width:60px;">
+            </td>
+            <td class="num" id="ratio_${p.code}">--</td>
+            <td class="num" style="font-weight:600;" id="F_${p.code}">--</td>
+            <td class="num" id="lossMyRed_${p.code}">--</td>
+            <td class="num" id="lossDiff_${p.code}">--</td>
+            <td>
+              <input type="text" inputmode="numeric" class="table-input" value="${adj ? adj.toLocaleString('zh-CN') : ''}"
+                ${disabled ? 'disabled' : ''}
+                oninput="onLossAdjChange('${p.code}', this.value)" onfocus="onLossAdjFocus(this)" onblur="onLossAdjBlur(this)" style="width:100px;">
+            </td>
+            <td>
+              <select class="table-input" id="lossRedSource_${p.code}"
+                ${disabled ? 'disabled' : ''}
+                onchange="onLossRedSourceChange('${p.code}', this.value)" style="width:130px;font-size:11px;text-align:left;">
+                <option value="">选择赎回来源</option>
+                ${getSPVData(p.code).map(s => {
+                  const sel2 = (st.lossRedSourceMap[p.code] === s.spvCode) ? 'selected' : '';
+                  const spvMaint2 = spvMaintList.find(m => { const a = allAccounts.find(ac => ac.id === m.id); return a && a.code === s.spvCode; });
+                  const svTval = spvMaint2 ? spvMaint2.tVal : 'T+0';
+                  return `<option value="${s.spvCode}" ${sel2}>${s.spvName.substring(0,12)}（${s.spvCode}）${svTval}</option>`;
+                }).join('')}
+              </select>
+            </td>
+            <td style="text-align:center;" id="lossRedTval_${p.code}">--</td>
+            <td class="num" style="font-weight:600;" id="I_${p.code}">--</td>
+          </tr>`;
+      }).join('');
+
+      return `
+    <!-- 调仓模式：左右两栏 -->
+    <div class="section-card" style="padding:0;">
+      <div class="section-header" style="padding:8px 12px;">
+        <div class="section-title" style="font-size:13px;">
+          <span class="icon">📊</span> 持有${acc.name}的理财产品 — 亏损分摊（调仓）
+          <span class="section-subtitle">— 左侧输入赎回金额累计，右侧按BP比例分配到各专户</span>
+        </div>
+        <div class="section-actions">
+          <span style="font-size:12px;color:var(--text-muted);">产品 <strong id="selectedCount">${selCount}</strong> / <strong id="totalProductCount">${totalCount}</strong> 只</span>
+          <span style="font-size:12px;color:var(--text-muted);margin-left:8px;">总目标亏损 <strong id="totalBPDisplay">${st.totalLoss || acc.totalBP}</strong></span>
+          <button class="btn" onclick="exportData()" style="background:#E6A23C;color:#fff;border:none;font-size:12px;padding:5px 14px;border-radius:4px;cursor:pointer;margin-left:12px;">导出 Excel</button>
+        </div>
+      </div>
+      <div class="loss-split-container">
+        <!-- ===== 左栏：赎回端 ===== -->
+        <div class="loss-left-panel">
+          <div class="loss-panel-header">
+            <span>🔴 赎回端 — 我的赎回决策（逐产品输入）</span>
+            <span style="font-size:11px;font-weight:400;color:#64748B;">累计赎回 →</span>
+          </div>
+          <div class="loss-panel-body">
+            <table>
+              <thead>
+                <tr>
+                  <th class="chk-cell" style="text-align:center;"><input type="checkbox" id="headerChk" title="全选/取消全选" onchange="onHeaderCheck(this.checked)" ${disabled}></th>
+                  <th>产品代码</th>
+                  <th>产品名称</th>
+                  <th style="text-align:right;">最新规模（亿）</th>
+                  <th style="text-align:right;">实际赎回金额（元）</th>
+                </tr>
+              </thead>
+              <tbody>${leftRows}</tbody>
+            </table>
+          </div>
+          <div class="loss-panel-summary">
+            <span style="color:#64748B;font-weight:500;">累计赎回金额</span>
+            <span style="font-weight:800;font-size:15px;color:#991B1B;" id="totalRedeemAmt">0</span>
+            <span style="font-size:11px;color:#64748B;">元</span>
+            <span style="margin-left:auto;font-size:11px;color:#64748B;">折合</span>
+            <span style="font-weight:700;font-size:13px;color:#991B1B;" id="totalRedeemWan">0</span>
+            <span style="font-size:11px;color:#64748B;">万元</span>
+          </div>
+        </div>
+
+        <!-- ===== 中间箭头桥 ===== -->
+        <div class="loss-arrow-bridge"></div>
+
+        <!-- ===== 右栏：申购端 ===== -->
+        <div class="loss-right-panel">
+          <div class="loss-panel-header">
+            <span style="font-weight:400;color:#64748B;">← BP标准参考</span>
+            <span>🔵 申购端 — 按BP比例的标准分摊</span>
+          </div>
+          <div class="loss-panel-body">
+            <table>
+              <thead>
+                <tr>
+                  <th class="chk-cell" style="text-align:center;"><input type="checkbox" title="全选/取消全选" onchange="onHeaderCheck(this.checked)" ${disabled}></th>
+                  <th>产品代码</th>
+                  <th>产品名称</th>
+                  <th style="text-align:center;">BP</th>
+                  <th style="text-align:right;">占比 <span title="占比 = 该产品BP ÷ 总目标亏损BP × 100%&#10;（总目标亏损为顶栏输入值）" style="display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;border-radius:50%;background:#E2E8F0;color:#64748B;font-size:10px;font-weight:600;cursor:help;">?</span></th>
+                  <th style="text-align:right;">BP标准分摊（元） <span title="BP标准分摊 = 占比 × 申购分配基数，四舍五入取整到万元后换算为元&#10;申购分配基数 = 左栏累计赎回金额 ÷ 10000（万元）&#10;因此左栏输入变化时，本列会联动重算" style="display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;border-radius:50%;background:#E2E8F0;color:#64748B;font-size:10px;font-weight:600;cursor:help;">?</span></th>
+                  <th style="text-align:right;">我的赎回（元） <span title="我的赎回 = 左栏赎回端中该产品输入的赎回金额&#10;此处为镜像显示，方便与BP标准分摊逐行对比&#10;左栏未输入或未勾选该产品时显示为0" style="display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;border-radius:50%;background:#E2E8F0;color:#64748B;font-size:10px;font-weight:600;cursor:help;">?</span></th>
+                  <th style="text-align:right;">差异（元） <span title="差异 = 我的赎回 − BP标准分摊" style="display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;border-radius:50%;background:#E2E8F0;color:#64748B;font-size:10px;font-weight:600;cursor:help;">?</span></th>
+                  <th style="text-align:right;">调减金额（元）</th>
+                  <th>赎回来源专户</th>
+                  <th style="text-align:center;">时效</th>
+                  <th style="text-align:right;">实际金额（元） <span title="实际金额 = BP标准分摊 − 调减金额&#10;调减金额为本行手工输入的调整值，不调减则为0&#10;实际金额为最终同步至头寸管理的执行金额" style="display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;border-radius:50%;background:#E2E8F0;color:#64748B;font-size:10px;font-weight:600;cursor:help;">?</span></th>
+                </tr>
+              </thead>
+              <tbody>${rightRows}</tbody>
+            </table>
+          </div>
+          <div class="loss-panel-summary">
+            <span style="color:#64748B;font-weight:500;">申购分配基数</span>
+            <span style="font-weight:800;font-size:15px;color:#1E3A5F;" id="baseSizeDisplay">0</span>
+            <span style="font-size:11px;color:#64748B;">万元</span>
+            <span style="margin-left:auto;font-weight:500;color:#64748B;">分摊合计</span>
+            <span style="font-weight:700;font-size:13px;color:#1E3A5F;" id="totalF_right">0</span>
+            <span style="font-size:11px;color:#64748B;">元</span>
+            <span style="margin-left:8px;font-weight:500;color:#64748B;">实际合计</span>
+            <span style="font-weight:700;font-size:13px;color:#16A34A;" id="totalI_right">0</span>
+            <span style="font-size:11px;color:#64748B;">元</span>
+          </div>
+        </div>
+      </div>
+    </div>`;
+    })() : ''}
 
     <div class="summary-row" id="summaryRow">
           <div class="summary-item">
@@ -2271,35 +2662,74 @@ function recalcProfitMode(acc, st) {
 
 function recalcLossMode(acc, st) {
   const totalLoss = parseFloat(document.getElementById('totalLoss')?.value) || st.totalLoss || 1;
-  const baseSize = parseFloat(document.getElementById('baseSize')?.value) || st.baseSize;
 
+  // ===== 左栏：累计赎回金额 → 作为右栏的 baseSize =====
+  let totalRedeemAmt = 0;
+  acc.holdings.forEach(p => {
+    const sel = (st.lossSelectedMap && st.lossSelectedMap[p.code] !== undefined) ? st.lossSelectedMap[p.code] : true;
+    const redAmt = st.lossRedeemAmt?.[p.code] || 0;
+    if (sel && redAmt > 0) {
+      totalRedeemAmt += redAmt;
+    }
+  });
+
+  // baseSize = 左栏累计赎回金额（元）÷ 10000 = 万元
+  const baseSize = totalRedeemAmt > 0 ? totalRedeemAmt / 10000 : (st.baseSize || 0);
+  st.baseSize = baseSize;
+
+  // 更新左栏汇总
+  const totalRedeemEl = document.getElementById('totalRedeemAmt');
+  if (totalRedeemEl) totalRedeemEl.textContent = totalRedeemAmt.toLocaleString('zh-CN', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+  const totalRedeemWanEl = document.getElementById('totalRedeemWan');
+  if (totalRedeemWanEl) totalRedeemWanEl.textContent = (totalRedeemAmt / 10000).toLocaleString('zh-CN', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+
+  // 更新右栏分配基数显示
+  const baseSizeEl = document.getElementById('baseSizeDisplay');
+  if (baseSizeEl) baseSizeEl.textContent = baseSize.toLocaleString('zh-CN', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+
+  // ===== 右栏：按BP占比分配 =====
   let totalBP = 0, selCount = 0;
-  const rows = document.querySelectorAll('#mainTbody tr[data-code]');
-  rows.forEach(row => {
-    const code = row.dataset.code;
-    const sel = (st.lossSelectedMap && st.lossSelectedMap[code] !== undefined) ? st.lossSelectedMap[code] : true;
+  acc.holdings.forEach(p => {
+    const sel = (st.lossSelectedMap && st.lossSelectedMap[p.code] !== undefined) ? st.lossSelectedMap[p.code] : true;
     if (!sel) return;
-    totalBP += st.bpData[code] || 0;
+    totalBP += st.bpData[p.code] || 0;
     selCount++;
   });
 
   let sumF = 0, sumI = 0;
-  rows.forEach(row => {
-    const code = row.dataset.code;
+  acc.holdings.forEach(p => {
+    const code = p.code;
+    const sel = (st.lossSelectedMap && st.lossSelectedMap[code] !== undefined) ? st.lossSelectedMap[code] : true;
+    if (!sel) {
+      setCell('ratio_' + code, '--');
+      setCell('F_' + code, '--');
+      setCell('lossMyRed_' + code, '--');
+      setCell('lossDiff_' + code, '--');
+      setCell('I_' + code, '--');
+      setCell('lossRedTval_' + code, '--');
+      return;
+    }
     const bp = st.bpData[code] || 0;
     const adj = st.lossAdjData[code] || 0;
 
-    // 占比 = BP / 总目标亏损 × 100（自动计算，与拉壳页面规则一致）
+    // 占比 = BP / 总目标亏损 × 100
     const ratio = totalLoss > 0 ? bp / totalLoss : 0;
     const ratioPct = totalLoss > 0 ? (bp / totalLoss) * 100 : 0;
 
     // F列：分摊金额 = ROUND(占比 × 基准规模(万元)) × 10000
-    const F = totalLoss > 0 ? Math.round(ratio * baseSize) * 10000 : 0;
+    const F = (totalLoss > 0 && baseSize > 0) ? Math.round(ratio * baseSize) * 10000 : 0;
     // I列 = F - 调减金额
     const I_val = F - adj;
 
     setCell('ratio_' + code, ratioPct.toFixed(2) + '%');
     setCell('F_' + code, fmtNum(F));
+    // 我的赎回（左栏输入）与差异（我的赎回 - BP标准分摊）
+    const myRed = st.lossRedeemAmt?.[code] || 0;
+    const diff = myRed - F;
+    setCell('lossMyRed_' + code, fmtNum(myRed));
+    const diffEl = document.getElementById('lossDiff_' + code);
+    setCell('lossDiff_' + code, (diff >= 0 ? '+' : '') + fmtNum(diff));
+    if (diffEl) diffEl.style.color = diff === 0 ? '#1E293B' : '#C2410C';
     setCell('I_' + code, fmtNum(I_val));
 
     // 专户时效显示
@@ -2310,28 +2740,16 @@ function recalcLossMode(acc, st) {
       setCell('lossRedTval_' + code, '--');
     }
 
-    // 赎回份额 = 实际金额 ÷ 所选赎回来源专户的单位净值，超持标红预警
-    const redSpvCode = st.lossRedSourceMap[code];
-    if (redSpvCode && I_val > 0) {
-      const spvHolding = getSPVData(code).find(s => s.spvCode === redSpvCode);
-      const nav = spvHolding ? spvHolding.nav : 0;
-      const availableQty = spvHolding ? spvHolding.qty : 0;
-      const redQty = nav > 0 ? Math.round(I_val / nav) : 0;
-      const overLimit = availableQty > 0 && redQty > availableQty;
-      const qtyEl = document.getElementById('lossRedQty_' + code);
-      if (qtyEl && overLimit) {
-        qtyEl.innerHTML = '<span style="display:inline-flex;align-items:center;gap:3px;background:#FEF2F2;border:1px solid #FECACA;border-radius:4px;padding:2px 6px;font-weight:700;color:#DC2626;">⚠️ ' + redQty.toLocaleString('zh-CN') + '</span>';
-        qtyEl.title = '赎回份额超过专户持仓 ' + availableQty.toLocaleString('zh-CN') + ' 份';
-      } else {
-        setCell('lossRedQty_' + code, redQty.toLocaleString('zh-CN'));
-      }
-    } else {
-      setCell('lossRedQty_' + code, '--');
-    }
-
     sumF += F; sumI += I_val;
   });
 
+  // 更新右栏汇总
+  const tfRightEl = document.getElementById('totalF_right');
+  if (tfRightEl) tfRightEl.textContent = sumF.toLocaleString('zh-CN', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+  const tiRightEl = document.getElementById('totalI_right');
+  if (tiRightEl) tiRightEl.textContent = sumI.toLocaleString('zh-CN', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+
+  // 更新底部汇总栏
   const bpEl = document.getElementById('bpTotal');
   if (bpEl) bpEl.textContent = totalBP;
   const tfEl = document.getElementById('totalF');
@@ -2380,6 +2798,16 @@ function onLossAdjChange(code, value) {
   // 去掉千分位逗号后解析
   const raw = String(value).replace(/,/g, '');
   st.lossAdjData[code] = parseFloat(raw) || 0;
+  recalcCurrent();
+}
+
+// 调仓左栏：赎回金额变更
+function onLossRedeemAmtChange(code, value) {
+  const st = getState(currentAccountId);
+  if (!st) return;
+  if (!st.lossRedeemAmt) st.lossRedeemAmt = {};
+  const raw = String(value).replace(/,/g, '');
+  st.lossRedeemAmt[code] = parseFloat(raw) || 0;
   recalcCurrent();
 }
 
@@ -3067,6 +3495,18 @@ function loadPositionData() {
     { code:'EW9201', name:'阳光金增利稳健天天购201号（已下线示例）', date:'2026-08-14', dayBegin:1500000, subAll:0, redAll:-500000, fee:0, t1Back:0, bankExch:0 },
     { code:'EW9202', name:'阳光金私享增利周开202号（已下线示例）', date:'2026-08-14', dayBegin:2800000, subAll:400000, redAll:0, fee:-20000, t1Back:0, bankExch:0 },
     { code:'EW9203', name:'阳光金安心计划203号（已下线示例）', date:'2026-08-14', dayBegin:900000, subAll:0, redAll:-300000, fee:0, t1Back:100000, bankExch:0 },
+    // === 临时产品示例（不在理财产品维护中，因当日专户调仓数据临时展示，头寸管理行带「临时」徽章）===
+    // 模拟场景：客户在专户调仓页临时添加该产品并同步调仓——从宁聚5号调出300万至鑫和14号
+    // 数据特征：无申赎(netSR=0) + 调仓闭环(源赎回300万/目标申购300万) → 剔除调仓后自然申赎=0 → gap=0 已平衡
+    // 次日演示「自动消失」：进入该产品专户弹窗将两笔金额清零保存即可（hasRebalanceData=false → 不再展示）
+    {
+      code:'EW9401', name:'阳光金增利稳健天天购401号（临时产品示例）', date:'2026-08-14',
+      dayBegin:0, subAll:0, redAll:0, fee:0, t1Back:0, bankExch:0,
+      _spv: {
+        ningju5: { sub:null, red:3000000, subManual:0, subRebalance:0, redManual:0, redRebalance:3000000 },
+        xinhe14: { sub:-3000000, red:null, subManual:0, subRebalance:3000000, redManual:0, redRebalance:0 }
+      }
+    },
   ];
   try {
     const saved = localStorage.getItem('position_data');
@@ -3571,13 +4011,13 @@ function calcPositionRow(row) {
       const seed = row.code.charCodeAt(row.code.length-1) + idx * 7;
       if (netSR > 500000) {
         existing.subManual = -(seed * 100000 + 500000);
-        existing.sub = (existing.subManual || 0) + (existing.subRebalance || 0);
+        existing.sub = (existing.subManual || 0) - (existing.subRebalance || 0);
       } else if (netSR < -500000) {
         existing.redManual = (seed * 100000 + 500000);
         existing.red = (existing.redManual || 0) + (existing.redRebalance || 0);
       } else {
         existing.subManual = 0; existing.redManual = 0;
-        existing.sub = existing.subRebalance || 0 ? existing.subRebalance : null;
+        existing.sub = existing.subRebalance || 0 ? -existing.subRebalance : null;
         existing.red = existing.redRebalance || 0 ? existing.redRebalance : null;
       }
     } else {
@@ -3658,6 +4098,9 @@ function init() {
     // 演示：将未上线示例产品（EW9101~EW9105）从产品维护列表移除，标记为"未上线"
     const unmaintCodes = ['EW9101','EW9102','EW9103','EW9104','EW9105'];
     productMaintList = productMaintList.filter(m => !unmaintCodes.includes(m.code));
+    // 演示：临时产品示例（EW9401）必须不在产品维护清单中——initProductMaintList 两条路径
+    // （默认全量上线 / 旧缓存合并补缺）都会把它补成"上线"，导致头寸管理「临时」徽章失效，须在此剔除
+    productMaintList = productMaintList.filter(m => m.code !== 'EW9401');
     // 演示：将已下线示例产品（EW9201~EW9203）加入产品维护列表并标记为下线
     const offlineCodes = ['EW9201','EW9202','EW9203'];
     offlineCodes.forEach(code => {
@@ -4708,7 +5151,7 @@ function renderPositionPage() {
   // 专户列：每个专户 colspan=2（分页展示）
   const spvPage = getSpvPage();
   spvPage.forEach(spv => {
-    headerRow1 += `<th class="spv-group-header" colspan="2"><span class="spv-name">${spv.name}</span></th>`;
+    headerRow1 += `<th class="spv-group-header" colspan="2"><span class="spv-name">${spv.name}</span><span class="spv-code">${spv.code || ''}</span></th>`;
     headerRow2 += `<th class="spv-sub-col">申购金额</th><th class="spv-red-col">赎回金额</th>`;
   });
 
@@ -4724,6 +5167,8 @@ function renderPositionPage() {
     const autoStatus = calcAutoStatus(row);
     const isBalanced = autoStatus === 'balanced';
     const isPending = autoStatus === 'pending';
+    // 临时产品：不在产品维护上线清单，仅因当日有调仓数据临时展示
+    const isTempProduct = !onlineCodes.has(row.code) && hasRebalanceData(row);
     let rowClass = '';
     if (isBalanced) rowClass = ' class="confirmed-row"';
     else if (isPending) rowClass = ' class="warn-row"';
@@ -4736,7 +5181,8 @@ function renderPositionPage() {
       if (col.key === 'code') {
         cellsHTML += `<td style="font-weight:500;"><a class="product-link" href="#" onclick="event.preventDefault();openProductInfoModal('${val}','${escHtml(row.name)}');">${val}</a></td>`;
       } else if (col.key === 'name') {
-        cellsHTML += `<td style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${val}"><a class="product-link" href="#" onclick="event.preventDefault();openProductInfoModal('${row.code}','${escHtml(row.name)}');">${val}</a></td>`;
+        const tempBadge = isTempProduct ? '<span class="temp-product-tag" title="该产品不在理财产品维护清单，因当日有调仓数据临时展示，次日无数据自动隐藏">临时</span>' : '';
+        cellsHTML += `<td style="white-space:nowrap;" title="${val}"><a class="product-link pos-name-link" href="#" onclick="event.preventDefault();openProductInfoModal('${row.code}','${escHtml(row.name)}');">${val}</a>${tempBadge}</td>`;
       } else if (col.key === 'posStatus') {
         cellsHTML += `<td class="pos-status-cell">${posStatusTag(autoStatus)}</td>`;
       } else if (col.isNum) {
@@ -4764,7 +5210,7 @@ function renderPositionPage() {
         if (!subManual && !subRebalance) return '';
         let t = '';
         if (subManual) t += '手动调整: ' + fmtMoneyNeg(subManual);
-        if (subRebalance) t += (t ? '\n' : '') + '专户调仓: ' + fmtMoneyNeg(subRebalance);
+        if (subRebalance) t += (t ? '\n' : '') + '专户调仓: ' + fmtMoneyNeg(-subRebalance);
         return t;
       };
       const makeRedTitle = () => {
@@ -5088,6 +5534,9 @@ function openPositionSpvModal(productCode, spvId, type) {
   // 当前金额
   const currentSub = sd.sub || 0;
   const currentRed = sd.red || 0;
+  // 专户调仓同步带入的金额（用于弹窗展示"其中专户调仓"）
+  const subReb = Math.abs(sd.subRebalance || 0);
+  const redReb = Math.abs(sd.redRebalance || 0);
 
   // 实际净值（用于份额计算）
   const nav = spvHolding.nav || 1;
@@ -5136,7 +5585,7 @@ function openPositionSpvModal(productCode, spvId, type) {
 
           <!-- 申购卡片 -->
           <div class="spv-trade-card card-sub">
-            <div class="card-label"><span class="card-icon sub">申</span>输入申购金额</div>
+            <div class="card-header">输入申购金额${subReb ? `<span class="header-tag">其中专户调仓 ${fmtMoneyNeg(subReb)} 元</span>` : ''}</div>
             <div class="spv-input-group">
               <div class="input-row">
                 <input type="text" id="spvSubInput" value="${currentSub !== 0 ? Math.abs(currentSub).toLocaleString('zh-CN') : ''}"
@@ -5145,18 +5594,21 @@ function openPositionSpvModal(productCode, spvId, type) {
               </div>
               <div class="input-hint" id="subHint">${currentSub !== 0 ? fmtWanYuan(Math.abs(currentSub)) : ''}</div>
             </div>
-            <div class="spv-action-row">
-              <button class="spv-action-btn primary" onclick="fillTotalSub('${productCode}','${spvId}')" ${isConfirmed ? 'disabled' : ''}>📥 带入总申购款</button>
-              <button class="spv-action-btn danger" onclick="fillSubHeadroom('${productCode}','${spvId}')" ${isConfirmed ? 'disabled' : ''}>⚡ 一键平头寸</button>
-            </div>
-            <div class="spv-action-info-row">
-              <span class="info-item">剩余可申购金额（元）：<span class="info-value">${fmtMoney(remainSub)}</span></span>
+            <div class="spv-action-grid">
+              <div class="spv-action-col">
+                <button class="col-btn" onclick="fillTotalSub('${productCode}','${spvId}')" ${isConfirmed ? 'disabled' : ''}>带入总申购款</button>
+                <div class="col-info">剩余可申购金额(元)：<span class="val">${fmtMoney(remainSub)}</span></div>
+              </div>
+              <div class="spv-action-col warning">
+                <button class="col-btn" onclick="fillSubHeadroom('${productCode}','${spvId}')" ${isConfirmed ? 'disabled' : ''}>一键平头寸</button>
+                <div class="col-info">剩余金额(元)：<span class="val">${fmtMoney(remainSub)}</span></div>
+              </div>
             </div>
           </div>
 
           <!-- 赎回卡片 -->
           <div class="spv-trade-card card-red">
-            <div class="card-label"><span class="card-icon red">赎</span>输入赎回金额</div>
+            <div class="card-header">输入赎回金额${redReb ? `<span class="header-tag">其中专户调仓 ${fmtMoneyPos(redReb)} 元</span>` : ''}</div>
             <div class="spv-input-group">
               <div class="input-row">
                 <input type="text" id="spvRedInput" value="${currentRed !== 0 ? currentRed.toLocaleString('zh-CN') : ''}"
@@ -5165,14 +5617,21 @@ function openPositionSpvModal(productCode, spvId, type) {
               </div>
               <div class="input-hint" id="redHint">${currentRed !== 0 ? fmtWanYuan(currentRed) : ''}</div>
             </div>
-            <div class="spv-action-row">
-              <button class="spv-action-btn" onclick="fillAllRed('${productCode}','${spvId}',${scale})" ${isConfirmed ? 'disabled' : ''}>📤 全部赎回</button>
-              <button class="spv-action-btn primary" onclick="fillTotalRed('${productCode}','${spvId}')" ${isConfirmed ? 'disabled' : ''}>📥 带入总赎回款</button>
-              <button class="spv-action-btn danger" onclick="fillRedHeadroom('${productCode}','${spvId}')" ${isConfirmed ? 'disabled' : ''}>⚡ 一键平头寸</button>
+            <div class="spv-action-grid">
+              <div class="spv-action-col">
+                <button class="col-btn" onclick="fillAllRed('${productCode}','${spvId}',${scale})" ${isConfirmed ? 'disabled' : ''}>全部赎回</button>
+                <div class="col-info">预估全部金额（元）：<span class="val">${fmtMoney(estRedAll)}</span></div>
+              </div>
+              <div class="spv-action-col">
+                <button class="col-btn" onclick="fillTotalRed('${productCode}','${spvId}')" ${isConfirmed ? 'disabled' : ''}>带入总赎回款</button>
+                <div class="col-info">剩余总赎回款(元)：<span class="val">${fmtMoney(remainRed)}</span></div>
+              </div>
             </div>
-            <div class="spv-action-info-row">
-              <span class="info-item">预估全部金额（元）：<span class="info-value">${fmtMoney(estRedAll)}</span></span>
-              <span class="info-item">剩余总赎回款（元）：<span class="info-value">${fmtMoney(remainRed)}</span></span>
+            <div class="spv-action-grid">
+              <div class="spv-action-col warning">
+                <button class="col-btn" onclick="fillRedHeadroom('${productCode}','${spvId}')" ${isConfirmed ? 'disabled' : ''}>一键平头寸</button>
+                <div class="col-info">剩余金额(元)：<span class="val">${fmtMoney(remainRed)}</span></div>
+              </div>
             </div>
 
             <!-- 预估赎回份额 -->
@@ -5311,8 +5770,12 @@ function calcHeadroomGap(product) {
       const isT0 = spvItem ? spvItem.tVal === 'T+0' : true;
       if (!isT0) return;
       const sd = product._spv[sid] || {};
-      t0SubSum += Math.abs(sd.sub || 0);
-      t0RedSum += Math.abs(sd.red || 0);
+      // 剔除专户调仓/拉壳带入的金额，只统计自然申赎（手动维护部分）
+      // 徽章用「其中」语义锁定口径A：主金额包含调仓 → gap 必须剔除调仓，否则一键平头寸会少算
+      const naturalSub = Math.abs(sd.sub || 0) - Math.abs(sd.subRebalance || 0);
+      const naturalRed = Math.abs(sd.red || 0) - Math.abs(sd.redRebalance || 0);
+      t0SubSum += naturalSub;
+      t0RedSum += naturalRed;
     });
   }
   return totalSub - t0SubSum + t0RedSum - totalRed;
@@ -5539,6 +6002,20 @@ function exportPositionData() {
 }
 
 // ==================== 产品搜索添加 ====================
+// 候选来源：「SPV持仓查询」页数据（positionData），不再使用独立产品库
+// 已下线产品排除；未维护产品可添加（标注"未上线"）；规模带出持仓总规模（元）
+
+function getAddableProducts() {
+  return positionData
+    .map(p => {
+      const m = productMaintList.find(x => x.code === p.code);
+      const status = (m && m.online) ? 'online' : (m && !m.online) ? 'offline' : 'unmaint';
+      const holdings = getSPVData(p.code);
+      const totalScale = holdings.reduce((sum, h) => sum + (h.scale || (h.qty * h.nav) || 0), 0);
+      return { code: p.code, name: p.name, status, totalScale, spvCount: holdings.length };
+    })
+    .filter(p => p.status !== 'offline');
+}
 
 function onProductSearch(query) {
   const dropdown = document.getElementById('productSearchDropdown');
@@ -5548,26 +6025,31 @@ function onProductSearch(query) {
     return;
   }
   const q = query.trim().toLowerCase();
-  const results = productLibrary.filter(p =>
+  const results = getAddableProducts().filter(p =>
     p.code.toLowerCase().includes(q) || p.name.toLowerCase().includes(q)
   ).slice(0, 8);
 
   if (results.length === 0) {
-    dropdown.innerHTML = '<div style="padding:8px 12px;font-size:12px;color:var(--text-muted);">未找到匹配产品</div>';
+    dropdown.innerHTML = '<div style="padding:8px 12px;font-size:12px;color:var(--text-muted);">未找到匹配产品（仅可选SPV持仓查询中的产品）</div>';
   } else {
-    dropdown.innerHTML = results.map(p => `
-      <div onclick="addProductFromSearch('${p.code}')" style="padding:8px 12px;font-size:12px;cursor:pointer;border-bottom:1px solid #f0f0f0;display:flex;justify-content:space-between;align-items:center;">
-        <span><strong>${p.code}</strong> ${p.name.split('（')[0]}</span>
-        <span style="font-size:10px;color:var(--text-muted);">${p.type}</span>
-      </div>
-    `).join('');
+    dropdown.innerHTML = results.map(p => {
+      const badge = p.status === 'unmaint'
+        ? '<span style="font-size:10px;padding:1px 5px;border-radius:3px;background:#FEF3C7;color:#B45309;">未上线</span>'
+        : '';
+      const sizeYi = (p.totalScale / 100000000).toFixed(2);
+      return `
+      <div onclick="addProductFromSearch('${p.code}')" style="padding:8px 12px;font-size:12px;cursor:pointer;border-bottom:1px solid #f0f0f0;display:flex;justify-content:space-between;align-items:center;gap:6px;">
+        <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"><strong>${p.code}</strong> ${p.name.split('（')[0].split('(')[0]} ${badge}</span>
+        <span style="font-size:10px;color:var(--text-muted);white-space:nowrap;">${sizeYi}亿</span>
+      </div>`;
+    }).join('');
   }
   dropdown.style.display = 'block';
 }
 
 function addProductFromSearch(code) {
-  const product = productLibrary.find(p => p.code === code);
-  if (!product) return;
+  const prod = positionData.find(p => p.code === code);
+  if (!prod) return;
 
   const acc = getAccount(currentAccountId);
   const st = getState(currentAccountId);
@@ -5580,71 +6062,84 @@ function addProductFromSearch(code) {
     return;
   }
 
-  // 添加新产品（默认未选中，BP=0）
+  // 规模带出口径：SPV持仓查询页该产品持仓总规模（Σ 各专户持仓市值，元）
+  const holdings = getSPVData(code);
+  const totalScale = holdings.reduce((sum, h) => sum + (h.scale || (h.qty * h.nav) || 0), 0);
+
+  // 添加新产品（默认未选中，BP=0，规模来自持仓查询）
   acc.holdings.push({
-    code: product.code,
-    name: product.name,
-    size: 100000000,  // 默认规模1亿
+    code: prod.code,
+    name: prod.name,
+    size: Math.round(totalScale),
     defaultBP: 0,
     defaultSelected: false,
     feeRatio: 1.0033613,
   });
-  st.selectedMap[product.code] = false;
-  st.bpData[product.code] = 0;
-  st.feeRatioData[product.code] = 1.0033613;
-  st.spvHoldingAdj[product.code] = 0;
+  st.selectedMap[prod.code] = false;
+  st.bpData[prod.code] = 0;
+  st.feeRatioData[prod.code] = 1.0033613;
+  st.spvHoldingAdj[prod.code] = 0;
 
   // 关闭下拉
   document.getElementById('productSearchDropdown').style.display = 'none';
   document.getElementById('productSearchInput').value = '';
   renderContent(acc, st);
   recalcCurrent();
+  // 若选择弹窗打开中，同步刷新其列表状态
+  if (document.getElementById('addChannelProductModal').classList.contains('show')) {
+    renderChannelProductPicker();
+  }
 }
 
 function addCustomProduct() {
   document.getElementById('addChannelProductModal').classList.add('show');
-  document.getElementById('chProdCode').value = '';
-  document.getElementById('chProdName').value = '';
-  document.getElementById('chProdBp').value = '1';
-  document.getElementById('chProdSize').value = '1.00';
-  document.getElementById('chProdHint').style.display = 'none';
-  setTimeout(() => document.getElementById('chProdCode').focus(), 50);
+  const input = document.getElementById('chProdSearch');
+  if (input) input.value = '';
+  renderChannelProductPicker('');
+  setTimeout(() => input && input.focus(), 50);
 }
 
 function closeAddChannelProductModal() {
   document.getElementById('addChannelProductModal').classList.remove('show');
 }
 
-function confirmAddChannelProduct() {
-  const code = (document.getElementById('chProdCode').value || '').trim();
-  const name = (document.getElementById('chProdName').value || '').trim();
-  const bp = parseFloat(document.getElementById('chProdBp').value) || 1;
-  const sizeYi = parseFloat(document.getElementById('chProdSize').value) || 1;
-  const hint = document.getElementById('chProdHint');
-
-  if (!code) { hint.textContent = '请输入产品代码'; hint.style.display = 'block'; return; }
-  if (!name) { hint.textContent = '请输入产品名称'; hint.style.display = 'block'; return; }
-
+// 渲染「添加理财产品」选择弹窗列表（来源：SPV持仓查询数据）
+function renderChannelProductPicker(query) {
+  const listEl = document.getElementById('chProdList');
+  if (!listEl) return;
   const acc = getAccount(currentAccountId);
-  const st = getState(currentAccountId);
-  if (!acc || !st) return;
+  const q = (query !== undefined ? query : (document.getElementById('chProdSearch') || {}).value || '').trim().toLowerCase();
 
-  if (acc.holdings.find(p => p.code === code)) {
-    hint.textContent = '产品 ' + code + ' 已存在';
-    hint.style.display = 'block';
+  let items = getAddableProducts();
+  if (q) items = items.filter(p => p.code.toLowerCase().includes(q) || p.name.toLowerCase().includes(q));
+
+  if (!items.length) {
+    listEl.innerHTML = '<div style="padding:16px;text-align:center;font-size:12px;color:var(--text-muted);">未找到匹配产品（仅可选SPV持仓查询中的产品）</div>';
     return;
   }
 
-  const size = Math.round(sizeYi * 100000000);
-  acc.holdings.push({ code, name, size, defaultBP: bp, defaultSelected: true, feeRatio: 1.0033613 });
-  st.selectedMap[code] = true;
-  st.bpData[code] = bp;
-  st.feeRatioData[code] = 1.0033613;
-  st.spvHoldingAdj[code] = 0;
+  // 排序：已上线在前，未上线在后
+  items.sort((a, b) => (a.status === 'online' ? 0 : 1) - (b.status === 'online' ? 0 : 1));
 
-  closeAddChannelProductModal();
-  renderContent(acc, st);
-  recalcCurrent();
+  listEl.innerHTML = items.map(p => {
+    const exists = acc && acc.holdings.find(h => h.code === p.code);
+    const badge = p.status === 'online'
+      ? '<span style="font-size:10px;padding:1px 5px;border-radius:3px;background:#DCFCE7;color:#15803D;">已上线</span>'
+      : '<span style="font-size:10px;padding:1px 5px;border-radius:3px;background:#FEF3C7;color:#B45309;">未上线</span>';
+    const sizeYi = (p.totalScale / 100000000).toFixed(2);
+    const btn = exists
+      ? '<button disabled style="padding:4px 12px;font-size:11px;border:1px solid var(--border);border-radius:4px;background:#F1F5F9;color:#94A3B8;cursor:not-allowed;">已存在</button>'
+      : `<button onclick="addProductFromSearch('${p.code}')" style="padding:4px 12px;font-size:11px;border:1px solid var(--primary);border-radius:4px;background:#fff;color:var(--primary);cursor:pointer;">+ 添加</button>`;
+    return `
+    <div style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-bottom:1px solid #f0f0f0;">
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"><strong>${p.code}</strong> ${p.name}</div>
+        <div style="font-size:10px;color:var(--text-muted);margin-top:2px;">持仓规模 ${sizeYi} 亿 · 持有 ${p.spvCount} 只专户</div>
+      </div>
+      ${badge}
+      ${btn}
+    </div>`;
+  }).join('');
 }
 
 // 点击其他地方关闭搜索下拉
@@ -5742,35 +6237,21 @@ document.addEventListener('click', function(e) {
 
 <!-- Add Channel Product Modal -->
 <div class="modal-overlay" id="addChannelProductModal">
-  <div class="modal" style="width:420px;max-width:90vw;">
+  <div class="modal" style="width:560px;max-width:95vw;">
     <div class="modal-header">
       <h3>添加理财产品</h3>
       <button class="modal-close" onclick="closeAddChannelProductModal()">&times;</button>
     </div>
-    <div class="modal-body">
-      <div class="form-row">
-        <label class="form-label" for="chProdCode">产品代码</label>
-        <input type="text" id="chProdCode" class="form-input" placeholder="如 EW9999" maxlength="30">
+    <div class="modal-body" style="padding:0;">
+      <div style="padding:10px 16px 8px;border-bottom:1px solid var(--border);">
+        <div style="font-size:11px;color:var(--text-muted);margin-bottom:8px;">候选来源：<strong>SPV持仓查询</strong>页面理财产品（已下线产品不可添加，规模自动带出持仓总规模）</div>
+        <input type="text" id="chProdSearch" class="form-input" placeholder="搜索产品代码 / 名称..."
+          oninput="renderChannelProductPicker(this.value)" style="width:100%;box-sizing:border-box;">
       </div>
-      <div class="form-row">
-        <label class="form-label" for="chProdName">产品名称</label>
-        <input type="text" id="chProdName" class="form-input" placeholder="产品全称" maxlength="100">
-      </div>
-      <div class="form-row" style="display:flex;gap:12px;">
-        <div style="flex:1;">
-          <label class="form-label" for="chProdBp">目标 BP</label>
-          <input type="number" id="chProdBp" class="form-input" value="1" step="1" min="1">
-        </div>
-        <div style="flex:1;">
-          <label class="form-label" for="chProdSize">产品规模（亿）</label>
-          <input type="number" id="chProdSize" class="form-input" value="1.00" step="0.01" min="0.01">
-        </div>
-      </div>
-      <div class="form-hint" id="chProdHint" style="display:none;color:var(--danger);font-size:12px;margin-top:8px;"></div>
+      <div id="chProdList" style="max-height:380px;overflow-y:auto;"></div>
     </div>
     <div class="modal-footer">
-      <button class="btn btn-outline" onclick="closeAddChannelProductModal()">取消</button>
-      <button class="btn btn-primary" onclick="confirmAddChannelProduct()">确认新增</button>
+      <button class="btn btn-primary" onclick="closeAddChannelProductModal()">完成</button>
     </div>
   </div>
 </div>
