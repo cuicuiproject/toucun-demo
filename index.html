@@ -2336,6 +2336,7 @@ function renderContent(acc, st) {
                 ${disabled || !sel ? 'disabled' : ''}
                 oninput="onLossRedeemAmtChange('${p.code}', this.value)" onfocus="this.select()"
                 style="width:120px;">
+              <button class="btn" onclick="onAllRedeemOne('${p.code}')" ${disabled || !sel ? 'disabled' : ''} style="font-size:11px;padding:3px 8px;background:#DC2626;color:#fff;border:none;border-radius:4px;cursor:pointer;margin-left:6px;">一键全部赎回</button>
             </td>
           </tr>`;
       }).join('');
@@ -2388,7 +2389,6 @@ function renderContent(acc, st) {
         <div class="loss-left-panel">
           <div class="loss-panel-header">
             <span>🔴 赎回端 — 我的赎回决策（逐产品输入）</span>
-            <button class="btn" onclick="onAllRedeem()" ${disabled} style="font-size:11px;padding:3px 10px;background:#DC2626;color:#fff;border:none;border-radius:4px;cursor:pointer;">一键全部赎回</button>
           </div>
           <div class="loss-panel-body">
             <table>
@@ -2663,17 +2663,17 @@ function onLossRedeemAmtChange(code, value) {
   recalcCurrent();
 }
 
-// 一键全部赎回：勾选全部产品并带入各自全部持仓金额（可二次修改）
-function onAllRedeem() {
+// 一键全部赎回（逐产品）：勾选该产品并带入其全部持仓金额（可二次修改）
+function onAllRedeemOne(code) {
   const acc = getAccount(currentAccountId);
   const st = getState(currentAccountId);
   if (!acc || !st) return;
+  const p = acc.holdings.find(h => h.code === code);
+  if (!p) return;
   if (!st.lossSelectedMap) st.lossSelectedMap = {};
   if (!st.lossRedeemAmt) st.lossRedeemAmt = {};
-  acc.holdings.forEach(p => {
-    st.lossSelectedMap[p.code] = true;
-    st.lossRedeemAmt[p.code] = p.size || 0;
-  });
+  st.lossSelectedMap[code] = true;
+  st.lossRedeemAmt[code] = p.size || 0;
   updateHeaderCheckbox();
   renderContent(acc, st);
   recalcCurrent();
