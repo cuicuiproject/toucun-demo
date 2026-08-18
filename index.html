@@ -2336,7 +2336,7 @@ function renderContent(acc, st) {
                 ${disabled || !sel ? 'disabled' : ''}
                 oninput="onLossRedeemAmtChange('${p.code}', this.value)" onfocus="this.select()"
                 style="width:120px;">
-              <button class="btn" id="allRedeemBtn_${p.code}" onclick="onAllRedeemOne('${p.code}')" ${disabled || !sel || !st.lossRedSourceMap[p.code] ? 'disabled' : ''} style="font-size:11px;padding:3px 8px;background:#DC2626;color:#fff;border:none;border-radius:4px;cursor:pointer;margin-left:6px;">全赎</button>
+              <button class="btn" id="allRedeemBtn_${p.code}" onclick="onAllRedeemOne('${p.code}')" ${disabled || !sel ? 'disabled' : ''} style="font-size:11px;padding:3px 8px;background:#DC2626;color:#fff;border:none;border-radius:4px;cursor:pointer;margin-left:6px;">全赎</button>
             </td>
           </tr>`;
       }).join('');
@@ -2720,15 +2720,14 @@ function onLossRedSourceChange(code, spvCode) {
   recalcCurrent();
 }
 
-// 刷新「全赎」按钮的禁用状态（需：未锁定 + 已勾选 + 已选赎回来源）
+// 刷新「全赎」按钮的禁用状态（仅需：未锁定 + 已勾选；是否已选来源由点击时校验弹提示）
 function refreshAllRedeemBtn(code) {
   const st = getState(currentAccountId);
   const btn = document.getElementById('allRedeemBtn_' + code);
   if (!btn || !st) return;
   const isLocked = st.status === 'done';
   const sel = (st.lossSelectedMap && st.lossSelectedMap[code] !== false);
-  const hasSrc = !!st.lossRedSourceMap[code];
-  btn.disabled = isLocked || !sel || !hasSrc;
+  btn.disabled = isLocked || !sel;
 }
 
 // ==================== REMOVE ACCOUNT ====================
