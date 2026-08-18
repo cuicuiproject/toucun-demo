@@ -2312,7 +2312,7 @@ function renderContent(acc, st) {
         return `
           <tr data-code="${p.code}" class="${sel ? 'selected' : 'not-selected'}">
             <td class="chk-cell">
-              <input type="checkbox" ${sel ? 'checked' : ''} ${disabled} onchange="onLossToggleSelect('${p.code}', this.checked)">
+              <input type="checkbox" id="lossChk_${p.code}" ${sel ? 'checked' : ''} ${disabled} onchange="onLossToggleSelect('${p.code}', this.checked)">
             </td>
             <td style="font-weight:500;">${p.code}</td>
             <td style="max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${p.name}">${p.name}</td>
@@ -2331,7 +2331,7 @@ function renderContent(acc, st) {
               </select>
             </td>
             <td>
-              <input type="text" inputmode="numeric" class="loss-red-input" value="${redAmt ? redAmt.toLocaleString('zh-CN') : ''}"
+              <input type="text" inputmode="numeric" class="loss-red-input" id="lossRedeemInput_${p.code}" value="${redAmt ? redAmt.toLocaleString('zh-CN') : ''}"
                 placeholder="输入赎回金额"
                 ${disabled || !sel ? 'disabled' : ''}
                 oninput="onLossRedeemAmtChange('${p.code}', this.value)" onfocus="this.select()"
@@ -2670,12 +2670,25 @@ function onAllRedeemOne(code) {
   if (!acc || !st) return;
   const p = acc.holdings.find(h => h.code === code);
   if (!p) return;
+
+  // 校验：未选赎回来源专户时提示
+  if (!st.lossRedSourceMap[code]) {
+    alert('请先选择该产品的「赎回来源专户」，再点「全赎」。');
+    return;
+  }
+
   if (!st.lossSelectedMap) st.lossSelectedMap = {};
   if (!st.lossRedeemAmt) st.lossRedeemAmt = {};
   st.lossSelectedMap[code] = true;
   st.lossRedeemAmt[code] = p.size || 0;
+
+  // 直接更新勾选框和金额输入框，不重新渲染（避免横向滚动条复位）
+  const chk = document.getElementById('lossChk_' + code);
+  if (chk) chk.checked = true;
+  const input = document.getElementById('lossRedeemInput_' + code);
+  if (input) input.value = (p.size || 0).toLocaleString('zh-CN');
+
   updateHeaderCheckbox();
-  renderContent(acc, st);
   recalcCurrent();
 }
 
