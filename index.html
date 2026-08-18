@@ -2336,7 +2336,7 @@ function renderContent(acc, st) {
                 ${disabled || !sel ? 'disabled' : ''}
                 oninput="onLossRedeemAmtChange('${p.code}', this.value)" onfocus="this.select()"
                 style="width:120px;">
-              <button class="btn" onclick="onAllRedeemOne('${p.code}')" ${disabled || !sel ? 'disabled' : ''} style="font-size:11px;padding:3px 8px;background:#DC2626;color:#fff;border:none;border-radius:4px;cursor:pointer;margin-left:6px;">一键全部赎回</button>
+              <button class="btn" onclick="onAllRedeemOne('${p.code}')" ${disabled || !sel || !st.lossRedSourceMap[p.code] ? 'disabled' : ''} style="font-size:11px;padding:3px 8px;background:#DC2626;color:#fff;border:none;border-radius:4px;cursor:pointer;margin-left:6px;">全赎</button>
             </td>
           </tr>`;
       }).join('');
@@ -2663,7 +2663,7 @@ function onLossRedeemAmtChange(code, value) {
   recalcCurrent();
 }
 
-// 一键全部赎回（逐产品）：勾选该产品并带入其全部持仓金额（可二次修改）
+// 全赎（逐产品）：需先选赎回来源专户，勾选该产品并带入其全部持仓金额（可二次修改）
 function onAllRedeemOne(code) {
   const acc = getAccount(currentAccountId);
   const st = getState(currentAccountId);
