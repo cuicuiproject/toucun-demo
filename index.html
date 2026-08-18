@@ -2096,14 +2096,16 @@ function getState(accountId) {
       totalYuan: 0,                  // 金额分摊模式：总金额 = 左栏累计赎回金额（元）
       baseSize: Math.round(acc.accountSize / 10000 * 100) / 100,  // 换算基数（万元）= 专户规模
       lossAdjData: {},
-      lossSelectedMap: {},         // 调仓左栏勾选状态 { productCode: boolean }
+      lossSelectedMap: {},         // 调仓左栏（赎回端）勾选状态 { productCode: boolean }
+      subSelectedMap: {},          // 调仓右栏（申购端）勾选状态 { productCode: boolean }
       lossRedSourceMap: {},        // 调仓逐产品赎回来源专户 { productCode: spvCode }
       lossRedeemAmt: {},           // 调仓左栏赎回金额 { productCode: amount }
       bpGrowth: acc.totalBP,
       accountSize: acc.accountSize,
     };
     acc.holdings.forEach(p => {
-      state.lossSelectedMap[p.code] = true;  // 调仓模式默认全选
+      state.lossSelectedMap[p.code] = true;  // 赎回端默认全选
+      state.subSelectedMap[p.code] = true;   // 申购端默认全选
       state.bpData[p.code] = p.defaultBP;
     });
     accountState[accountId] = state;
@@ -2345,11 +2347,11 @@ function renderContent(acc, st) {
       const rightRows = acc.holdings.map(p => {
         const bp = st.bpData[p.code] ?? p.defaultBP;
         const adj = st.lossAdjData[p.code] ?? 0;
-        const sel = (st.lossSelectedMap && st.lossSelectedMap[p.code] !== false);
+        const subSel = (st.subSelectedMap && st.subSelectedMap[p.code] !== false);
         return `
-          <tr data-code="${p.code}" class="${sel ? 'selected' : 'not-selected'}">
+          <tr data-code="${p.code}" class="${subSel ? 'selected' : 'not-selected'}">
             <td class="chk-cell">
-              <input type="checkbox" ${sel ? 'checked' : ''} ${disabled} onchange="onLossToggleSelect('${p.code}', this.checked)">
+              <input type="checkbox" ${subSel ? 'checked' : ''} ${disabled} onchange="onSubToggleSelect('${p.code}', this.checked)">
             </td>
             <td style="font-weight:500;">${p.code}</td>
             <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${p.name}">${p.name}</td>
@@ -2428,7 +2430,7 @@ function renderContent(acc, st) {
             <table>
               <thead>
                 <tr>
-                  <th class="chk-cell" style="text-align:center;"><input type="checkbox" title="全选/取消全选" onchange="onHeaderCheck(this.checked)" ${disabled}></th>
+                  <th class="chk-cell" style="text-align:center;"><input type="checkbox" title="全选/取消全选" onchange="onSubHeaderCheck(this.checked)" ${disabled}></th>
                   <th>产品代码</th>
                   <th>产品名称</th>
                   ${st.subMode === 'bp' ? '<th style="text-align:center;">BP</th>' : ''}
@@ -2536,10 +2538,10 @@ function recalcLossMode(acc, st) {
   const baseSizeEl = document.getElementById('baseSizeDisplay');
   if (baseSizeEl) baseSizeEl.textContent = (st.subMode === 'wan' ? totalYuan : baseSize).toLocaleString('zh-CN', {minimumFractionDigits: 2, maximumFractionDigits: 2});
 
-  // ===== 右栏：按占比分配（BP模式按BP占比，金额模式按规模占比）=====
+  // ===== 右栏：按占比分配（BP模式按BP占比，金额模式按规模占比；勾选用申购端 subSelectedMap）=====
   let totalSizeSum = 0;
   acc.holdings.forEach(p => {
-    const sel = (st.lossSelectedMap && st.lossSelectedMap[p.code] !== undefined) ? st.lossSelectedMap[p.code] : true;
+    const sel = (st.subSelectedMap && st.subSelectedMap[p.code] !== undefined) ? st.subSelectedMap[p.code] : true;
     if (!sel) return;
     totalSizeSum += p.size || 0;
   });
@@ -2547,7 +2549,7 @@ function recalcLossMode(acc, st) {
   let sumF = 0, sumI = 0;
   acc.holdings.forEach(p => {
     const code = p.code;
-    const sel = (st.lossSelectedMap && st.lossSelectedMap[code] !== undefined) ? st.lossSelectedMap[code] : true;
+    const sel = (st.subSelectedMap && st.subSelectedMap[code] !== undefined) ? st.subSelectedMap[code] : true;
     if (!sel) {
       setCell('ratio_' + code, '--');
       setCell('F_' + code, '--');
@@ -2681,13 +2683,22 @@ function onAllRedeemOne(code) {
   recalcCurrent();
 }
 
-// 调仓模式勾选产品
+// 调仓模式勾选产品（赎回端）
 function onLossToggleSelect(code, checked) {
   const st = getState(currentAccountId);
   if (!st) return;
   if (!st.lossSelectedMap) st.lossSelectedMap = {};
   st.lossSelectedMap[code] = checked;
   refreshAllRedeemBtn(code);
+  recalcCurrent();
+}
+
+// 申购端（右栏）勾选产品
+function onSubToggleSelect(code, checked) {
+  const st = getState(currentAccountId);
+  if (!st) return;
+  if (!st.subSelectedMap) st.subSelectedMap = {};
+  st.subSelectedMap[code] = checked;
   recalcCurrent();
 }
 
@@ -2746,6 +2757,18 @@ function onHeaderCheck(checked) {
   if (!st.lossSelectedMap) st.lossSelectedMap = {};
   acc.holdings.forEach(p => { st.lossSelectedMap[p.code] = checked; });
   updateHeaderCheckbox();
+  saveCurrentState();
+  renderContent(acc, st);
+  recalcCurrent();
+}
+
+// 申购端（右栏）表头全选
+function onSubHeaderCheck(checked) {
+  const acc = getAccount(currentAccountId);
+  const st = getState(currentAccountId);
+  if (!acc || !st) return;
+  if (!st.subSelectedMap) st.subSelectedMap = {};
+  acc.holdings.forEach(p => { st.subSelectedMap[p.code] = checked; });
   saveCurrentState();
   renderContent(acc, st);
   recalcCurrent();
@@ -2994,37 +3017,30 @@ function syncToSystem() {
       errors.push('左栏累计赎回金额为 0，请先输入各产品的赎回金额。');
     }
   }
-  const selected = acc.holdings.filter(p => {
-    const sel = (st.lossSelectedMap && st.lossSelectedMap[p.code] !== undefined) ? st.lossSelectedMap[p.code] : true;
+  // 申购侧：申购勾选（subSelectedMap）产品非空
+  const subSelected = acc.holdings.filter(p => {
+    const sel = (st.subSelectedMap && st.subSelectedMap[p.code] !== undefined) ? st.subSelectedMap[p.code] : true;
     return sel;
   });
-  if (selected.length === 0) {
-    errors.push('未勾选任何产品，请至少勾选一只参与调仓。');
-  } else {
-      if (st.subMode === 'bp') {
-        const hasBp = selected.some(p => (st.bpData[p.code] ?? p.defaultBP) > 0);
-        if (!hasBp) {
-          errors.push('已勾选产品的目标承担亏损 BP 均为 0，请至少设置一只。');
-        }
-      }
-      const missingSrc = selected.filter(p => {
-        let F = 0;
-        if (st.subMode === 'wan') {
-          const totalSize = selected.reduce((s, q) => s + (q.size || 0), 0);
-          const ratio = totalSize > 0 ? (p.size / totalSize) : 0;
-          F = Math.round(ratio * (st.totalYuan || 0));
-          return F > 0 && !st.lossRedSourceMap[p.code];
-        } else {
-          const bp = st.bpData[p.code] ?? p.defaultBP;
-          const ratio = (st.totalLoss || 1) > 0 ? bp / (st.totalLoss || 1) : 0;
-          F = Math.round(ratio * st.baseSize) * 10000;
-          return bp > 0 && F > 0 && !st.lossRedSourceMap[p.code];
-        }
-      });
-      if (missingSrc.length > 0) {
-        errors.push('以下产品未选择赎回来源专户：' + missingSrc.map(p => p.code).join('、'));
-      }
+  if (subSelected.length === 0) {
+    errors.push('未勾选任何申购产品，请至少勾选一只参与申购。');
+  } else if (st.subMode === 'bp') {
+    const hasBp = subSelected.some(p => (st.bpData[p.code] ?? p.defaultBP) > 0);
+    if (!hasBp) {
+      errors.push('已勾选产品的目标承担亏损 BP 均为 0，请至少设置一只。');
     }
+  }
+
+  // 赎回侧：赎回勾选（lossSelectedMap）且有赎回金额的产品，需选赎回来源专户
+  const redeemSelected = acc.holdings.filter(p => {
+    const sel = (st.lossSelectedMap && st.lossSelectedMap[p.code] !== undefined) ? st.lossSelectedMap[p.code] : true;
+    const redAmt = st.lossRedeemAmt?.[p.code] || 0;
+    return sel && redAmt > 0;
+  });
+  const missingSrc = redeemSelected.filter(p => !st.lossRedSourceMap[p.code]);
+  if (missingSrc.length > 0) {
+    errors.push('以下产品未选择赎回来源专户：' + missingSrc.map(p => p.code).join('、'));
+  }
 
   if (errors.length > 0) {
     const msg = '以下项目未完成，请完善后再同步：\n\n' + errors.map((e, i) => (i + 1) + '. ' + e).join('\n');
@@ -3042,21 +3058,22 @@ function syncToSystem() {
     return;
   }
 
-  let sumF = 0, sumI = 0, sumK = 0;
-  let syncedProducts = [];
+  let sumF = 0, sumI = 0, sumRedAmt = 0;
+  let subscribeProducts = [];
+  let redeemProducts = [];
 
   {
     const totalLoss = st.totalLoss || 1;
-    // 万元模式：先算选中产品的规模合计，用于按规模比例分摊
+    // 申购侧（右栏）：按 subSelectedMap 勾选，算分摊金额
     let totalSizeSumSync = 0;
     if (st.subMode === 'wan') {
       acc.holdings.forEach(p => {
-        const sel = (st.lossSelectedMap && st.lossSelectedMap[p.code] !== undefined) ? st.lossSelectedMap[p.code] : true;
+        const sel = (st.subSelectedMap && st.subSelectedMap[p.code] !== undefined) ? st.subSelectedMap[p.code] : true;
         if (sel) totalSizeSumSync += p.size || 0;
       });
     }
     acc.holdings.forEach(p => {
-      const sel = (st.lossSelectedMap && st.lossSelectedMap[p.code] !== undefined) ? st.lossSelectedMap[p.code] : true;
+      const sel = (st.subSelectedMap && st.subSelectedMap[p.code] !== undefined) ? st.subSelectedMap[p.code] : true;
       if (!sel) return;
       const bp = st.bpData[p.code] ?? p.defaultBP;
       const adj = st.lossAdjData[p.code] || 0;
@@ -3069,52 +3086,69 @@ function syncToSystem() {
         F = totalLoss > 0 ? Math.round(ratio * st.baseSize) * 10000 : 0;
       }
       const I_val = F - adj;
+      sumF += F; sumI += I_val;
+      subscribeProducts.push({ code: p.code, name: p.name.split('（')[0], bp, F, adj, I_val });
+    });
+
+    // 赎回侧（左栏）：按 lossSelectedMap 勾选，写赎回金额到赎回来源
+    acc.holdings.forEach(p => {
+      const sel = (st.lossSelectedMap && st.lossSelectedMap[p.code] !== undefined) ? st.lossSelectedMap[p.code] : true;
+      const redAmt = st.lossRedeemAmt?.[p.code] || 0;
+      if (!sel || redAmt <= 0) return;
       const redSpvCode = st.lossRedSourceMap[p.code] || '';
       const redSpvName = redSpvCode ? (getSPVData(p.code).find(s => s.spvCode === redSpvCode) || {}).spvName || redSpvCode : '';
-      const nav = redSpvCode ? (getSPVData(p.code).find(s => s.spvCode === redSpvCode) || {}).nav || 0 : 0;
-      const redQty = nav > 0 ? Math.round(I_val / nav) : null;
-      sumF += F; sumI += I_val;
-      syncedProducts.push({ code: p.code, name: p.name.split('（')[0], bp, F, adj, I_val, redSpvCode, redSpvName, redQty });
+      sumRedAmt += redAmt;
+      redeemProducts.push({ code: p.code, name: p.name.split('（')[0], redAmt, redSpvCode, redSpvName });
     });
   }
 
   // 保存待确认数据
-  pendingSyncData = { acc, st, syncedProducts, sumF, sumI, sumK };
+  pendingSyncData = { acc, st, subscribeProducts, redeemProducts, sumF, sumI, sumRedAmt };
   showSyncModal();
 }
 
 function showSyncModal() {
   const data = pendingSyncData;
   if (!data) return;
-  const { acc, st, syncedProducts, sumF, sumI, sumK } = data;
+  const { acc, st, subscribeProducts, redeemProducts, sumF, sumI, sumRedAmt } = data;
   const modeLabel = '调仓（' + (st.subMode === 'bp' ? 'BP分摊' : '金额分摊') + '）';
-  const summaryTotal = (() => {
-    const sumRedQty = syncedProducts.reduce((s, p) => s + (p.redQty || 0), 0);
-    return `<span>分摊合计 <strong style="color:var(--primary);">${(sumF/10000).toLocaleString()} 万</strong></span> <span style="margin-left:16px;">实际偿付合计 <strong style="color:var(--success);">${(sumI/10000).toLocaleString()} 万</strong></span> <span style="margin-left:16px;">赎回份额合计 <strong>${sumRedQty.toLocaleString()} 份</strong></span>`;
-  })();
 
-  let tableHTML = '<table class="spv-table" style="margin-top:12px;"><thead><tr>';
-  tableHTML += `<th>产品代码</th><th>产品名称</th><th>BP</th><th>分摊金额</th>`;
-  tableHTML += '<th>调减金额</th><th>赎回来源</th><th>实际金额</th><th>赎回份额</th>';
-  tableHTML += '</tr></thead><tbody>';
-
-  syncedProducts.forEach(p => {
-    tableHTML += '<tr>';
-    tableHTML += `<td style="font-weight:500;">${p.code}</td><td>${p.name}</td><td class="num">${p.bp}</td>`;
-    tableHTML += `<td class="num" style="font-weight:600;">${(p.F/10000).toLocaleString()}万</td>`;
-    tableHTML += `<td class="num">${p.adj ? (p.adj/10000).toLocaleString()+'万' : '--'}</td>`;
-    tableHTML += `<td>${p.redSpvName ? p.redSpvName.substring(0,12) : '--'}</td>`;
-    tableHTML += `<td class="num" style="font-weight:600;">${(p.I_val/10000).toLocaleString()}万</td>`;
-    tableHTML += `<td class="num">${p.redQty ? p.redQty.toLocaleString() : '--'}</td>`;
-    tableHTML += '</tr>';
-  });
-  tableHTML += '</tbody></table>';
+  let tableHTML = '';
+  if (subscribeProducts.length > 0) {
+    tableHTML += '<div style="font-size:13px;font-weight:600;color:var(--primary);margin:12px 0 6px;">申购侧（申购进当前专户）</div>';
+    tableHTML += '<table class="spv-table"><thead><tr>';
+    tableHTML += `<th>产品代码</th><th>产品名称</th><th>BP</th><th>分摊金额</th><th>调减金额</th><th>实际金额</th>`;
+    tableHTML += '</tr></thead><tbody>';
+    subscribeProducts.forEach(p => {
+      tableHTML += '<tr>';
+      tableHTML += `<td style="font-weight:500;">${p.code}</td><td>${p.name}</td><td class="num">${p.bp}</td>`;
+      tableHTML += `<td class="num" style="font-weight:600;">${(p.F/10000).toLocaleString()}万</td>`;
+      tableHTML += `<td class="num">${p.adj ? (p.adj/10000).toLocaleString()+'万' : '--'}</td>`;
+      tableHTML += `<td class="num" style="font-weight:600;">${(p.I_val/10000).toLocaleString()}万</td>`;
+      tableHTML += '</tr>';
+    });
+    tableHTML += '</tbody></table>';
+  }
+  if (redeemProducts.length > 0) {
+    tableHTML += '<div style="font-size:13px;font-weight:600;color:var(--primary);margin:12px 0 6px;">赎回侧（从赎回来源专户赎回）</div>';
+    tableHTML += '<table class="spv-table"><thead><tr>';
+    tableHTML += `<th>产品代码</th><th>产品名称</th><th>赎回金额</th><th>赎回来源</th>`;
+    tableHTML += '</tr></thead><tbody>';
+    redeemProducts.forEach(p => {
+      tableHTML += '<tr>';
+      tableHTML += `<td style="font-weight:500;">${p.code}</td><td>${p.name}</td>`;
+      tableHTML += `<td class="num" style="font-weight:600;">${(p.redAmt/10000).toLocaleString()}万</td>`;
+      tableHTML += `<td>${p.redSpvName ? p.redSpvName.substring(0,12) : '--'}</td>`;
+      tableHTML += '</tr>';
+    });
+    tableHTML += '</tbody></table>';
+  }
 
   document.getElementById('syncModalBody').innerHTML = `
     <div class="info-line"><span class="info-label">模式</span><span class="info-value">${modeLabel}</span></div>
     <div class="info-line"><span class="info-label">源专户</span><span class="info-value">${acc.name}（${acc.code}）<span style="font-weight:400;color:var(--text-muted);margin-left:8px;">${st.subMode === 'bp' ? '总目标亏损 ' + (st.totalLoss || 0) + ' BP' : '累计赎回金额 ' + (st.totalYuan || 0) + ' 元'}</span></span></div>
-    <div class="info-line"><span class="info-label">产品数量</span><span class="info-value">${syncedProducts.length} 只</span></div>
-    <div class="info-line" style="padding:8px 0;">${summaryTotal}</div>
+    <div class="info-line"><span class="info-label">汇总</span><span class="info-value">申购 ${subscribeProducts.length} 只 · 赎回 ${redeemProducts.length} 只</span></div>
+    <div class="info-line" style="padding:8px 0;">分摊合计 <strong style="color:var(--primary);">${(sumF/10000).toLocaleString()} 万</strong> · 实际合计 <strong style="color:var(--success);">${(sumI/10000).toLocaleString()} 万</strong> · 赎回合计 <strong style="color:#C2410C;">${(sumRedAmt/10000).toLocaleString()} 万</strong></div>
     ${tableHTML}
   `;
   document.getElementById('syncModal').classList.add('show');
@@ -3128,36 +3162,39 @@ function closeSyncModal() {
 function confirmSync() {
   const data = pendingSyncData;
   if (!data) return;
-  const { acc, st, syncedProducts } = data;
+  const { acc, st, subscribeProducts, redeemProducts } = data;
 
   // 同步：不修改理财产品维护的固定上线清单，仅写入 positionData
-  // 头寸管理渲染时按"上线产品 ∪ 当天有调仓数据的产品"临时展示
-  syncedProducts.forEach(p => {
-    let posRow = positionData.find(r => r.code === p.code);
+  function ensureRow(code, name) {
+    let posRow = positionData.find(r => r.code === code);
     if (!posRow) {
-      posRow = createDefaultPositionRow(p.code, p.name);
+      posRow = createDefaultPositionRow(code, name);
       positionData.push(posRow);
     }
     if (!posRow._spv) posRow._spv = {};
+    return posRow;
+  }
 
-    {
-      // 调仓：资金来源于其他专户赎回，申购目标为当前操作专户
-      // 1) 赎回来源专户（其他专户）写赎回
-      const redSpvId = p.redSpvCode;
-      if (redSpvId && redSpvId in getOnlineSpvList().reduce((m, s) => ({...m, [s.id]: true}), {})) {
-        // 需映射 spvCode → spvId
-        const spvId = getOnlineSpvList().find(s => s.code === redSpvId)?.id || redSpvId;
-        if (!posRow._spv[spvId]) posRow._spv[spvId] = { sub: null, red: null, subManual: 0, subRebalance: 0, redManual: 0, redRebalance: 0 };
-        const spv = posRow._spv[spvId];
-        spv.redRebalance += p.I_val;
-        spv.red = (spv.red || 0) + p.I_val;
-      }
-      // 2) 申购目标（当前操作专户）写申购
-      if (!posRow._spv[acc.id]) posRow._spv[acc.id] = { sub: null, red: null, subManual: 0, subRebalance: 0, redManual: 0, redRebalance: 0 };
-      const curSpv = posRow._spv[acc.id];
-      curSpv.subRebalance += p.I_val;
-      curSpv.sub = (curSpv.sub || 0) - p.I_val;
+  // 1) 赎回侧：写赎回金额到赎回来源专户（其他专户）
+  redeemProducts.forEach(p => {
+    const posRow = ensureRow(p.code, p.name);
+    const redSpvId = p.redSpvCode;
+    if (redSpvId && redSpvId in getOnlineSpvList().reduce((m, s) => ({...m, [s.id]: true}), {})) {
+      const spvId = getOnlineSpvList().find(s => s.code === redSpvId)?.id || redSpvId;
+      if (!posRow._spv[spvId]) posRow._spv[spvId] = { sub: null, red: null, subManual: 0, subRebalance: 0, redManual: 0, redRebalance: 0 };
+      const spv = posRow._spv[spvId];
+      spv.redRebalance += p.redAmt;
+      spv.red = (spv.red || 0) + p.redAmt;
     }
+  });
+
+  // 2) 申购侧：写实际金额到当前操作专户
+  subscribeProducts.forEach(p => {
+    const posRow = ensureRow(p.code, p.name);
+    if (!posRow._spv[acc.id]) posRow._spv[acc.id] = { sub: null, red: null, subManual: 0, subRebalance: 0, redManual: 0, redRebalance: 0 };
+    const curSpv = posRow._spv[acc.id];
+    curSpv.subRebalance += p.I_val;
+    curSpv.sub = (curSpv.sub || 0) - p.I_val;
   });
 
   savePositionData();
