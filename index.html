@@ -2466,23 +2466,6 @@ function renderContent(acc, st) {
     })() : ''}
 
     <div class="summary-row" id="summaryRow">
-          <div class="summary-item">
-            <div class="summary-label">选中产品</div>
-            <div class="summary-value" id="productCount" style="color:var(--text);">${selCount}</div>
-          </div>
-          <div class="summary-item">
-            <div class="summary-label">${isLoss ? '目标亏损合计' : 'BP 合计'}</div>
-            <div class="summary-value" id="bpTotal" style="color:var(--primary);">0</div>
-          </div>
-          <div class="summary-item">
-            <div class="summary-label">${isLoss ? '分摊合计' : '应分配收益合计'}</div>
-            <div class="summary-value" id="totalF" style="color:var(--text);">0 万</div>
-          </div>
-          ${isLoss ? `
-          <div class="summary-item">
-            <div class="summary-label">实际偿付合计</div>
-            <div class="summary-value" id="totalI" style="color:var(--success);">0 万</div>
-          </div>` : ''}
           <div class="summary-item" style="flex:0 0 auto;">
             <button class="btn btn-outline" onclick="resetAll()" style="font-size:12px;padding:6px 16px;">
               重置
@@ -2560,14 +2543,12 @@ function recalcLossMode(acc, st) {
   const baseSizeEl = document.getElementById('baseSizeDisplay');
   if (baseSizeEl) baseSizeEl.textContent = (st.subMode === 'wan' ? totalYuan : baseSize).toLocaleString('zh-CN', {minimumFractionDigits: 2, maximumFractionDigits: 2});
 
-  // ===== 右栏：按占比分配（BP模式按BP占比，万元模式按规模占比）=====
-  let totalBP = 0, totalSizeSum = 0, selCount = 0;
+  // ===== 右栏：按占比分配（BP模式按BP占比，金额模式按规模占比）=====
+  let totalSizeSum = 0;
   acc.holdings.forEach(p => {
     const sel = (st.lossSelectedMap && st.lossSelectedMap[p.code] !== undefined) ? st.lossSelectedMap[p.code] : true;
     if (!sel) return;
-    totalBP += st.bpData[p.code] || 0;
     totalSizeSum += p.size || 0;
-    selCount++;
   });
 
   let sumF = 0, sumI = 0;
@@ -2619,14 +2600,6 @@ function recalcLossMode(acc, st) {
   if (tfRightEl) tfRightEl.textContent = sumF.toLocaleString('zh-CN', {minimumFractionDigits: 2, maximumFractionDigits: 2});
   const tiRightEl = document.getElementById('totalI_right');
   if (tiRightEl) tiRightEl.textContent = sumI.toLocaleString('zh-CN', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-
-  // 更新底部汇总栏
-  const bpEl = document.getElementById('bpTotal');
-  if (bpEl) bpEl.textContent = totalBP;
-  const tfEl = document.getElementById('totalF');
-  if (tfEl) tfEl.textContent = (sumF / 10000).toLocaleString('zh-CN', {minimumFractionDigits: 2}) + ' 万';
-  const tiEl = document.getElementById('totalI');
-  if (tiEl) tiEl.textContent = (sumI / 10000).toLocaleString('zh-CN', {minimumFractionDigits: 2}) + ' 万';
 }
 
 // ==================== HELPERS ====================
