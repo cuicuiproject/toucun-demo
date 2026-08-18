@@ -2378,7 +2378,7 @@ function renderContent(acc, st) {
         <div class="loss-right-panel">
           <div class="loss-panel-header">
             <span style="font-weight:400;color:#64748B;">← ${st.subMode === 'bp' ? 'BP标准参考' : '规模占比参考'}</span>
-            <span>🔵 申购端 — ${st.subMode === 'bp' ? '按BP比例的标准分摊' : '按规模比例的金额分摊'}</span>
+            <span>🔵 申购端 — 申购进 <strong style="color:var(--primary);">${acc.name}</strong>（当前专户）· ${st.subMode === 'bp' ? '按BP比例的标准分摊' : '按规模比例的金额分摊'}</span>
           </div>
           <div class="loss-panel-body">
             <table>
