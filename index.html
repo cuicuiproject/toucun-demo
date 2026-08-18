@@ -2318,13 +2318,6 @@ function renderContent(acc, st) {
             <td style="max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${p.name}">${p.name}</td>
             <td class="num" style="width:90px;">${sizeYi}</td>
             <td>
-              <input type="text" inputmode="numeric" class="loss-red-input" value="${redAmt ? redAmt.toLocaleString('zh-CN') : ''}"
-                placeholder="输入赎回金额"
-                ${disabled || !sel ? 'disabled' : ''}
-                oninput="onLossRedeemAmtChange('${p.code}', this.value)" onfocus="this.select()"
-                style="width:120px;">
-            </td>
-            <td>
               <select class="table-input" id="lossRedSource_${p.code}"
                 ${disabled ? 'disabled' : ''}
                 onchange="onLossRedSourceChange('${p.code}', this.value)" style="width:140px;font-size:11px;text-align:left;max-width:140px;min-width:120px;">
@@ -2336,6 +2329,13 @@ function renderContent(acc, st) {
                   return `<option value="${s.spvCode}" ${sel2}>${s.spvName.substring(0,12)}（${s.spvCode}）${svTval}</option>`;
                 }).join('')}
               </select>
+            </td>
+            <td>
+              <input type="text" inputmode="numeric" class="loss-red-input" value="${redAmt ? redAmt.toLocaleString('zh-CN') : ''}"
+                placeholder="输入赎回金额"
+                ${disabled || !sel ? 'disabled' : ''}
+                oninput="onLossRedeemAmtChange('${p.code}', this.value)" onfocus="this.select()"
+                style="width:120px;">
             </td>
           </tr>`;
       }).join('');
@@ -2398,8 +2398,8 @@ function renderContent(acc, st) {
                   <th>产品代码</th>
                   <th>产品名称</th>
                   <th style="text-align:right;width:90px;white-space:nowrap;">最新规模（亿）<i class="th-help" data-tip="该理财产品持有当前专户的规模">i</i></th>
-                  <th style="text-align:right;">实际赎回金额（元）</th>
                   <th>赎回来源专户</th>
+                  <th style="text-align:right;">实际赎回金额（元）</th>
                 </tr>
               </thead>
               <tbody>${leftRows}</tbody>
