@@ -421,7 +421,7 @@
     display: flex;
     gap: 12px;
     align-items: stretch;
-    min-height: 420px;
+    min-height: 280px;
   }
   .loss-left-panel,
   .loss-right-panel {
@@ -435,13 +435,14 @@
     overflow: hidden;
     box-shadow: 0 1px 3px rgba(0,0,0,0.06);
   }
-  /* 左栏5列较窄、右栏12列较宽，按 2:3 分配 */
+  /* 左栏6列(含赎回来源专户下拉)、右栏9列，按 1:1 分配 */
   .loss-left-panel {
-    flex: 2 1 0%;
-    min-width: 400px;
+    flex: 1 1 0%;
+    min-width: 460px;
   }
   .loss-right-panel {
-    flex: 3 1 0%;
+    flex: 1 1 0%;
+    min-width: 380px;
   }
   .loss-panel-header {
     display: flex;
@@ -463,6 +464,7 @@
   }
   .loss-panel-body {
     flex: 1;
+    min-height: 0;
     overflow-y: auto;
     overflow-x: auto;
     padding: 0;
@@ -500,6 +502,49 @@
   .loss-panel-body tbody tr:hover td {
     background: #FAFBFC;
   }
+  /* 表头帮助图标 + 悬浮提示（气泡向下弹，避免被滚动容器裁剪） */
+  .th-help {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 14px;
+    height: 14px;
+    margin-left: 3px;
+    border-radius: 50%;
+    background: #94A3B8;
+    color: #fff;
+    font-size: 10px;
+    font-style: normal;
+    font-weight: 700;
+    cursor: help;
+    position: relative;
+    vertical-align: middle;
+    flex-shrink: 0;
+  }
+  .th-help:hover { background: #475569; }
+  .th-help::after {
+    content: attr(data-tip);
+    position: absolute;
+    top: calc(100% + 7px);
+    right: -8px;
+    background: #1E293B;
+    color: #fff;
+    padding: 8px 10px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 400;
+    white-space: normal;
+    width: 220px;
+    line-height: 1.6;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.15s;
+    z-index: 100;
+    pointer-events: none;
+    text-align: left;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.18);
+  }
+  .th-help:hover::after { opacity: 1; visibility: visible; }
   .loss-panel-summary {
     display: flex;
     align-items: center;
@@ -1870,24 +1915,24 @@ const allAccounts = [
     totalBP: 29,
     accountSize: 113183068.08,
     holdings: [
-      { code: 'EW7746', name: '阳光金增利稳健天天购46号（14天最低持有）',       size: 9797057.22,       defaultBP: 5,  defaultSelected: true,  feeRatio: 1.0034389 },
-      { code: 'EW7748', name: '阳光金增利稳健天天购52号（30天最低持有）',       size: 10015358.74,      defaultBP: 5,  defaultSelected: true,  feeRatio: 1.0033613 },
-      { code: 'EW4659', name: '阳光金增利稳健天天购16号（90天最低持有）',       size: 855921676.42,     defaultBP: 2,  defaultSelected: true,  feeRatio: 1.0033613 },
-      { code: 'EW6287', name: '阳光金增利稳健乐享天天购49号（14天最低持有）',    size: 4610569677.94,    defaultBP: 1,  defaultSelected: true,  feeRatio: 1.0033613 },
-      { code: 'EW5208', name: '阳光金增利稳健天天购27号（7天最低持有）',        size: 333548165.24,     defaultBP: 2,  defaultSelected: true,  feeRatio: 1.0033613 },
-      { code: 'EW0599', name: '阳光金私享增利稳健天天购（300天最低持有）',       size: 650000000,        defaultBP: 0,  defaultSelected: false, feeRatio: 1.0033613 },
-      { code: 'EW3517', name: '阳光金增利稳健天天购13号（7天最低持有）',        size: 330000000,        defaultBP: 0,  defaultSelected: false, feeRatio: 1.0033613 },
-      { code: 'EW4217', name: '阳光金丰利617期',                                size: 290000000,        defaultBP: 0,  defaultSelected: false, feeRatio: 1.0033613 },
-      { code: 'EW2911', name: '阳光金增利稳健乐享天天购9号（30天最低持有）',    size: 150000000,        defaultBP: 0,  defaultSelected: false, feeRatio: 1.0033613 },
-      { code: 'EW1390', name: '阳光金安心计划-存单存款策略（60天最低持有）',     size: 220000000,        defaultBP: 0,  defaultSelected: false, feeRatio: 1.0033613 },
-      { code: 'EW5322', name: '阳光金增利稳健天天购22号（90天最低持有）',       size: 310000000,        defaultBP: 0,  defaultSelected: false, feeRatio: 1.0033613 },
-      { code: 'EW0767', name: '阳光金增利稳健天天购定制(100天最低持有)',         size: 270000000,        defaultBP: 0,  defaultSelected: false, feeRatio: 1.0033613 },
-      { code: 'EW2847', name: '阳光金增利稳健天天购定制（7天最低持有）2号',      size: 120000000,        defaultBP: 0,  defaultSelected: false, feeRatio: 1.0033613 },
-      { code: 'EW4512', name: '阳光金丰利682期',                                size: 600000000,        defaultBP: 0,  defaultSelected: false, feeRatio: 1.0033613 },
-      { code: 'EW6075', name: '阳光金丰利874期',                                size: 200000000,        defaultBP: 0,  defaultSelected: false, feeRatio: 1.0033613 },
-      { code: 'EW2923', name: '阳光金丰利臻享C083期',                            size: 100000000,        defaultBP: 0,  defaultSelected: false, feeRatio: 1.0033613 },
-      { code: 'EW5231', name: '颐享阳光金安享如意日开1号（180天最低持有）',      size: 770000000,        defaultBP: 0,  defaultSelected: false, feeRatio: 1.0033613 },
-      { code: 'EW5218', name: '阳光金增利稳健天天购15号（180天最低持有）',       size: 170000000,        defaultBP: 0,  defaultSelected: false, feeRatio: 1.0033613 },
+      { code: 'EW7746', name: '阳光金增利稳健天天购46号（14天最低持有）',       size: 110887.74,       defaultBP: 5,  defaultSelected: true,  feeRatio: 1.0034389 },
+      { code: 'EW7748', name: '阳光金增利稳健天天购52号（30天最低持有）',       size: 113358.58,      defaultBP: 5,  defaultSelected: true,  feeRatio: 1.0033613 },
+      { code: 'EW4659', name: '阳光金增利稳健天天购16号（90天最低持有）',       size: 9687727.58,     defaultBP: 2,  defaultSelected: true,  feeRatio: 1.0033613 },
+      { code: 'EW6287', name: '阳光金增利稳健乐享天天购49号（14天最低持有）',    size: 52184614.84,    defaultBP: 1,  defaultSelected: true,  feeRatio: 1.0033613 },
+      { code: 'EW5208', name: '阳光金增利稳健天天购27号（7天最低持有）',        size: 3775256.37,     defaultBP: 2,  defaultSelected: true,  feeRatio: 1.0033613 },
+      { code: 'EW0599', name: '阳光金私享增利稳健天天购（300天最低持有）',       size: 7357008.36,        defaultBP: 0,  defaultSelected: false, feeRatio: 1.0033613 },
+      { code: 'EW3517', name: '阳光金增利稳健天天购13号（7天最低持有）',        size: 3735096.55,        defaultBP: 0,  defaultSelected: false, feeRatio: 1.0033613 },
+      { code: 'EW4217', name: '阳光金丰利617期',                                size: 3282357.57,        defaultBP: 0,  defaultSelected: false, feeRatio: 1.0033613 },
+      { code: 'EW2911', name: '阳光金增利稳健乐享天天购9号（30天最低持有）',    size: 1697771.16,        defaultBP: 0,  defaultSelected: false, feeRatio: 1.0033613 },
+      { code: 'EW1390', name: '阳光金安心计划-存单存款策略（60天最低持有）',     size: 2490064.37,        defaultBP: 0,  defaultSelected: false, feeRatio: 1.0033613 },
+      { code: 'EW5322', name: '阳光金增利稳健天天购22号（90天最低持有）',       size: 3508727.06,        defaultBP: 0,  defaultSelected: false, feeRatio: 1.0033613 },
+      { code: 'EW0767', name: '阳光金增利稳健天天购定制(100天最低持有)',         size: 3055988.09,        defaultBP: 0,  defaultSelected: false, feeRatio: 1.0033613 },
+      { code: 'EW2847', name: '阳光金增利稳健天天购定制（7天最低持有）2号',      size: 1358216.93,        defaultBP: 0,  defaultSelected: false, feeRatio: 1.0033613 },
+      { code: 'EW4512', name: '阳光金丰利682期',                                size: 6791084.64,        defaultBP: 0,  defaultSelected: false, feeRatio: 1.0033613 },
+      { code: 'EW6075', name: '阳光金丰利874期',                                size: 2263694.88,        defaultBP: 0,  defaultSelected: false, feeRatio: 1.0033613 },
+      { code: 'EW2923', name: '阳光金丰利臻享C083期',                            size: 1131847.44,        defaultBP: 0,  defaultSelected: false, feeRatio: 1.0033613 },
+      { code: 'EW5231', name: '颐享阳光金安享如意日开1号（180天最低持有）',      size: 8715225.28,        defaultBP: 0,  defaultSelected: false, feeRatio: 1.0033613 },
+      { code: 'EW5218', name: '阳光金增利稳健天天购15号（180天最低持有）',       size: 1924140.64,        defaultBP: 0,  defaultSelected: false, feeRatio: 1.0033613 },
     ]
   },
   {
@@ -1900,14 +1945,14 @@ const allAccounts = [
     totalBP: 50,
     accountSize: 200000000,
     holdings: [
-      { code: 'EW3517', name: '阳光金增利稳健天天购13号（7天最低持有）', size: 330000000, defaultBP: 33, defaultSelected: true, feeRatio: 1.0033613 },
-      { code: 'EW0599', name: '阳光金私享增利稳健天天购（300天最低持有）', size: 650000000, defaultBP: 29, defaultSelected: true, feeRatio: 1.0033613 },
-      { code: 'EW4217', name: '阳光金丰利617期', size: 290000000, defaultBP: 29, defaultSelected: true, feeRatio: 1.0033613 },
-      { code: 'EW2911', name: '阳光金增利稳健乐享天天购9号（30天最低持有）', size: 150000000, defaultBP: 8, defaultSelected: true, feeRatio: 1.0033613 },
-      { code: 'EW1390', name: '阳光金安心计划-存单存款策略（60天最低持有）', size: 220000000, defaultBP: 12, defaultSelected: true, feeRatio: 1.0033613 },
-      { code: 'EW5322', name: '阳光金增利稳健天天购22号（90天最低持有）', size: 310000000, defaultBP: 17, defaultSelected: true, feeRatio: 1.0033613 },
-      { code: 'EW0767', name: '阳光金增利稳健天天购定制(100天最低持有)', size: 270000000, defaultBP: 15, defaultSelected: true, feeRatio: 1.0033613 },
-      { code: 'EW2847', name: '阳光金增利稳健天天购定制（7天最低持有）2号', size: 120000000, defaultBP: 6, defaultSelected: true, feeRatio: 1.0033613 },
+      { code: 'EW3517', name: '阳光金增利稳健天天购13号（7天最低持有）', size: 28205128.21, defaultBP: 33, defaultSelected: true, feeRatio: 1.0033613 },
+      { code: 'EW0599', name: '阳光金私享增利稳健天天购（300天最低持有）', size: 55555555.56, defaultBP: 29, defaultSelected: true, feeRatio: 1.0033613 },
+      { code: 'EW4217', name: '阳光金丰利617期', size: 24786324.79, defaultBP: 29, defaultSelected: true, feeRatio: 1.0033613 },
+      { code: 'EW2911', name: '阳光金增利稳健乐享天天购9号（30天最低持有）', size: 12820512.82, defaultBP: 8, defaultSelected: true, feeRatio: 1.0033613 },
+      { code: 'EW1390', name: '阳光金安心计划-存单存款策略（60天最低持有）', size: 18803418.80, defaultBP: 12, defaultSelected: true, feeRatio: 1.0033613 },
+      { code: 'EW5322', name: '阳光金增利稳健天天购22号（90天最低持有）', size: 26495726.50, defaultBP: 17, defaultSelected: true, feeRatio: 1.0033613 },
+      { code: 'EW0767', name: '阳光金增利稳健天天购定制(100天最低持有)', size: 23076923.08, defaultBP: 15, defaultSelected: true, feeRatio: 1.0033613 },
+      { code: 'EW2847', name: '阳光金增利稳健天天购定制（7天最低持有）2号', size: 10256410.24, defaultBP: 6, defaultSelected: true, feeRatio: 1.0033613 },
     ]
   },
   {
@@ -1920,14 +1965,14 @@ const allAccounts = [
     totalBP: 35,
     accountSize: 150000000,
     holdings: [
-      { code: 'EW7746', name: '阳光金增利稳健天天购46号（14天最低持有）', size: 8000000, defaultBP: 10, defaultSelected: true, feeRatio: 1.0034389 },
-      { code: 'EW4659', name: '阳光金增利稳健天天购16号（90天最低持有）', size: 600000000, defaultBP: 8, defaultSelected: true, feeRatio: 1.0033613 },
-      { code: 'EW6287', name: '阳光金增利稳健乐享天天购49号（14天最低持有）', size: 3500000000, defaultBP: 5, defaultSelected: true, feeRatio: 1.0033613 },
-      { code: 'EW5208', name: '阳光金增利稳健天天购27号（7天最低持有）', size: 250000000, defaultBP: 7, defaultSelected: true, feeRatio: 1.0033613 },
-      { code: 'EW4512', name: '阳光金丰利682期', size: 500000000, defaultBP: 3, defaultSelected: true, feeRatio: 1.0033613 },
-      { code: 'EW6075', name: '阳光金丰利874期', size: 150000000, defaultBP: 2, defaultSelected: true, feeRatio: 1.0033613 },
-      { code: 'EW0599', name: '阳光金私享增利稳健天天购（300天最低持有）', size: 500000000, defaultBP: 0, defaultSelected: false, feeRatio: 1.0033613 },
-      { code: 'EW5231', name: '颐享阳光金安享如意日开1号（180天最低持有）', size: 600000000, defaultBP: 0, defaultSelected: false, feeRatio: 1.0033613 },
+      { code: 'EW7746', name: '阳光金增利稳健天天购46号（14天最低持有）', size: 196463.65, defaultBP: 10, defaultSelected: true, feeRatio: 1.0034389 },
+      { code: 'EW4659', name: '阳光金增利稳健天天购16号（90天最低持有）', size: 14734774.07, defaultBP: 8, defaultSelected: true, feeRatio: 1.0033613 },
+      { code: 'EW6287', name: '阳光金增利稳健乐享天天购49号（14天最低持有）', size: 85952848.72, defaultBP: 5, defaultSelected: true, feeRatio: 1.0033613 },
+      { code: 'EW5208', name: '阳光金增利稳健天天购27号（7天最低持有）', size: 6139489.19, defaultBP: 7, defaultSelected: true, feeRatio: 1.0033613 },
+      { code: 'EW4512', name: '阳光金丰利682期', size: 12278978.39, defaultBP: 3, defaultSelected: true, feeRatio: 1.0033613 },
+      { code: 'EW6075', name: '阳光金丰利874期', size: 3683693.52, defaultBP: 2, defaultSelected: true, feeRatio: 1.0033613 },
+      { code: 'EW0599', name: '阳光金私享增利稳健天天购（300天最低持有）', size: 12278978.39, defaultBP: 0, defaultSelected: false, feeRatio: 1.0033613 },
+      { code: 'EW5231', name: '颐享阳光金安享如意日开1号（180天最低持有）', size: 14734774.07, defaultBP: 0, defaultSelected: false, feeRatio: 1.0033613 },
     ]
   },
   {
@@ -1940,14 +1985,14 @@ const allAccounts = [
     totalBP: 42,
     accountSize: 180000000,
     holdings: [
-      { code: 'EW4659', name: '阳光金增利稳健天天购16号（90天最低持有）', size: 700000000, defaultBP: 12, defaultSelected: true, feeRatio: 1.0033613 },
-      { code: 'EW6287', name: '阳光金增利稳健乐享天天购49号（14天最低持有）', size: 4000000000, defaultBP: 10, defaultSelected: true, feeRatio: 1.0033613 },
-      { code: 'EW5208', name: '阳光金增利稳健天天购27号（7天最低持有）', size: 280000000, defaultBP: 8, defaultSelected: true, feeRatio: 1.0033613 },
-      { code: 'EW7746', name: '阳光金增利稳健天天购46号（14天最低持有）', size: 6000000, defaultBP: 5, defaultSelected: true, feeRatio: 1.0034389 },
-      { code: 'EW7748', name: '阳光金增利稳健天天购52号（30天最低持有）', size: 8000000, defaultBP: 4, defaultSelected: true, feeRatio: 1.0033613 },
-      { code: 'EW4512', name: '阳光金丰利682期', size: 450000000, defaultBP: 3, defaultSelected: true, feeRatio: 1.0033613 },
-      { code: 'EW0599', name: '阳光金私享增利稳健天天购（300天最低持有）', size: 400000000, defaultBP: 0, defaultSelected: false, feeRatio: 1.0033613 },
-      { code: 'EW5231', name: '颐享阳光金安享如意日开1号（180天最低持有）', size: 550000000, defaultBP: 0, defaultSelected: false, feeRatio: 1.0033613 },
+      { code: 'EW4659', name: '阳光金增利稳健天天购16号（90天最低持有）', size: 19705974.35, defaultBP: 12, defaultSelected: true, feeRatio: 1.0033613 },
+      { code: 'EW6287', name: '阳光金增利稳健乐享天天购49号（14天最低持有）', size: 112605567.72, defaultBP: 10, defaultSelected: true, feeRatio: 1.0033613 },
+      { code: 'EW5208', name: '阳光金增利稳健天天购27号（7天最低持有）', size: 7882389.74, defaultBP: 8, defaultSelected: true, feeRatio: 1.0033613 },
+      { code: 'EW7746', name: '阳光金增利稳健天天购46号（14天最低持有）', size: 168908.35, defaultBP: 5, defaultSelected: true, feeRatio: 1.0034389 },
+      { code: 'EW7748', name: '阳光金增利稳健天天购52号（30天最低持有）', size: 225211.14, defaultBP: 4, defaultSelected: true, feeRatio: 1.0033613 },
+      { code: 'EW4512', name: '阳光金丰利682期', size: 12668126.37, defaultBP: 3, defaultSelected: true, feeRatio: 1.0033613 },
+      { code: 'EW0599', name: '阳光金私享增利稳健天天购（300天最低持有）', size: 11260556.77, defaultBP: 0, defaultSelected: false, feeRatio: 1.0033613 },
+      { code: 'EW5231', name: '颐享阳光金安享如意日开1号（180天最低持有）', size: 15483265.56, defaultBP: 0, defaultSelected: false, feeRatio: 1.0033613 },
     ]
   },
   {
@@ -1960,12 +2005,12 @@ const allAccounts = [
     totalBP: 20,
     accountSize: 95000000,
     holdings: [
-      { code: 'EW6287', name: '阳光金增利稳健乐享天天购49号（14天最低持有）', size: 3800000000, defaultBP: 8, defaultSelected: true, feeRatio: 1.0033613 },
-      { code: 'EW4659', name: '阳光金增利稳健天天购16号（90天最低持有）', size: 500000000, defaultBP: 6, defaultSelected: true, feeRatio: 1.0033613 },
-      { code: 'EW5208', name: '阳光金增利稳健天天购27号（7天最低持有）', size: 200000000, defaultBP: 4, defaultSelected: true, feeRatio: 1.0033613 },
-      { code: 'EW7746', name: '阳光金增利稳健天天购46号（14天最低持有）', size: 5000000, defaultBP: 2, defaultSelected: true, feeRatio: 1.0034389 },
-      { code: 'EW0599', name: '阳光金私享增利稳健天天购（300天最低持有）', size: 300000000, defaultBP: 0, defaultSelected: false, feeRatio: 1.0033613 },
-      { code: 'EW5231', name: '颐享阳光金安享如意日开1号（180天最低持有）', size: 400000000, defaultBP: 0, defaultSelected: false, feeRatio: 1.0033613 },
+      { code: 'EW6287', name: '阳光金增利稳健乐享天天购49号（14天最低持有）', size: 69356388.09, defaultBP: 8, defaultSelected: true, feeRatio: 1.0033613 },
+      { code: 'EW4659', name: '阳光金增利稳健天天购16号（90天最低持有）', size: 9125840.54, defaultBP: 6, defaultSelected: true, feeRatio: 1.0033613 },
+      { code: 'EW5208', name: '阳光金增利稳健天天购27号（7天最低持有）', size: 3650336.22, defaultBP: 4, defaultSelected: true, feeRatio: 1.0033613 },
+      { code: 'EW7746', name: '阳光金增利稳健天天购46号（14天最低持有）', size: 91258.41, defaultBP: 2, defaultSelected: true, feeRatio: 1.0034389 },
+      { code: 'EW0599', name: '阳光金私享增利稳健天天购（300天最低持有）', size: 5475504.32, defaultBP: 0, defaultSelected: false, feeRatio: 1.0033613 },
+      { code: 'EW5231', name: '颐享阳光金安享如意日开1号（180天最低持有）', size: 7300672.42, defaultBP: 0, defaultSelected: false, feeRatio: 1.0033613 },
     ]
   },
   {
@@ -1978,10 +2023,10 @@ const allAccounts = [
     totalBP: 15,
     accountSize: 80000000,
     holdings: [
-      { code: 'EW6287', name: '阳光金增利稳健乐享天天购49号（14天最低持有）', size: 2500000000, defaultBP: 7, defaultSelected: true, feeRatio: 1.0033613 },
-      { code: 'EW4659', name: '阳光金增利稳健天天购16号（90天最低持有）', size: 350000000, defaultBP: 5, defaultSelected: true, feeRatio: 1.0033613 },
-      { code: 'EW5208', name: '阳光金增利稳健天天购27号（7天最低持有）', size: 150000000, defaultBP: 3, defaultSelected: true, feeRatio: 1.0033613 },
-      { code: 'EW0599', name: '阳光金私享增利稳健天天购（300天最低持有）', size: 200000000, defaultBP: 0, defaultSelected: false, feeRatio: 1.0033613 },
+      { code: 'EW6287', name: '阳光金增利稳健乐享天天购49号（14天最低持有）', size: 62500000.00, defaultBP: 7, defaultSelected: true, feeRatio: 1.0033613 },
+      { code: 'EW4659', name: '阳光金增利稳健天天购16号（90天最低持有）', size: 8750000.00, defaultBP: 5, defaultSelected: true, feeRatio: 1.0033613 },
+      { code: 'EW5208', name: '阳光金增利稳健天天购27号（7天最低持有）', size: 3750000.00, defaultBP: 3, defaultSelected: true, feeRatio: 1.0033613 },
+      { code: 'EW0599', name: '阳光金私享增利稳健天天购（300天最低持有）', size: 5000000.00, defaultBP: 0, defaultSelected: false, feeRatio: 1.0033613 },
     ]
   },
   {
@@ -1994,10 +2039,10 @@ const allAccounts = [
     totalBP: 25,
     accountSize: 120000000,
     holdings: [
-      { code: 'EW4217', name: '阳光金丰利617期', size: 250000000, defaultBP: 12, defaultSelected: true, feeRatio: 1.0033613 },
-      { code: 'EW4512', name: '阳光金丰利682期', size: 400000000, defaultBP: 8, defaultSelected: true, feeRatio: 1.0033613 },
-      { code: 'EW6075', name: '阳光金丰利874期', size: 150000000, defaultBP: 5, defaultSelected: true, feeRatio: 1.0033613 },
-      { code: 'EW0599', name: '阳光金私享增利稳健天天购（300天最低持有）', size: 350000000, defaultBP: 0, defaultSelected: false, feeRatio: 1.0033613 },
+      { code: 'EW4217', name: '阳光金丰利617期', size: 26086956.52, defaultBP: 12, defaultSelected: true, feeRatio: 1.0033613 },
+      { code: 'EW4512', name: '阳光金丰利682期', size: 41739130.43, defaultBP: 8, defaultSelected: true, feeRatio: 1.0033613 },
+      { code: 'EW6075', name: '阳光金丰利874期', size: 15652173.91, defaultBP: 5, defaultSelected: true, feeRatio: 1.0033613 },
+      { code: 'EW0599', name: '阳光金私享增利稳健天天购（300天最低持有）', size: 36521739.14, defaultBP: 0, defaultSelected: false, feeRatio: 1.0033613 },
     ]
   },
   {
@@ -2010,9 +2055,9 @@ const allAccounts = [
     totalBP: 18,
     accountSize: 65000000,
     holdings: [
-      { code: 'EW6287', name: '阳光金增利稳健乐享天天购49号（14天最低持有）', size: 1800000000, defaultBP: 9, defaultSelected: true, feeRatio: 1.0033613 },
-      { code: 'EW4659', name: '阳光金增利稳健天天购16号（90天最低持有）', size: 280000000, defaultBP: 6, defaultSelected: true, feeRatio: 1.0033613 },
-      { code: 'EW5208', name: '阳光金增利稳健天天购27号（7天最低持有）', size: 100000000, defaultBP: 3, defaultSelected: true, feeRatio: 1.0033613 },
+      { code: 'EW6287', name: '阳光金增利稳健乐享天天购49号（14天最低持有）', size: 53669724.77, defaultBP: 9, defaultSelected: true, feeRatio: 1.0033613 },
+      { code: 'EW4659', name: '阳光金增利稳健天天购16号（90天最低持有）', size: 8348623.85, defaultBP: 6, defaultSelected: true, feeRatio: 1.0033613 },
+      { code: 'EW5208', name: '阳光金增利稳健天天购27号（7天最低持有）', size: 2981651.38, defaultBP: 3, defaultSelected: true, feeRatio: 1.0033613 },
     ]
   },
 ];
@@ -2041,7 +2086,7 @@ function getState(accountId) {
       bpLoss: 149,
       totalLoss: 149,
       totalWan: 0,                  // 金额分摊模式：输入的总金额（万元）
-      baseSize: 26400,
+      baseSize: Math.round(acc.accountSize / 10000 * 100) / 100,  // 换算基数（万元）= 专户规模
       lossAdjData: {},
       lossSelectedMap: {},         // 调仓左栏勾选状态 { productCode: boolean }
       lossRedSourceMap: {},        // 调仓逐产品赎回来源专户 { productCode: spvCode }
@@ -2282,7 +2327,7 @@ function renderContent(acc, st) {
             <td>
               <select class="table-input" id="lossRedSource_${p.code}"
                 ${disabled ? 'disabled' : ''}
-                onchange="onLossRedSourceChange('${p.code}', this.value)" style="width:130px;font-size:11px;text-align:left;">
+                onchange="onLossRedSourceChange('${p.code}', this.value)" style="width:140px;font-size:11px;text-align:left;max-width:140px;min-width:120px;">
                 <option value="">选择赎回来源</option>
                 ${getSPVData(p.code).map(s => {
                   const sel2 = (st.lossRedSourceMap[p.code] === s.spvCode) ? 'selected' : '';
@@ -2344,7 +2389,6 @@ function renderContent(acc, st) {
           <div class="loss-panel-header">
             <span>🔴 赎回端 — 我的赎回决策（逐产品输入）</span>
             <button class="btn" onclick="onAllRedeem()" ${disabled} style="font-size:11px;padding:3px 10px;background:#DC2626;color:#fff;border:none;border-radius:4px;cursor:pointer;">一键全部赎回</button>
-            <span style="font-size:11px;font-weight:400;color:#64748B;">累计赎回 →</span>
           </div>
           <div class="loss-panel-body">
             <table>
@@ -2353,7 +2397,7 @@ function renderContent(acc, st) {
                   <th class="chk-cell" style="text-align:center;"><input type="checkbox" id="headerChk" title="全选/取消全选" onchange="onHeaderCheck(this.checked)" ${disabled}></th>
                   <th>产品代码</th>
                   <th>产品名称</th>
-                  <th style="text-align:right;">最新规模（亿）</th>
+                  <th style="text-align:right;">最新规模（亿）<i class="th-help" data-tip="本专户内持仓规模（各产品之和 = 专户总规模）">i</i></th>
                   <th style="text-align:right;">实际赎回金额（元）</th>
                   <th>赎回来源专户</th>
                 </tr>
@@ -2377,7 +2421,6 @@ function renderContent(acc, st) {
         <!-- ===== 右栏：申购端 ===== -->
         <div class="loss-right-panel">
           <div class="loss-panel-header">
-            <span style="font-weight:400;color:#64748B;">← ${st.subMode === 'bp' ? 'BP标准参考' : '规模占比参考'}</span>
             <span>🔵 申购端 — 申购进 <strong style="color:var(--primary);">${acc.name}</strong>（当前专户）· ${st.subMode === 'bp' ? '按BP比例的标准分摊' : '按规模比例的金额分摊'}</span>
           </div>
           <div class="loss-panel-body">
@@ -2388,11 +2431,11 @@ function renderContent(acc, st) {
                   <th>产品代码</th>
                   <th>产品名称</th>
                   ${st.subMode === 'bp' ? '<th style="text-align:center;">BP</th>' : ''}
-                  <th style="text-align:right;">${st.subMode === 'bp' ? '占比' : '规模占比'} <span title="${st.subMode === 'bp' ? '占比 = 该产品BP ÷ 总目标亏损BP × 100%' : '规模占比 = 该产品规模 ÷ 全部产品规模合计 × 100%'}" style="display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;border-radius:50%;background:#E2E8F0;color:#64748B;font-size:10px;font-weight:600;cursor:help;">?</span></th>
-                  <th style="text-align:right;">${st.subMode === 'bp' ? 'BP标准分摊（元）' : '分摊金额（元）'} <span title="${st.subMode === 'bp' ? 'BP标准分摊 = 占比 × 申购分配基数' : '分摊金额 = 规模占比 × 总金额'}" style="display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;border-radius:50%;background:#E2E8F0;color:#64748B;font-size:10px;font-weight:600;cursor:help;">?</span></th>
+                  <th style="text-align:right;">${st.subMode === 'bp' ? '占比' : '规模占比'}<i class="th-help" data-tip="${st.subMode === 'bp' ? '占比 = 该产品BP ÷ 总目标亏损BP × 100%' : '规模占比 = 该产品持仓规模 ÷ 勾选产品持仓合计 × 100%'}">i</i></th>
+                  <th style="text-align:right;">${st.subMode === 'bp' ? 'BP标准分摊（元）' : '分摊金额（元）'}<i class="th-help" data-tip="${st.subMode === 'bp' ? 'BP标准分摊 = 占比 × 申购分配基数' : '分摊金额 = 规模占比 × 总金额（万元）'}">i</i></th>
                   <th style="text-align:right;">调减金额（元）</th>
                   <th style="text-align:center;">时效</th>
-                  <th style="text-align:right;">实际金额（元） <span title="实际金额 = 分摊金额 − 调减金额&#10;实际金额为最终同步至头寸管理的执行金额" style="display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;border-radius:50%;background:#E2E8F0;color:#64748B;font-size:10px;font-weight:600;cursor:help;">?</span></th>
+                  <th style="text-align:right;">实际金额（元）<i class="th-help" data-tip="实际金额 = 分摊金额 − 调减金额。实际金额为最终同步至头寸管理的执行金额。">i</i></th>
                 </tr>
               </thead>
               <tbody>${rightRows}</tbody>
