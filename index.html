@@ -2034,9 +2034,13 @@ function getState(accountId) {
   if (!accountState[accountId]) {
     const acc = allAccounts.find(a => a.id === accountId);
     if (!acc) return null;
+    // 演示账户默认模式：宁聚5号=金额直填(wan)，其余=BP模式(bp)
+    const defaultSubMode = (accountId === 'ningju5') ? 'wan' : 'bp';
+    // 演示账户（鑫和14号、宁聚5号）预勾选默认产品并填充示例数据
+    const isDemo = (accountId === 'xinhe14' || accountId === 'ningju5');
     const state = {
       mode: 'loss',                 // 统一为单一「调仓」场景（原拉壳已合并）
-      subMode: 'bp',                // 分摊模式：bp=BP分摊，wan=金额分摊
+      subMode: defaultSubMode,      // 分摊模式：bp=BP模式，wan=金额直填
       bpData: {},
       status: 'pending',  // pending | progress | done
       feeRateN: 0.0066,
@@ -2052,9 +2056,17 @@ function getState(accountId) {
     };
     acc.holdings.forEach(p => {
       state.lossSelectedMap[p.code] = false;  // 赎回端默认不选（进入时不默认全选）
-      state.subSelectedMap[p.code] = false;  // 申购端默认不选（监管互斥：同一产品不可同时在赎回+申购）
+      state.subSelectedMap[p.code] = isDemo ? p.defaultSelected : false;  // 演示账户预勾选默认产品
       state.bpData[p.code] = p.defaultBP;
     });
+    // 宁聚5号演示「金额直填」：预填申购金额示例
+    if (accountId === 'ningju5') {
+      state.subAmountMap['EW7746'] = 100000;
+      state.subAmountMap['EW7748'] = 100000;
+      state.subAmountMap['EW4659'] = 1000000;
+      state.subAmountMap['EW6287'] = 3000000;
+      state.subAmountMap['EW5208'] = 500000;
+    }
     accountState[accountId] = state;
   }
 
