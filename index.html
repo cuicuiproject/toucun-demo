@@ -2239,7 +2239,7 @@ function renderContent(acc, st) {
       <span style="color:var(--border);margin:0 4px;">|</span>
       <span style="font-size:12px;color:var(--text-muted);">规模</span>
       <span style="font-weight:700;font-size:14px;color:var(--text);">${(acc.accountSize / 100000000).toFixed(2)}亿</span>
-      <i class="th-help" data-tip="该专户的总规模 = 所有理财产品持有该专户的规模之和（等于左栏「最新规模」列的合计）">i</i>
+      <i title="该专户的总规模 = 所有理财产品持有该专户的规模之和（等于左栏「最新规模」列的合计）" style="display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;margin-left:3px;border-radius:50%;background:#94A3B8;color:#fff;font-size:10px;font-style:normal;font-weight:700;cursor:help;vertical-align:middle;flex-shrink:0;">i</i>
       ${st.subMode === 'bp' ? `
       <span style="color:var(--border);margin:0 4px;">|</span>
       <span style="font-size:12px;color:var(--text-muted);">总目标亏损</span>
