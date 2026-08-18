@@ -2316,7 +2316,7 @@ function renderContent(acc, st) {
         const bp = st.bpData[p.code] ?? p.defaultBP;
         const redAmt = st.lossRedeemAmt?.[p.code] ?? 0;
         const sel = (st.lossSelectedMap && st.lossSelectedMap[p.code] !== false);
-        const sizeYi = (p.size / 100000000).toFixed(4);
+        const sizeYuan = fmtNum(p.size);
         return `
           <tr data-code="${p.code}" class="${sel ? 'selected' : 'not-selected'}">
             <td class="chk-cell">
@@ -2324,7 +2324,7 @@ function renderContent(acc, st) {
             </td>
             <td style="font-weight:500;">${p.code}</td>
             <td style="max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${p.name}">${p.name}</td>
-            <td class="num" style="width:90px;">${sizeYi}</td>
+            <td class="num" style="width:120px;">${sizeYuan}</td>
             <td>
               <select class="table-input" id="lossRedSource_${p.code}"
                 ${disabled ? 'disabled' : ''}
@@ -2405,7 +2405,7 @@ function renderContent(acc, st) {
                   <th class="chk-cell" style="text-align:center;"><input type="checkbox" id="headerChk" title="全选/取消全选" onchange="onHeaderCheck(this.checked)" ${disabled}></th>
                   <th>产品代码</th>
                   <th>产品名称</th>
-                  <th style="text-align:right;width:90px;white-space:nowrap;">最新规模（亿）<i class="th-help" data-tip="该理财产品持有当前专户的规模">i</i></th>
+                  <th style="text-align:right;width:120px;white-space:nowrap;">最新规模（元）<i class="th-help" data-tip="该理财产品持有当前专户的规模">i</i></th>
                   <th>赎回来源专户</th>
                   <th style="text-align:right;">赎回金额（元）</th>
                 </tr>
