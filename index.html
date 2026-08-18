@@ -2114,7 +2114,7 @@ function renderSidebar() {
       return `
         <div class="sidebar-item${active}" data-account="${acc.id}" onclick="switchAccount('${acc.id}')">
           <span class="item-name" title="${acc.name}（${acc.code}）">${acc.name}<span style="color:var(--text-muted);font-size:11px;margin-left:6px;">${acc.code}</span></span>
-          ${status === 'done' ? '<span style="font-size:10px;color:#1A8353;background:#DCFCE7;border-radius:3px;padding:1px 6px;flex-shrink:0;margin-left:4px;">' + (st.subMode === 'bp' ? 'BP分摊' : '万元分摊') + '</span>' : ''}
+          ${status === 'done' ? '<span style="font-size:10px;color:#1A8353;background:#DCFCE7;border-radius:3px;padding:1px 6px;flex-shrink:0;margin-left:4px;">' + (st.subMode === 'bp' ? 'BP分摊' : '金额分摊') + '</span>' : ''}
           <span class="item-remove" title="${canRemove ? '移除该专户' : '已同步，需先撤销同步才能移除'}" onclick="event.stopPropagation();removeAccount('${acc.id}')">×</span>
         </div>
       `;
