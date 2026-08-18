@@ -2272,13 +2272,13 @@ function renderContent(acc, st) {
             <td style="max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding-right:4px;" title="${p.name}">${p.name}</td>
             <td class="num" style="width:120px;">${sizeYuan}</td>
             <td style="white-space:nowrap;">
-              <div style="display:inline-flex;align-items:center;gap:4px;">
+              <div style="display:inline-flex;align-items:center;gap:2px;">
                 <input type="text" inputmode="numeric" class="loss-red-input" id="lossRedeemInput_${p.code}" value="${redAmt ? redAmt.toLocaleString('zh-CN') : ''}"
                   placeholder="输入赎回金额"
                   ${disabled || !sel || subOccupied ? 'disabled' : ''}
                   oninput="onLossRedeemAmtChange('${p.code}', this.value)" onfocus="this.select()"
                   style="width:90px;">
-                <button class="btn" id="allRedeemBtn_${p.code}" onclick="onAllRedeemOne('${p.code}')" ${disabled || !sel || subOccupied ? 'disabled' : ''} style="font-size:11px;padding:3px 8px;background:#DC2626;color:#fff;border:none;border-radius:4px;cursor:pointer;white-space:nowrap;">全赎</button>
+                <button class="btn" id="allRedeemBtn_${p.code}" onclick="onAllRedeemOne('${p.code}')" ${disabled || !sel || subOccupied ? 'disabled' : ''} style="font-size:11px;padding:3px 5px;background:#DC2626;color:#fff;border:none;border-radius:4px;cursor:pointer;white-space:nowrap;">全赎</button>
               </div>
             </td>
           </tr>`;
