@@ -2068,7 +2068,7 @@ const allAccounts = [
 // 已下线产品排除、未维护产品可添加（标注"未上线"）、规模带出持仓总规模
 
 // ==================== GLOBAL STATE ====================
-// accountState: { accountId: { mode, subMode, bpData, status, feeRateN, bpLoss, totalLoss, totalWan, baseSize, lossAdjData, lossSelectedMap, lossRedSourceMap, lossRedeemAmt, bpGrowth, accountSize } }
+// accountState: { accountId: { mode, subMode, bpData, status, feeRateN, bpLoss, totalLoss, totalYuan, baseSize, lossAdjData, lossSelectedMap, lossRedSourceMap, lossRedeemAmt, bpGrowth, accountSize } }
 let accountState = {};
 let currentAccountId = null;
 let sidebarFilter = '';
@@ -2085,7 +2085,7 @@ function getState(accountId) {
       feeRateN: 0.0066,
       bpLoss: 149,
       totalLoss: 149,
-      totalWan: 0,                  // 金额分摊模式：输入的总金额（万元）
+      totalYuan: 0,                  // 金额分摊模式：输入的总金额（元）
       baseSize: Math.round(acc.accountSize / 10000 * 100) / 100,  // 换算基数（万元）= 专户规模
       lossAdjData: {},
       lossSelectedMap: {},         // 调仓左栏勾选状态 { productCode: boolean }
@@ -2195,12 +2195,12 @@ function saveCurrentState() {
   const bpGrowthEl = document.getElementById('bpGrowth');
   const bpLossEl = document.getElementById('bpLoss');
   const totalLossEl = document.getElementById('totalLoss');
-  const totalWanEl = document.getElementById('totalWan');
+  const totalYuanEl = document.getElementById('totalYuan');
 
   if (bpGrowthEl) st.bpGrowth = parseFloat(bpGrowthEl.value) || st.bpGrowth;
   if (bpLossEl) st.bpLoss = parseFloat(bpLossEl.value) || st.bpLoss;
   if (totalLossEl) st.totalLoss = parseFloat(totalLossEl.value) || st.totalLoss;
-  if (totalWanEl) st.totalWan = parseFloat(totalWanEl.value) || st.totalWan;
+  if (totalYuanEl) st.totalYuan = parseFloat(totalYuanEl.value) || st.totalYuan;
 }
 
 // ==================== RENDER CONTENT ====================
@@ -2242,9 +2242,9 @@ function renderContent(acc, st) {
       ` : `
       <span style="color:var(--border);margin:0 4px;">|</span>
       <span style="font-size:12px;color:var(--text-muted);">总金额</span>
-      <input type="number" id="totalWan" value="${st.totalWan || ''}" step="1" ${disabled} oninput="recalcCurrent()"
+      <input type="number" id="totalYuan" value="${st.totalYuan || ''}" step="1" ${disabled} oninput="recalcCurrent()"
         style="width:150px;padding:8px 12px;font-size:18px;font-weight:800;text-align:center;color:#1A3C6D;background:linear-gradient(135deg,#F5F3FF,#EDE9FE);border:2px solid #A78BFA;border-radius:8px;outline:none;">
-      <span style="font-size:12px;font-weight:600;color:#7C3AED;">万元</span>
+      <span style="font-size:12px;font-weight:600;color:#7C3AED;">元</span>
       `}
       <div style="flex:1;"></div>
       <div class="mode-selector" id="modeSelector">
@@ -2379,7 +2379,7 @@ function renderContent(acc, st) {
         </div>
         <div class="section-actions">
           <span style="font-size:12px;color:var(--text-muted);">产品 <strong id="selectedCount">${selCount}</strong> / <strong id="totalProductCount">${totalCount}</strong> 只</span>
-          <span style="font-size:12px;color:var(--text-muted);margin-left:8px;">${st.subMode === 'bp' ? '总目标亏损' : '总金额(万元)'} <strong id="totalBPDisplay">${st.subMode === 'bp' ? (st.totalLoss || acc.totalBP) : (st.totalWan || 0)}</strong></span>
+          <span style="font-size:12px;color:var(--text-muted);margin-left:8px;">${st.subMode === 'bp' ? '总目标亏损' : '总金额(元)'} <strong id="totalBPDisplay">${st.subMode === 'bp' ? (st.totalLoss || acc.totalBP) : (st.totalYuan || 0)}</strong></span>
           <button class="btn" onclick="exportData()" style="background:#E6A23C;color:#fff;border:none;font-size:12px;padding:5px 14px;border-radius:4px;cursor:pointer;margin-left:12px;">导出 Excel</button>
         </div>
       </div>
@@ -2432,7 +2432,7 @@ function renderContent(acc, st) {
                   <th>产品名称</th>
                   ${st.subMode === 'bp' ? '<th style="text-align:center;">BP</th>' : ''}
                   <th style="text-align:right;">${st.subMode === 'bp' ? '占比' : '规模占比'}<i class="th-help" data-tip="${st.subMode === 'bp' ? '占比 = 该产品BP ÷ 总目标亏损BP × 100%' : '规模占比 = 该产品持仓规模 ÷ 勾选产品持仓合计 × 100%'}">i</i></th>
-                  <th style="text-align:right;">${st.subMode === 'bp' ? 'BP标准分摊（元）' : '分摊金额（元）'}<i class="th-help" data-tip="${st.subMode === 'bp' ? 'BP标准分摊 = 占比 × 申购分配基数' : '分摊金额 = 规模占比 × 总金额（万元）'}">i</i></th>
+                  <th style="text-align:right;">${st.subMode === 'bp' ? 'BP标准分摊（元）' : '分摊金额（元）'}<i class="th-help" data-tip="${st.subMode === 'bp' ? 'BP标准分摊 = 占比 × 申购分配基数' : '分摊金额 = 规模占比 × 总金额（元）'}">i</i></th>
                   <th style="text-align:right;">调减金额（元）</th>
                   <th style="text-align:center;">时效</th>
                   <th style="text-align:right;">实际金额（元）<i class="th-help" data-tip="实际金额 = 分摊金额 − 调减金额。实际金额为最终同步至头寸管理的执行金额。">i</i></th>
@@ -2442,9 +2442,9 @@ function renderContent(acc, st) {
             </table>
           </div>
           <div class="loss-panel-summary">
-            <span style="color:#64748B;font-weight:500;">申购分配基数</span>
+            <span style="color:#64748B;font-weight:500;">${st.subMode === 'bp' ? '申购分配基数' : '总金额'}</span>
             <span style="font-weight:800;font-size:15px;color:#1E3A5F;" id="baseSizeDisplay">0</span>
-            <span style="font-size:11px;color:#64748B;">万元</span>
+            <span style="font-size:11px;color:#64748B;">${st.subMode === 'bp' ? '万元' : '元'}</span>
             <span style="margin-left:auto;font-weight:500;color:#64748B;">分摊合计</span>
             <span style="font-weight:700;font-size:13px;color:#1E3A5F;" id="totalF_right">0</span>
             <span style="font-size:11px;color:#64748B;">元</span>
@@ -2536,12 +2536,10 @@ function recalcLossMode(acc, st) {
     }
   });
 
-  // 分摊基数（万元）：BP模式 = 左栏累计赎回÷10000；万元模式 = 顶部输入总金额
-  const totalWan = parseFloat(document.getElementById('totalWan')?.value) || st.totalWan || 0;
-  st.totalWan = totalWan;
-  const baseSize = st.subMode === 'wan'
-    ? totalWan
-    : (totalRedeemAmt > 0 ? totalRedeemAmt / 10000 : (st.baseSize || 0));
+  // 金额模式：总金额直接以元计；BP模式：baseSize = 左栏累计赎回÷10000（万元）
+  const totalYuan = parseFloat(document.getElementById('totalYuan')?.value) || st.totalYuan || 0;
+  st.totalYuan = totalYuan;
+  const baseSize = totalRedeemAmt > 0 ? totalRedeemAmt / 10000 : (st.baseSize || 0);
   st.baseSize = baseSize;
 
   // 更新左栏汇总
@@ -2552,7 +2550,7 @@ function recalcLossMode(acc, st) {
 
   // 更新右栏分配基数显示
   const baseSizeEl = document.getElementById('baseSizeDisplay');
-  if (baseSizeEl) baseSizeEl.textContent = baseSize.toLocaleString('zh-CN', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+  if (baseSizeEl) baseSizeEl.textContent = (st.subMode === 'wan' ? totalYuan : baseSize).toLocaleString('zh-CN', {minimumFractionDigits: 2, maximumFractionDigits: 2});
 
   // ===== 右栏：按占比分配（BP模式按BP占比，万元模式按规模占比）=====
   let totalBP = 0, totalSizeSum = 0, selCount = 0;
@@ -2584,7 +2582,7 @@ function recalcLossMode(acc, st) {
       const totalSize = totalSizeSum > 0 ? totalSizeSum : 1;
       ratio = p.size / totalSize;
       ratioPct = ratio * 100;
-      F = baseSize > 0 ? Math.round(ratio * baseSize) * 10000 : 0;
+      F = totalYuan > 0 ? Math.round(ratio * totalYuan) : 0;
     } else {
       ratio = totalLoss > 0 ? bp / totalLoss : 0;
       ratioPct = totalLoss > 0 ? (bp / totalLoss) * 100 : 0;
@@ -2978,8 +2976,8 @@ function syncToSystem() {
       errors.push('总目标亏损（BP）未设置。');
     }
   } else {
-    if ((st.totalWan || 0) <= 0) {
-      errors.push('总金额（万元）未设置。');
+    if ((st.totalYuan || 0) <= 0) {
+      errors.push('总金额（元）未设置。');
     }
   }
   const selected = acc.holdings.filter(p => {
@@ -3000,7 +2998,7 @@ function syncToSystem() {
         if (st.subMode === 'wan') {
           const totalSize = selected.reduce((s, q) => s + (q.size || 0), 0);
           const ratio = totalSize > 0 ? (p.size / totalSize) : 0;
-          F = Math.round(ratio * (st.totalWan || 0)) * 10000;
+          F = Math.round(ratio * (st.totalYuan || 0));
           return F > 0 && !st.lossRedSourceMap[p.code];
         } else {
           const bp = st.bpData[p.code] ?? p.defaultBP;
@@ -3051,7 +3049,7 @@ function syncToSystem() {
       let F = 0;
       if (st.subMode === 'wan') {
         const ratio = totalSizeSumSync > 0 ? (p.size / totalSizeSumSync) : 0;
-        F = st.baseSize > 0 ? Math.round(ratio * st.baseSize) * 10000 : 0;
+        F = (st.totalYuan || 0) > 0 ? Math.round(ratio * (st.totalYuan || 0)) : 0;
       } else {
         const ratio = totalLoss > 0 ? bp / totalLoss : 0;
         F = totalLoss > 0 ? Math.round(ratio * st.baseSize) * 10000 : 0;
@@ -3100,7 +3098,7 @@ function showSyncModal() {
 
   document.getElementById('syncModalBody').innerHTML = `
     <div class="info-line"><span class="info-label">模式</span><span class="info-value">${modeLabel}</span></div>
-    <div class="info-line"><span class="info-label">源专户</span><span class="info-value">${acc.name}（${acc.code}）<span style="font-weight:400;color:var(--text-muted);margin-left:8px;">${st.subMode === 'bp' ? '总目标亏损 ' + (st.totalLoss || 0) + ' 万' : '总金额 ' + (st.totalWan || 0) + ' 万元'}</span></span></div>
+    <div class="info-line"><span class="info-label">源专户</span><span class="info-value">${acc.name}（${acc.code}）<span style="font-weight:400;color:var(--text-muted);margin-left:8px;">${st.subMode === 'bp' ? '总目标亏损 ' + (st.totalLoss || 0) + ' BP' : '总金额 ' + (st.totalYuan || 0) + ' 元'}</span></span></div>
     <div class="info-line"><span class="info-label">产品数量</span><span class="info-value">${syncedProducts.length} 只</span></div>
     <div class="info-line" style="padding:8px 0;">${summaryTotal}</div>
     ${tableHTML}
