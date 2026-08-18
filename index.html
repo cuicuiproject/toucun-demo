@@ -2316,7 +2316,7 @@ function renderContent(acc, st) {
             </td>
             <td style="font-weight:500;">${p.code}</td>
             <td style="max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${p.name}">${p.name}</td>
-            <td class="num">${sizeYi}</td>
+            <td class="num" style="width:90px;">${sizeYi}</td>
             <td>
               <input type="text" inputmode="numeric" class="loss-red-input" value="${redAmt ? redAmt.toLocaleString('zh-CN') : ''}"
                 placeholder="输入赎回金额"
@@ -2397,7 +2397,7 @@ function renderContent(acc, st) {
                   <th class="chk-cell" style="text-align:center;"><input type="checkbox" id="headerChk" title="全选/取消全选" onchange="onHeaderCheck(this.checked)" ${disabled}></th>
                   <th>产品代码</th>
                   <th>产品名称</th>
-                  <th style="text-align:right;">最新规模（亿）<i class="th-help" data-tip="该理财产品持有当前专户的规模">i</i></th>
+                  <th style="text-align:right;width:90px;white-space:nowrap;">最新规模（亿）<i class="th-help" data-tip="该理财产品持有当前专户的规模">i</i></th>
                   <th style="text-align:right;">实际赎回金额（元）</th>
                   <th>赎回来源专户</th>
                 </tr>
