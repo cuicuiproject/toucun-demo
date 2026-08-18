@@ -2271,7 +2271,7 @@ function renderContent(acc, st) {
             </td>
             <td style="font-weight:500;width:70px;white-space:nowrap;">${p.code}</td>
             <td style="max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding-right:4px;" title="${p.name}">${p.name}</td>
-            <td class="num" style="width:100px;">${sizeYuan}</td>
+            <td class="num" style="width:90px;">${sizeYuan}</td>
             <td style="white-space:nowrap;width:150px;padding-right:0;">
               <div style="display:flex;align-items:center;justify-content:flex-end;gap:2px;">
                 <input type="text" inputmode="numeric" class="loss-red-input" id="lossRedeemInput_${p.code}" value="${redAmt ? redAmt.toLocaleString('zh-CN') : ''}"
@@ -2332,7 +2332,7 @@ function renderContent(acc, st) {
     <div class="section-card" style="padding:0;">
       <div class="section-header" style="padding:8px 12px;">
         <div class="section-title" style="font-size:13px;">
-          <span class="icon">📊</span> 持有${acc.name}的理财产品 — 调仓
+          <span class="icon">📊</span> 持有${acc.name}的理财产品
           <span class="section-subtitle">— 左侧赎回、右侧申购，日终规模不变</span>
         </div>
         <div class="section-actions">
@@ -2353,7 +2353,7 @@ function renderContent(acc, st) {
                   <th class="chk-cell" style="text-align:center;"><input type="checkbox" id="headerChk" title="全选/取消全选" onchange="onHeaderCheck(this.checked)" ${disabled}></th>
                   <th style="width:70px;">产品代码</th>
                   <th style="width:auto;">产品名称</th>
-                  <th style="text-align:right;width:100px;white-space:nowrap;">专户规模（元）<i class="th-help" data-tip="该理财产品持有当前专户的规模">i</i></th>
+                  <th style="text-align:right;width:90px;white-space:nowrap;">专户规模（元）<i class="th-help" data-tip="该理财产品持有当前专户的规模">i</i></th>
                   <th style="text-align:right;width:150px;padding-right:6px;">赎回金额（元）</th>
                 </tr>
               </thead>
@@ -2384,12 +2384,12 @@ function renderContent(acc, st) {
                 <tr>
                   <th class="chk-cell" style="text-align:center;"><input type="checkbox" title="全选/取消全选" onchange="onSubHeaderCheck(this.checked)" ${disabled}></th>
                   <th style="width:70px;">产品代码</th>
-                  <th>产品名称</th>
-                  ${st.subMode === 'bp' ? '<th style="text-align:center;">BP</th>' : ''}
-                  <th style="text-align:right;">${st.subMode === 'bp' ? '占比' : '占比'}<i class="th-help" data-tip="${st.subMode === 'bp' ? '占比 = 该产品BP ÷ 总BP × 100%，申购金额 = 占比 × 产品规模（取整到万）' : '占比 = 该产品申购金额 ÷ 勾选产品申购金额合计 × 100%（自动反算）'}">i</i></th>
-                  <th style="text-align:right;">申购金额（元）</th>
-                  <th style="text-align:right;">调减金额（元）</th>
-                  <th style="text-align:right;">实际金额（元）<i class="th-help" data-tip="实际金额 = 申购金额 − 调减金额。实际金额为最终同步至头寸管理的执行金额。">i</i></th>
+                  <th style="width:auto;">产品名称</th>
+                  ${st.subMode === 'bp' ? '<th style="text-align:center;width:70px;">BP</th>' : ''}
+                  <th style="text-align:right;width:70px;">${st.subMode === 'bp' ? '占比' : '占比'}<i class="th-help" data-tip="${st.subMode === 'bp' ? '占比 = 该产品BP ÷ 总BP × 100%，申购金额 = 占比 × 产品规模（取整到万）' : '占比 = 该产品申购金额 ÷ 勾选产品申购金额合计 × 100%（自动反算）'}">i</i></th>
+                  <th style="text-align:right;width:110px;">申购金额（元）</th>
+                  <th style="text-align:right;width:95px;">调减金额（元）</th>
+                  <th style="text-align:right;width:90px;">实际金额（元）<i class="th-help" data-tip="实际金额 = 申购金额 − 调减金额。实际金额为最终同步至头寸管理的执行金额。">i</i></th>
                 </tr>
               </thead>
               <tbody>${rightRows}</tbody>
