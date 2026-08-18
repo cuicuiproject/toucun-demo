@@ -339,7 +339,7 @@
   .num.pos { color: var(--danger); }
   .num.neg { color: var(--success); }
 
-  .chk-cell { text-align: center; width: 48px; }
+  .chk-cell { text-align: center; width: 32px; }
   .chk-cell input[type="checkbox"] {
     width: 16px; height: 16px;
     cursor: pointer;
@@ -569,12 +569,12 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    width: 34px;
+    width: 22px;
     flex-shrink: 0;
   }
   .loss-arrow-bridge::before {
     content: '→';
-    font-size: 22px;
+    font-size: 18px;
     color: #94A3B8;
     font-weight: 700;
   }
@@ -2050,8 +2050,8 @@ function getState(accountId) {
       accountSize: acc.accountSize,
     };
     acc.holdings.forEach(p => {
-      state.lossSelectedMap[p.code] = true;   // 赎回端默认全选
-      state.subSelectedMap[p.code] = false;  // 申购端默认全不选（监管互斥：同一产品不可同时在赎回+申购）
+      state.lossSelectedMap[p.code] = false;  // 赎回端默认不选（进入时不默认全选）
+      state.subSelectedMap[p.code] = false;  // 申购端默认不选（监管互斥：同一产品不可同时在赎回+申购）
       state.bpData[p.code] = p.defaultBP;
     });
     accountState[accountId] = state;
