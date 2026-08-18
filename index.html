@@ -423,9 +423,9 @@
   /* 调仓模式左右两栏布局 */
   .loss-split-container {
     display: flex;
-    gap: 12px;
+    gap: 8px;
     align-items: stretch;
-    min-height: 280px;
+    min-height: 260px;
   }
   .loss-left-panel,
   .loss-right-panel {
@@ -442,19 +442,19 @@
   /* 左栏5列、右栏7列(BP模式)/6列(金额模式)，按 1:1 分配 */
   .loss-left-panel {
     flex: 1 1 0%;
-    min-width: 460px;
+    min-width: 400px;
   }
   .loss-right-panel {
     flex: 1 1 0%;
-    min-width: 380px;
+    min-width: 340px;
   }
   .loss-panel-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 10px 16px;
+    padding: 6px 12px;
     border-bottom: 1px solid #E2E8F0;
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 700;
     flex-shrink: 0;
   }
@@ -482,7 +482,7 @@
     position: sticky;
     top: 0;
     z-index: 2;
-    padding: 8px 10px;
+    padding: 5px 8px;
     text-align: left;
     font-weight: 600;
     font-size: 11px;
@@ -498,7 +498,7 @@
     color: #1E40AF;
   }
   .loss-panel-body td {
-    padding: 7px 10px;
+    padding: 4px 8px;
     border-bottom: 1px solid #F1F5F9;
     white-space: nowrap;
     vertical-align: middle;
@@ -553,7 +553,7 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    padding: 10px 16px;
+    padding: 6px 12px;
     border-top: 1px solid #E2E8F0;
     font-size: 12px;
     flex-shrink: 0;
@@ -579,8 +579,8 @@
     font-weight: 700;
   }
   .loss-red-input {
-    width: 120px;
-    padding: 5px 8px;
+    width: 100px;
+    padding: 3px 6px;
     border: 1px solid #D1D5DB;
     border-radius: 6px;
     font-size: 12px;
@@ -2273,7 +2273,7 @@ function renderContent(acc, st) {
                 placeholder="输入赎回金额"
                 ${disabled || !sel || subOccupied ? 'disabled' : ''}
                 oninput="onLossRedeemAmtChange('${p.code}', this.value)" onfocus="this.select()"
-                style="width:120px;">
+                style="width:90px;">
               <button class="btn" id="allRedeemBtn_${p.code}" onclick="onAllRedeemOne('${p.code}')" ${disabled || !sel || subOccupied ? 'disabled' : ''} style="font-size:11px;padding:3px 8px;background:#DC2626;color:#fff;border:none;border-radius:4px;cursor:pointer;margin-left:6px;">全赎</button>
             </td>
           </tr>`;
@@ -2308,12 +2308,12 @@ function renderContent(acc, st) {
                 placeholder="自动分摊"
                 readonly
                 title="申购金额 = 占比 × 产品规模（取整到万），如需调整请修改BP或调减金额"
-                style="width:120px;background:#F8FAFC;color:#1E3A5F;font-weight:600;">
+                style="width:100px;background:#F8FAFC;color:#1E3A5F;font-weight:600;">
             </td>
             <td>
               <input type="text" inputmode="numeric" class="table-input" value="${adj ? adj.toLocaleString('zh-CN') : ''}"
                 ${disabled ? 'disabled' : ''}
-                oninput="onLossAdjChange('${p.code}', this.value)" onfocus="onLossAdjFocus(this)" onblur="onLossAdjBlur(this)" style="width:100px;">
+                oninput="onLossAdjChange('${p.code}', this.value)" onfocus="onLossAdjFocus(this)" onblur="onLossAdjBlur(this)" style="width:85px;">
             </td>
             <td class="num" style="font-weight:600;" id="I_${p.code}">--</td>
           </tr>`;
