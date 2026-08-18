@@ -498,7 +498,7 @@
     color: #1E40AF;
   }
   .loss-panel-body td {
-    padding: 7px 8px;
+    padding: 7px 6px;
     border-bottom: 1px solid #F1F5F9;
     white-space: nowrap;
     vertical-align: middle;
@@ -2265,7 +2265,7 @@ function renderContent(acc, st) {
               <input type="checkbox" id="lossChk_${p.code}" ${sel ? 'checked' : ''} ${chkDisabled ? 'disabled' : ''} onchange="onLossToggleSelect('${p.code}', this.checked)">
               </span>
             </td>
-            <td style="font-weight:500;width:64px;white-space:nowrap;">${p.code}</td>
+            <td style="font-weight:500;width:50px;white-space:nowrap;">${p.code}</td>
             <td style="max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${p.name}">${p.name}</td>
             <td class="num" style="width:120px;">${sizeYuan}</td>
             <td>
@@ -2294,7 +2294,7 @@ function renderContent(acc, st) {
               <input type="checkbox" ${subSel ? 'checked' : ''} ${subChkDisabled ? 'disabled' : ''} onchange="onSubToggleSelect('${p.code}', this.checked)">
               </span>
             </td>
-            <td style="font-weight:500;width:64px;white-space:nowrap;">${p.code}</td>
+            <td style="font-weight:500;width:50px;white-space:nowrap;">${p.code}</td>
             <td style="max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${p.name}">${p.name}</td>
             ${st.subMode === 'bp' ? `
             <td class="col-bp">
