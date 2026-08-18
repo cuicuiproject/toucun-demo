@@ -2189,7 +2189,10 @@ function renderContent(acc, st) {
       ${st.subMode === 'bp' ? `
       <span style="color:var(--border);margin:0 4px;">|</span>
       <span style="font-size:12px;color:var(--text-muted);">总BP</span>
-      <span id="totalBPDisplay" style="font-weight:800;font-size:18px;color:#1A3C6D;background:linear-gradient(135deg,#F0F9FF,#E0F2FE);border:2px solid #93C5FD;border-radius:8px;padding:6px 16px;min-width:60px;text-align:center;display:inline-block;">${st.totalLoss || 0}</span>
+      <input type="number" id="totalBPInput" value="${st.totalLoss || 0}" step="1" min="0"
+        style="font-weight:800;font-size:18px;color:#1A3C6D;background:linear-gradient(135deg,#F0F9FF,#E0F2FE);border:2px solid #93C5FD;border-radius:8px;padding:6px 16px;width:140px;text-align:center;"
+        oninput="onTotalBPChange(this.value)"
+        title="投资经理输入总BP，各产品BP为明细分配，占比 = 产品BP ÷ 总BP">
       <span style="font-size:12px;font-weight:600;color:#1D4ED8;">BP</span>
       ` : ''}
       <div style="flex:1;"></div>
@@ -2209,7 +2212,7 @@ function renderContent(acc, st) {
         </div>
         <div class="section-actions">
           <span style="font-size:12px;color:var(--text-muted);">已选 <strong id="selectedCount">${selCount}</strong> / <strong id="totalProductCount">${totalCount}</strong> 只</span>
-          <span style="font-size:12px;color:var(--text-muted);margin-left:8px;">总BP <strong id="totalBPDisplay">${acc.totalBP}</strong></span>
+          <span style="font-size:12px;color:var(--text-muted);margin-left:8px;">总BP <input type="number" id="totalBPInput" value="${st.totalLoss || acc.totalBP || 0}" step="1" min="0" style="font-weight:700;font-size:14px;width:60px;text-align:center;border:1px solid #93C5FD;border-radius:4px;padding:2px 6px;" oninput="onTotalBPChange(this.value)" title="投资经理输入总BP"></span>
           <button class="btn" onclick="exportData()" style="background:#E6A23C;color:#fff;border:none;font-size:12px;padding:5px 14px;border-radius:4px;cursor:pointer;margin-left:12px;">导出 Excel</button>
         </div>
       </div>
@@ -2265,16 +2268,18 @@ function renderContent(acc, st) {
               <input type="checkbox" id="lossChk_${p.code}" ${sel ? 'checked' : ''} ${chkDisabled ? 'disabled' : ''} onchange="onLossToggleSelect('${p.code}', this.checked)">
               </span>
             </td>
-            <td style="font-weight:500;width:50px;white-space:nowrap;">${p.code}</td>
-            <td style="max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${p.name}">${p.name}</td>
+            <td style="font-weight:500;width:70px;white-space:nowrap;">${p.code}</td>
+            <td style="max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding-right:4px;" title="${p.name}">${p.name}</td>
             <td class="num" style="width:120px;">${sizeYuan}</td>
-            <td>
-              <input type="text" inputmode="numeric" class="loss-red-input" id="lossRedeemInput_${p.code}" value="${redAmt ? redAmt.toLocaleString('zh-CN') : ''}"
-                placeholder="输入赎回金额"
-                ${disabled || !sel || subOccupied ? 'disabled' : ''}
-                oninput="onLossRedeemAmtChange('${p.code}', this.value)" onfocus="this.select()"
-                style="width:90px;">
-              <button class="btn" id="allRedeemBtn_${p.code}" onclick="onAllRedeemOne('${p.code}')" ${disabled || !sel || subOccupied ? 'disabled' : ''} style="font-size:11px;padding:3px 8px;background:#DC2626;color:#fff;border:none;border-radius:4px;cursor:pointer;margin-left:6px;">全赎</button>
+            <td style="white-space:nowrap;">
+              <div style="display:inline-flex;align-items:center;gap:4px;">
+                <input type="text" inputmode="numeric" class="loss-red-input" id="lossRedeemInput_${p.code}" value="${redAmt ? redAmt.toLocaleString('zh-CN') : ''}"
+                  placeholder="输入赎回金额"
+                  ${disabled || !sel || subOccupied ? 'disabled' : ''}
+                  oninput="onLossRedeemAmtChange('${p.code}', this.value)" onfocus="this.select()"
+                  style="width:90px;">
+                <button class="btn" id="allRedeemBtn_${p.code}" onclick="onAllRedeemOne('${p.code}')" ${disabled || !sel || subOccupied ? 'disabled' : ''} style="font-size:11px;padding:3px 8px;background:#DC2626;color:#fff;border:none;border-radius:4px;cursor:pointer;white-space:nowrap;">全赎</button>
+              </div>
             </td>
           </tr>`;
       }).join('');
@@ -2294,8 +2299,8 @@ function renderContent(acc, st) {
               <input type="checkbox" ${subSel ? 'checked' : ''} ${subChkDisabled ? 'disabled' : ''} onchange="onSubToggleSelect('${p.code}', this.checked)">
               </span>
             </td>
-            <td style="font-weight:500;width:50px;white-space:nowrap;">${p.code}</td>
-            <td style="max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${p.name}">${p.name}</td>
+            <td style="font-weight:500;width:70px;white-space:nowrap;">${p.code}</td>
+            <td style="max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding-right:4px;" title="${p.name}">${p.name}</td>
             ${st.subMode === 'bp' ? `
             <td class="col-bp">
               <input type="number" class="table-input" value="${bp}" step="1" min="0"
@@ -2344,10 +2349,10 @@ function renderContent(acc, st) {
               <thead>
                 <tr>
                   <th class="chk-cell" style="text-align:center;"><input type="checkbox" id="headerChk" title="全选/取消全选" onchange="onHeaderCheck(this.checked)" ${disabled}></th>
-                  <th>产品代码</th>
+                  <th style="width:70px;">产品代码</th>
                   <th>产品名称</th>
                   <th style="text-align:right;width:120px;white-space:nowrap;">专户规模（元）<i class="th-help" data-tip="该理财产品持有当前专户的规模">i</i></th>
-                  <th style="text-align:right;">赎回金额（元）</th>
+                  <th style="text-align:right;width:170px;">赎回金额（元）</th>
                 </tr>
               </thead>
               <tbody>${leftRows}</tbody>
@@ -2376,7 +2381,7 @@ function renderContent(acc, st) {
               <thead>
                 <tr>
                   <th class="chk-cell" style="text-align:center;"><input type="checkbox" title="全选/取消全选" onchange="onSubHeaderCheck(this.checked)" ${disabled}></th>
-                  <th>产品代码</th>
+                  <th style="width:70px;">产品代码</th>
                   <th>产品名称</th>
                   ${st.subMode === 'bp' ? '<th style="text-align:center;">BP</th>' : ''}
                   <th style="text-align:right;">${st.subMode === 'bp' ? '占比' : '规模占比'}<i class="th-help" data-tip="${st.subMode === 'bp' ? '占比 = 该产品BP ÷ 总BP × 100%，申购金额 = 占比 × 产品规模（取整到万）' : '规模占比 = 该产品持仓规模 ÷ 勾选产品持仓合计 × 100%，申购金额 = 规模占比 × 产品规模（取整到万）'}">i</i></th>
@@ -2477,9 +2482,10 @@ function recalcLossMode(acc, st) {
     totalBP += st.bpData[p.code] || 0;
   });
 
-  // 更新顶部总BP只读显示
-  const totalBPEl = document.getElementById('totalBPDisplay');
-  if (totalBPEl) totalBPEl.textContent = totalBP;
+  // 总BP = 投资经理在顶部输入的值（st.totalLoss），各产品BP为明细分配
+  const inputTotalBP = st.totalLoss || 0;
+
+  // 更新各产品BP之和的展示（可选：对比输入总BP）
 
   // 第二步：按占比计算各产品申购金额（占比 × 产品规模，取整到万）
   let sumSub = 0, sumI = 0;
@@ -2496,14 +2502,14 @@ function recalcLossMode(acc, st) {
     const adj = st.lossAdjData[code] || 0;
     const pSize = p.size || 0;  // 产品规模（基数）
 
-    // 占比计算
+    // 占比计算（分母 = 投资经理输入的总BP，不是各产品BP之和）
     let ratio = 0, ratioPct = 0;
     if (st.subMode === 'wan') {
       ratio = totalSizeSum > 0 ? pSize / totalSizeSum : 0;
       ratioPct = ratio * 100;
     } else {
-      ratio = totalBP > 0 ? bp / totalBP : 0;
-      ratioPct = totalBP > 0 ? (bp / totalBP) * 100 : 0;
+      ratio = inputTotalBP > 0 ? bp / inputTotalBP : 0;
+      ratioPct = inputTotalBP > 0 ? (bp / inputTotalBP) * 100 : 0;
     }
 
     // 申购金额 = 占比 × 产品规模，取整到万
@@ -2597,6 +2603,13 @@ function onBPChange(code, value) {
   const st = getState(currentAccountId);
   if (!st) return;
   st.bpData[code] = parseFloat(value) || 0;
+  recalcCurrent();
+}
+
+function onTotalBPChange(value) {
+  const st = getState(currentAccountId);
+  if (!st) return;
+  st.totalLoss = parseFloat(value) || 0;
   recalcCurrent();
 }
 
