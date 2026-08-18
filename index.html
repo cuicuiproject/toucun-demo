@@ -2352,7 +2352,7 @@ function renderContent(acc, st) {
                 <tr>
                   <th class="chk-cell" style="text-align:center;"><input type="checkbox" id="headerChk" title="全选/取消全选" onchange="onHeaderCheck(this.checked)" ${disabled}></th>
                   <th style="width:70px;">产品代码</th>
-                  <th style="width:auto;">产品名称</th>
+                  <th style="width:90px;">产品名称</th>
                   <th style="text-align:right;width:90px;white-space:nowrap;">专户规模（元）<i class="th-help" data-tip="该理财产品持有当前专户的规模">i</i></th>
                   <th style="text-align:right;width:150px;padding-right:6px;">赎回金额（元）</th>
                 </tr>
@@ -2384,12 +2384,12 @@ function renderContent(acc, st) {
                 <tr>
                   <th class="chk-cell" style="text-align:center;"><input type="checkbox" title="全选/取消全选" onchange="onSubHeaderCheck(this.checked)" ${disabled}></th>
                   <th style="width:70px;">产品代码</th>
-                  <th style="width:auto;">产品名称</th>
-                  ${st.subMode === 'bp' ? '<th style="text-align:center;width:70px;">BP</th>' : ''}
-                  <th style="text-align:right;width:70px;">${st.subMode === 'bp' ? '占比' : '占比'}<i class="th-help" data-tip="${st.subMode === 'bp' ? '占比 = 该产品BP ÷ 总BP × 100%，申购金额 = 占比 × 产品规模（取整到万）' : '占比 = 该产品申购金额 ÷ 勾选产品申购金额合计 × 100%（自动反算）'}">i</i></th>
-                  <th style="text-align:right;width:110px;">申购金额（元）</th>
-                  <th style="text-align:right;width:95px;">调减金额（元）</th>
-                  <th style="text-align:right;width:90px;">实际金额（元）<i class="th-help" data-tip="实际金额 = 申购金额 − 调减金额。实际金额为最终同步至头寸管理的执行金额。">i</i></th>
+                  <th style="width:90px;">产品名称</th>
+                  ${st.subMode === 'bp' ? '<th style="text-align:center;width:50px;">BP</th>' : ''}
+                  <th style="text-align:right;width:60px;">${st.subMode === 'bp' ? '占比' : '占比'}<i class="th-help" data-tip="${st.subMode === 'bp' ? '占比 = 该产品BP ÷ 总BP × 100%，申购金额 = 占比 × 产品规模（取整到万）' : '占比 = 该产品申购金额 ÷ 勾选产品申购金额合计 × 100%（自动反算）'}">i</i></th>
+                  <th style="text-align:right;width:100px;">申购金额（元）</th>
+                  <th style="text-align:right;width:80px;">调减金额（元）</th>
+                  <th style="text-align:right;width:85px;">实际金额（元）<i class="th-help" data-tip="实际金额 = 申购金额 − 调减金额。实际金额为最终同步至头寸管理的执行金额。">i</i></th>
                 </tr>
               </thead>
               <tbody>${rightRows}</tbody>
