@@ -477,6 +477,7 @@
     width: 100%;
     border-collapse: collapse;
     font-size: 12px;
+    table-layout: fixed;
   }
   .loss-panel-body th {
     position: sticky;
@@ -2197,8 +2198,8 @@ function renderContent(acc, st) {
       ` : ''}
       <div style="flex:1;"></div>
       <div class="mode-selector" id="modeSelector">
-        <button class="mode-btn ${st.subMode === 'bp' ? 'active' : ''}" data-submode="bp" ${disabled}>BP分摊</button>
-        <button class="mode-btn ${st.subMode === 'wan' ? 'active' : ''}" data-submode="wan" ${disabled}>金额分摊</button>
+        <button class="mode-btn ${st.subMode === 'bp' ? 'active' : ''}" data-submode="bp" ${disabled}>BP模式</button>
+        <button class="mode-btn ${st.subMode === 'wan' ? 'active' : ''}" data-submode="wan" ${disabled}>金额直填</button>
       </div>
     </div>
 
@@ -2270,15 +2271,15 @@ function renderContent(acc, st) {
             </td>
             <td style="font-weight:500;width:70px;white-space:nowrap;">${p.code}</td>
             <td style="max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding-right:4px;" title="${p.name}">${p.name}</td>
-            <td class="num" style="width:120px;">${sizeYuan}</td>
-            <td style="white-space:nowrap;">
-              <div style="display:inline-flex;align-items:center;gap:2px;">
+            <td class="num" style="width:100px;">${sizeYuan}</td>
+            <td style="white-space:nowrap;width:150px;padding-right:0;">
+              <div style="display:flex;align-items:center;justify-content:flex-end;gap:2px;">
                 <input type="text" inputmode="numeric" class="loss-red-input" id="lossRedeemInput_${p.code}" value="${redAmt ? redAmt.toLocaleString('zh-CN') : ''}"
                   placeholder="输入赎回金额"
                   ${disabled || !sel || subOccupied ? 'disabled' : ''}
                   oninput="onLossRedeemAmtChange('${p.code}', this.value)" onfocus="this.select()"
-                  style="width:90px;">
-                <button class="btn" id="allRedeemBtn_${p.code}" onclick="onAllRedeemOne('${p.code}')" ${disabled || !sel || subOccupied ? 'disabled' : ''} style="font-size:11px;padding:3px 5px;background:#DC2626;color:#fff;border:none;border-radius:4px;cursor:pointer;white-space:nowrap;">全赎</button>
+                  style="width:80px;padding:4px 6px;">
+                <button class="btn" id="allRedeemBtn_${p.code}" onclick="onAllRedeemOne('${p.code}')" ${disabled || !sel || subOccupied ? 'disabled' : ''} style="font-size:11px;padding:4px 6px;background:#DC2626;color:#fff;border:none;border-radius:4px;cursor:pointer;white-space:nowrap;">全赎</button>
               </div>
             </td>
           </tr>`;
@@ -2310,10 +2311,12 @@ function renderContent(acc, st) {
             <td class="num" id="ratio_${p.code}">--</td>
             <td>
               <input type="text" inputmode="numeric" class="table-input" id="subAmtInput_${p.code}" value="${subAmt ? subAmt.toLocaleString('zh-CN') : ''}"
-                placeholder="自动分摊"
-                readonly
-                title="申购金额 = 占比 × 产品规模（取整到万），如需调整请修改BP或调减金额"
-                style="width:100px;background:#F8FAFC;color:#1E3A5F;font-weight:600;">
+                placeholder="${st.subMode === 'bp' ? '自动分摊' : '输入金额'}"
+                ${st.subMode === 'bp' ? 'readonly' : ''}
+                ${disabled || !subSel || subChkDisabled ? 'disabled' : ''}
+                oninput="${st.subMode === 'bp' ? '' : 'onSubAmountChange(\'' + p.code + '\', this.value)'}"
+                title="${st.subMode === 'bp' ? '申购金额 = 占比 × 产品规模（取整到万），如需调整请修改BP或调减金额' : '投资经理直接输入申购金额，占比自动反算'}"
+                style="width:100px;${st.subMode === 'bp' ? 'background:#F8FAFC;color:#1E3A5F;font-weight:600;' : 'background:#fff;color:#1E3A5F;font-weight:600;'}">
             </td>
             <td>
               <input type="text" inputmode="numeric" class="table-input" value="${adj ? adj.toLocaleString('zh-CN') : ''}"
@@ -2349,9 +2352,9 @@ function renderContent(acc, st) {
                 <tr>
                   <th class="chk-cell" style="text-align:center;"><input type="checkbox" id="headerChk" title="全选/取消全选" onchange="onHeaderCheck(this.checked)" ${disabled}></th>
                   <th style="width:70px;">产品代码</th>
-                  <th>产品名称</th>
-                  <th style="text-align:right;width:120px;white-space:nowrap;">专户规模（元）<i class="th-help" data-tip="该理财产品持有当前专户的规模">i</i></th>
-                  <th style="text-align:right;width:170px;">赎回金额（元）</th>
+                  <th style="width:auto;">产品名称</th>
+                  <th style="text-align:right;width:100px;white-space:nowrap;">专户规模（元）<i class="th-help" data-tip="该理财产品持有当前专户的规模">i</i></th>
+                  <th style="text-align:right;width:150px;padding-right:6px;">赎回金额（元）</th>
                 </tr>
               </thead>
               <tbody>${leftRows}</tbody>
@@ -2373,7 +2376,7 @@ function renderContent(acc, st) {
         <!-- ===== 右栏：申购端 ===== -->
         <div class="loss-right-panel">
           <div class="loss-panel-header">
-            <span>🔵 申购端 — 申购进 <strong style="color:var(--primary);">${acc.name}</strong>（当前专户）· ${st.subMode === 'bp' ? '按BP比例自动分摊' : '按规模比例自动分摊'}</span>
+            <span>🔵 申购端 — 申购进 <strong style="color:var(--primary);">${acc.name}</strong>（当前专户）· ${st.subMode === 'bp' ? '按BP占比自动分摊' : '投资经理逐笔指定金额'}</span>
           </div>
           <div class="loss-panel-body">
             <table>
@@ -2383,7 +2386,7 @@ function renderContent(acc, st) {
                   <th style="width:70px;">产品代码</th>
                   <th>产品名称</th>
                   ${st.subMode === 'bp' ? '<th style="text-align:center;">BP</th>' : ''}
-                  <th style="text-align:right;">${st.subMode === 'bp' ? '占比' : '规模占比'}<i class="th-help" data-tip="${st.subMode === 'bp' ? '占比 = 该产品BP ÷ 总BP × 100%，申购金额 = 占比 × 产品规模（取整到万）' : '规模占比 = 该产品持仓规模 ÷ 勾选产品持仓合计 × 100%，申购金额 = 规模占比 × 产品规模（取整到万）'}">i</i></th>
+                  <th style="text-align:right;">${st.subMode === 'bp' ? '占比' : '占比'}<i class="th-help" data-tip="${st.subMode === 'bp' ? '占比 = 该产品BP ÷ 总BP × 100%，申购金额 = 占比 × 产品规模（取整到万）' : '占比 = 该产品申购金额 ÷ 勾选产品申购金额合计 × 100%（自动反算）'}">i</i></th>
                   <th style="text-align:right;">申购金额（元）</th>
                   <th style="text-align:right;">调减金额（元）</th>
                   <th style="text-align:right;">实际金额（元）<i class="th-help" data-tip="实际金额 = 申购金额 − 调减金额。实际金额为最终同步至头寸管理的执行金额。">i</i></th>
@@ -2501,34 +2504,45 @@ function recalcLossMode(acc, st) {
     const adj = st.lossAdjData[code] || 0;
     const pSize = p.size || 0;  // 产品规模（基数）
 
-    // 占比计算（分母 = 投资经理输入的总BP，不是各产品BP之和）
     let ratio = 0, ratioPct = 0;
-    if (st.subMode === 'wan') {
-      ratio = totalSizeSum > 0 ? pSize / totalSizeSum : 0;
-      ratioPct = ratio * 100;
-    } else {
+    let subAmt = 0;
+
+    if (st.subMode === 'bp') {
+      // BP驱动模式：占比 = BP ÷ 总BP，申购金额 = 占比 × 规模（取整到万）
       ratio = inputTotalBP > 0 ? bp / inputTotalBP : 0;
       ratioPct = inputTotalBP > 0 ? (bp / inputTotalBP) * 100 : 0;
+      subAmt = Math.round(ratio * pSize / 10000) * 10000;
+      if (subAmt < 0) subAmt = 0;
+      // 写入状态 + 回填DOM
+      if (!st.subAmountMap) st.subAmountMap = {};
+      st.subAmountMap[code] = subAmt;
+      const subInputEl = document.getElementById('subAmtInput_' + code);
+      if (subInputEl) subInputEl.value = subAmt ? subAmt.toLocaleString('zh-CN') : '';
+    } else {
+      // 金额直填模式：申购金额由投资经理直接输入，占比反算
+      subAmt = st.subAmountMap?.[code] || 0;
     }
-
-    // 申购金额 = 占比 × 产品规模，取整到万
-    let subAmt = Math.round(ratio * pSize / 10000) * 10000;
-    if (subAmt < 0) subAmt = 0;  // guard：不为负
-
-    // 写入状态 + 回填DOM
-    if (!st.subAmountMap) st.subAmountMap = {};
-    st.subAmountMap[code] = subAmt;
-    const subInputEl = document.getElementById('subAmtInput_' + code);
-    if (subInputEl) subInputEl.value = subAmt ? subAmt.toLocaleString('zh-CN') : '';
 
     // 实际金额 = 申购金额 − 调减金额
     const I_val = subAmt - adj;
 
-    setCell('ratio_' + code, ratioPct.toFixed(2) + '%');
+    // 金额直填模式下占比稍后统一反算（需要先累加sumSub）
+    if (st.subMode === 'bp') {
+      setCell('ratio_' + code, ratioPct.toFixed(2) + '%');
+    }
     setCell('I_' + code, fmtNum(I_val));
 
     sumSub += subAmt; sumI += I_val;
   });
+
+  // 金额直填模式：占比反算 = 金额 ÷ Σ金额
+  if (st.subMode === 'wan') {
+    subSelectedCodes.forEach(code => {
+      const amt = st.subAmountMap?.[code] || 0;
+      const pct = sumSub > 0 ? (amt / sumSub) * 100 : 0;
+      setCell('ratio_' + code, pct.toFixed(2) + '%');
+    });
+  }
 
   // 未勾选产品：清空显示
   acc.holdings.forEach(p => {
@@ -2633,9 +2647,16 @@ function onLossRedeemAmtChange(code, value) {
   recalcCurrent();
 }
 
-// 申购金额现已自动分摊，此函数保留空壳防止调用报错
+// 金额直填模式：投资经理直接输入申购金额，占比自动反算
 function onSubAmountChange(code, value) {
-  // no-op: 申购金额由 recalcLossMode 自动计算
+  const st = getState(currentAccountId);
+  if (!st) return;
+  // 去掉千分位逗号后解析
+  const raw = String(value).replace(/,/g, '');
+  const amt = parseFloat(raw) || 0;
+  if (!st.subAmountMap) st.subAmountMap = {};
+  st.subAmountMap[code] = amt;
+  recalcCurrent();
 }
 
 // 全赎（逐产品）：勾选该产品并带入其全部持仓金额（可二次修改）
@@ -3023,7 +3044,7 @@ function syncToSystem() {
   const errors = [];
 
   if (st.subMode === 'bp') {
-    // 总BP自动计算，校验是否有勾选产品且BP>0
+    // BP驱动模式：校验是否有勾选产品且BP>0
     let hasBP = false;
     acc.holdings.forEach(p => {
       const sel = (st.subSelectedMap && st.subSelectedMap[p.code] !== undefined) ? st.subSelectedMap[p.code] : false;
@@ -3031,6 +3052,16 @@ function syncToSystem() {
     });
     if (!hasBP) {
       errors.push('右栏未勾选产品或BP均为0，无法按BP分摊。');
+    }
+  } else {
+    // 金额直填模式：校验是否有勾选产品且申购金额>0
+    let hasAmt = false;
+    acc.holdings.forEach(p => {
+      const sel = (st.subSelectedMap && st.subSelectedMap[p.code] !== undefined) ? st.subSelectedMap[p.code] : false;
+      if (sel && (st.subAmountMap?.[p.code] || 0) > 0) hasAmt = true;
+    });
+    if (!hasAmt) {
+      errors.push('右栏未勾选产品或申购金额均为0，请输入申购金额。');
     }
   }
 
