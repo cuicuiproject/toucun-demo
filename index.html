@@ -202,14 +202,6 @@
   }
   .sidebar-item .item-remove:hover { color: var(--danger); background: rgba(217,48,37,0.08); }
   .sidebar-item:hover .item-remove { display: block; }
-  .item-badge {
-    font-size: 11px;
-    padding: 1px 6px;
-    border-radius: 3px;
-    flex-shrink: 0;
-  }
-  .item-badge.profit { background: #685BE7; color: #fff; }
-  .item-badge.loss { background: #1A8353; color: #fff; }
 
   /* ============ MAIN CONTENT ============ */
   .content {
@@ -613,65 +605,6 @@
   .red-source-item.current-spv input[type="checkbox"] {
     cursor: not-allowed;
     accent-color: #9ca3af;
-  }
-  .red-source-row, .profit-target-row {
-    background: var(--card-bg);
-    border-radius: var(--radius);
-    padding: 10px 16px;
-    margin-bottom: 12px;
-    box-shadow: var(--shadow);
-  }
-  .red-source-row label.section-label, .profit-target-row label.section-label {
-    font-size: 12px;
-    font-weight: 600;
-    color: var(--text-secondary);
-    display: block;
-    margin-bottom: 8px;
-  }
-  /* 拉壳产品回笼资金申购目标专户多选（复用 red-source 横向卡片） */
-  .profit-target-group {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-    font-size: 12px;
-    padding: 4px 0;
-  }
-  .profit-target-group .empty-hint {
-    color: var(--text-muted);
-    font-style: italic;
-    padding: 4px 0;
-  }
-  .profit-target-item {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    cursor: pointer;
-    color: var(--text);
-    font-weight: 400;
-    padding: 6px 10px;
-    border-radius: var(--radius-sm);
-    border: 1px solid var(--border);
-    background: #fff;
-    transition: background 0.15s, border-color 0.15s;
-    min-width: 180px;
-    flex: 0 0 220px;
-  }
-  .profit-target-item:hover {
-    background: var(--hover-bg);
-    border-color: var(--primary);
-  }
-  .profit-target-item input[type="checkbox"] {
-    width: 14px;
-    height: 14px;
-    cursor: pointer;
-    accent-color: var(--primary);
-    flex-shrink: 0;
-  }
-  .profit-target-item .spv-code {
-    color: var(--text-muted);
-    font-size: 11px;
-    margin-left: auto;
-    font-variant-numeric: tabular-nums;
   }
 
   .config-card {
@@ -1936,7 +1869,6 @@ const allAccounts = [
     nature: '债券专户',
     totalBP: 29,
     accountSize: 113183068.08,
-    defaultMode: 'profit',
     holdings: [
       { code: 'EW7746', name: '阳光金增利稳健天天购46号（14天最低持有）',       size: 9797057.22,       defaultBP: 5,  defaultSelected: true,  feeRatio: 1.0034389 },
       { code: 'EW7748', name: '阳光金增利稳健天天购52号（30天最低持有）',       size: 10015358.74,      defaultBP: 5,  defaultSelected: true,  feeRatio: 1.0033613 },
@@ -1967,7 +1899,6 @@ const allAccounts = [
     nature: '债券专户',
     totalBP: 50,
     accountSize: 200000000,
-    defaultMode: 'loss',
     holdings: [
       { code: 'EW3517', name: '阳光金增利稳健天天购13号（7天最低持有）', size: 330000000, defaultBP: 33, defaultSelected: true, feeRatio: 1.0033613 },
       { code: 'EW0599', name: '阳光金私享增利稳健天天购（300天最低持有）', size: 650000000, defaultBP: 29, defaultSelected: true, feeRatio: 1.0033613 },
@@ -1988,7 +1919,6 @@ const allAccounts = [
     nature: '债券专户',
     totalBP: 35,
     accountSize: 150000000,
-    defaultMode: 'profit',
     holdings: [
       { code: 'EW7746', name: '阳光金增利稳健天天购46号（14天最低持有）', size: 8000000, defaultBP: 10, defaultSelected: true, feeRatio: 1.0034389 },
       { code: 'EW4659', name: '阳光金增利稳健天天购16号（90天最低持有）', size: 600000000, defaultBP: 8, defaultSelected: true, feeRatio: 1.0033613 },
@@ -2009,7 +1939,6 @@ const allAccounts = [
     nature: '多资产专户',
     totalBP: 42,
     accountSize: 180000000,
-    defaultMode: 'profit',
     holdings: [
       { code: 'EW4659', name: '阳光金增利稳健天天购16号（90天最低持有）', size: 700000000, defaultBP: 12, defaultSelected: true, feeRatio: 1.0033613 },
       { code: 'EW6287', name: '阳光金增利稳健乐享天天购49号（14天最低持有）', size: 4000000000, defaultBP: 10, defaultSelected: true, feeRatio: 1.0033613 },
@@ -2030,7 +1959,6 @@ const allAccounts = [
     nature: '债券专户',
     totalBP: 20,
     accountSize: 95000000,
-    defaultMode: 'profit',
     holdings: [
       { code: 'EW6287', name: '阳光金增利稳健乐享天天购49号（14天最低持有）', size: 3800000000, defaultBP: 8, defaultSelected: true, feeRatio: 1.0033613 },
       { code: 'EW4659', name: '阳光金增利稳健天天购16号（90天最低持有）', size: 500000000, defaultBP: 6, defaultSelected: true, feeRatio: 1.0033613 },
@@ -2049,7 +1977,6 @@ const allAccounts = [
     nature: '债券专户',
     totalBP: 15,
     accountSize: 80000000,
-    defaultMode: 'profit',
     holdings: [
       { code: 'EW6287', name: '阳光金增利稳健乐享天天购49号（14天最低持有）', size: 2500000000, defaultBP: 7, defaultSelected: true, feeRatio: 1.0033613 },
       { code: 'EW4659', name: '阳光金增利稳健天天购16号（90天最低持有）', size: 350000000, defaultBP: 5, defaultSelected: true, feeRatio: 1.0033613 },
@@ -2066,7 +1993,6 @@ const allAccounts = [
     nature: '权益专户',
     totalBP: 25,
     accountSize: 120000000,
-    defaultMode: 'loss',
     holdings: [
       { code: 'EW4217', name: '阳光金丰利617期', size: 250000000, defaultBP: 12, defaultSelected: true, feeRatio: 1.0033613 },
       { code: 'EW4512', name: '阳光金丰利682期', size: 400000000, defaultBP: 8, defaultSelected: true, feeRatio: 1.0033613 },
@@ -2083,7 +2009,6 @@ const allAccounts = [
     nature: '多资产专户',
     totalBP: 18,
     accountSize: 65000000,
-    defaultMode: 'profit',
     holdings: [
       { code: 'EW6287', name: '阳光金增利稳健乐享天天购49号（14天最低持有）', size: 1800000000, defaultBP: 9, defaultSelected: true, feeRatio: 1.0033613 },
       { code: 'EW4659', name: '阳光金增利稳健天天购16号（90天最低持有）', size: 280000000, defaultBP: 6, defaultSelected: true, feeRatio: 1.0033613 },
@@ -2098,7 +2023,7 @@ const allAccounts = [
 // 已下线产品排除、未维护产品可添加（标注"未上线"）、规模带出持仓总规模
 
 // ==================== GLOBAL STATE ====================
-// accountState: { accountId: { mode, bpData, feeRatioData, selectedMap, status, feeRateN, bpLoss, totalLoss, baseSize, bpGrowth, accountSize, lossAdjData, lossRedSourceMap, profitTargetMap, spvHoldingAdj } }
+// accountState: { accountId: { mode, subMode, bpData, status, feeRateN, bpLoss, totalLoss, totalWan, baseSize, lossAdjData, lossSelectedMap, lossRedSourceMap, lossRedeemAmt, bpGrowth, accountSize } }
 let accountState = {};
 let currentAccountId = null;
 let sidebarFilter = '';
@@ -2109,15 +2034,13 @@ function getState(accountId) {
     if (!acc) return null;
     const state = {
       mode: 'loss',                 // 统一为单一「调仓」场景（原拉壳已合并）
-      subMode: 'bp',                // 分摊模式：bp=BP分摊，wan=万元金额分摊
+      subMode: 'bp',                // 分摊模式：bp=BP分摊，wan=金额分摊
       bpData: {},
-      feeRatioData: {},
-      selectedMap: {},
       status: 'pending',  // pending | progress | done
       feeRateN: 0.0066,
       bpLoss: 149,
       totalLoss: 149,
-      totalWan: 0,                  // 万元金额分摊模式：输入的总金额（万元）
+      totalWan: 0,                  // 金额分摊模式：输入的总金额（万元）
       baseSize: 26400,
       lossAdjData: {},
       lossSelectedMap: {},         // 调仓左栏勾选状态 { productCode: boolean }
@@ -2125,17 +2048,10 @@ function getState(accountId) {
       lossRedeemAmt: {},           // 调仓左栏赎回金额 { productCode: amount }
       bpGrowth: acc.totalBP,
       accountSize: acc.accountSize,
-
-      profitTargetMap: {},          // 拉壳逐产品目标专户 { productCode: spvId }
-      spvHoldingAdj: {},           // SPV持仓调减金额 { productCode: { spvId: amount } }
     };
     acc.holdings.forEach(p => {
-      state.selectedMap[p.code] = p.defaultSelected;
       state.lossSelectedMap[p.code] = true;  // 调仓模式默认全选
       state.bpData[p.code] = p.defaultBP;
-      state.feeRatioData[p.code] = p.feeRatio;
-      // 初始化调减金额（模拟从SPV持仓自动回填）
-      state.spvHoldingAdj[p.code] = Math.round(p.size * 0.02 / 10000) * 10000;
     });
     accountState[accountId] = state;
   }
@@ -2237,7 +2153,6 @@ function saveCurrentState() {
   const totalWanEl = document.getElementById('totalWan');
 
   if (bpGrowthEl) st.bpGrowth = parseFloat(bpGrowthEl.value) || st.bpGrowth;
-  // 拉壳逐产品目标专户：已由 selectTargetSpv 实时更新 profitTargetMap
   if (bpLossEl) st.bpLoss = parseFloat(bpLossEl.value) || st.bpLoss;
   if (totalLossEl) st.totalLoss = parseFloat(totalLossEl.value) || st.totalLoss;
   if (totalWanEl) st.totalWan = parseFloat(totalWanEl.value) || st.totalWan;
@@ -2248,9 +2163,11 @@ function saveCurrentState() {
 function renderContent(acc, st) {
   const container = document.getElementById('mainContent');
 
-  const isLoss = st.mode === 'loss';
   const isLocked = st.status === 'done';
   const disabled = isLocked ? 'disabled' : '';
+
+  // 调仓模式固定为 loss（已合并单一场景，profit 路径已删除）
+  const isLoss = true;
 
   // 调仓模式使用左右两栏（lossSplitHtml），不用单表 tableRows
   let tableRows = '';
@@ -2259,7 +2176,7 @@ function renderContent(acc, st) {
     return (st.lossSelectedMap && st.lossSelectedMap[p.code] !== undefined) ? st.lossSelectedMap[p.code] : true;
   }).length;
   const totalCount = acc.holdings.length;
-  const tableTitle = `持有${acc.name}的理财产品 & ${isLoss ? '亏损分摊' : '收益分配'}`;
+  const tableTitle = `持有${acc.name}的理财产品 & 亏损分摊`;
 
   container.innerHTML = `
     ${isLocked ? `<div style="background:#FFF3CD;border:1px solid #FFC107;color:#856404;padding:8px 16px;border-radius:4px;margin-bottom:12px;font-size:13px;">该专户已同步至头寸管理计算，当前为<strong>只读</strong>状态。如需调整，请点击下方<strong>重置</strong>按钮。</div>` : ''}
@@ -2287,7 +2204,7 @@ function renderContent(acc, st) {
       <div style="flex:1;"></div>
       <div class="mode-selector" id="modeSelector">
         <button class="mode-btn ${st.subMode === 'bp' ? 'active' : ''}" data-submode="bp" ${disabled}>BP分摊</button>
-        <button class="mode-btn ${st.subMode === 'wan' ? 'active' : ''}" data-submode="wan" ${disabled}>万元金额分摊</button>
+        <button class="mode-btn ${st.subMode === 'wan' ? 'active' : ''}" data-submode="wan" ${disabled}>金额分摊</button>
       </div>
     </div>
 
@@ -2677,17 +2594,6 @@ function fmtNum(v) {
 
 // ==================== ACTIONS ====================
 
-function onToggleSelect(code, checked) {
-  const st = getState(currentAccountId);
-  if (!st) return;
-  st.selectedMap[code] = checked;
-  updateHeaderCheckbox();
-  saveCurrentState();
-  const acc = getAccount(currentAccountId);
-  renderContent(acc, st);
-  recalcCurrent();
-}
-
 function onBPChange(code, value) {
   const st = getState(currentAccountId);
   if (!st) return;
@@ -2758,62 +2664,7 @@ function onLossRedSourceChange(code, spvCode) {
   recalcCurrent();
 }
 
-// 拉壳模式调减金额变更（SPV持仓调减）
-function onAdjChange(code, value) {
-  const st = getState(currentAccountId);
-  if (!st) return;
-  const raw = String(value).replace(/,/g, '');
-  st.spvHoldingAdj[code] = parseFloat(raw) || 0;
-  recalcCurrent();
-}
-
-// 拉壳模式逐产品目标专户搜索
-function onTargetSpvSearch(code, query) {
-  const st = getState(currentAccountId);
-  const acc = getAccount(currentAccountId);
-  if (!st || !acc) return;
-  const dropdown = document.getElementById('targetSpvDropdown_' + code);
-  if (!dropdown) return;
-  const q = query.trim().toLowerCase();
-  const list = allAccounts.filter(a => a.id !== acc.id && (!q || a.name.toLowerCase().includes(q) || a.code.toLowerCase().includes(q)));
-  dropdown.innerHTML = list.length > 0
-    ? list.map(a => `<div onclick="selectTargetSpv('${code}','${a.id}','${escHtml(a.name + '（' + a.code + '）')}')" style="padding:6px 10px;font-size:12px;cursor:pointer;border-bottom:1px solid #f0f0f0;white-space:nowrap;display:flex;justify-content:space-between;align-items:center;" onmouseover="this.style.background='#F0F4FF'" onmouseout="this.style.background=''"><span>${escHtml(a.name)} <span style="color:var(--text-muted);font-size:11px;">${a.code}</span></span><span style="font-size:10px;color:${a.tVal==='T+0'?'#1D4ED8':'#C2410C'};background:${a.tVal==='T+0'?'#DBEAFE':'#FFF7ED'};border-radius:2px;padding:0 4px;">${a.tVal||'T+0'}</span></div>`).join('')
-    : '<div style="padding:8px 10px;font-size:12px;color:var(--text-muted);">未找到匹配专户</div>';
-  dropdown.style.display = 'block';
-  delete st.profitTargetMap[code];
-}
-
-function onTargetSpvFocus(code) {
-  const input = document.getElementById('targetSpvInput_' + code);
-  if (input) { input.select(); onTargetSpvSearch(code, input.value); }
-}
-
-function closeTargetSpvDropdown(code) {
-  const dropdown = document.getElementById('targetSpvDropdown_' + code);
-  if (dropdown) dropdown.style.display = 'none';
-}
-
-function selectTargetSpv(code, spvId, display) {
-  const st = getState(currentAccountId);
-  if (!st) return;
-  st.profitTargetMap[code] = spvId;
-  const input = document.getElementById('targetSpvInput_' + code);
-  if (input) input.value = display;
-  closeTargetSpvDropdown(code);
-  recalcCurrent();
-}
-
-// 拉壳模式逐产品目标专户选择（兼容旧调用）
-function onTargetSpvChange(code, spvId) {
-  const st = getState(currentAccountId);
-  if (!st) return;
-  if (spvId) {
-    st.profitTargetMap[code] = spvId;
-  } else {
-    delete st.profitTargetMap[code];
-  }
-  recalcCurrent();
-}
+// ==================== REMOVE ACCOUNT ====================
 
 function onLossAdjFocus(el) {
   // 聚焦时去掉千分位，方便编辑
@@ -2852,11 +2703,9 @@ function updateHeaderCheckbox() {
   const st = getState(currentAccountId);
   if (!acc || !st) return;
   const total = acc.holdings.length;
-  const selCount = st.mode === 'profit'
-    ? acc.holdings.filter(p => st.selectedMap[p.code]).length
-    : acc.holdings.filter(p => {
-        return (st.lossSelectedMap && st.lossSelectedMap[p.code] !== undefined) ? st.lossSelectedMap[p.code] : true;
-      }).length;
+  const selCount = acc.holdings.filter(p => {
+    return (st.lossSelectedMap && st.lossSelectedMap[p.code] !== undefined) ? st.lossSelectedMap[p.code] : true;
+  }).length;
   hdr.checked = (total > 0 && selCount === total);
   hdr.indeterminate = (selCount > 0 && selCount < total);
 }
@@ -2916,7 +2765,7 @@ function showRevokeModal(accountId) {
   const st = getState(accountId);
   if (!acc || !st) return;
 
-  const modeLabel = '调仓（' + (st.subMode === 'bp' ? 'BP分摊' : '万元金额分摊') + '）';
+  const modeLabel = '调仓（' + (st.subMode === 'bp' ? 'BP分摊' : '金额分摊') + '）';
   document.getElementById('revokeModalBody').innerHTML = `
     <div class="info-line"><span class="info-label">专户</span><span class="info-value">${acc.name}（${acc.code}）</span></div>
     <div class="info-line"><span class="info-label">模式</span><span class="info-value">${modeLabel}</span></div>
@@ -3077,31 +2926,26 @@ function syncToSystem() {
   const acc = getAccount(currentAccountId);
   const st = getState(currentAccountId);
   if (!acc || !st) return;
-  if (st.mode !== 'profit' && st.mode !== 'loss') {
-    alert('当前仅支持"调仓"模式同步。');
-    return;
-  }
 
   // ========== 同步前校验（收集全部问题，一次性提示） ==========
   const errors = [];
 
-  if (st.mode === 'loss') {
-    if (st.subMode === 'bp') {
-      if ((st.totalLoss || 0) <= 0) {
-        errors.push('总目标亏损（BP）未设置。');
-      }
-    } else {
-      if ((st.totalWan || 0) <= 0) {
-        errors.push('总金额（万元）未设置。');
-      }
+  if (st.subMode === 'bp') {
+    if ((st.totalLoss || 0) <= 0) {
+      errors.push('总目标亏损（BP）未设置。');
     }
-    const selected = acc.holdings.filter(p => {
-      const sel = (st.lossSelectedMap && st.lossSelectedMap[p.code] !== undefined) ? st.lossSelectedMap[p.code] : true;
-      return sel;
-    });
-    if (selected.length === 0) {
-      errors.push('未勾选任何产品，请至少勾选一只参与调仓。');
-    } else {
+  } else {
+    if ((st.totalWan || 0) <= 0) {
+      errors.push('总金额（万元）未设置。');
+    }
+  }
+  const selected = acc.holdings.filter(p => {
+    const sel = (st.lossSelectedMap && st.lossSelectedMap[p.code] !== undefined) ? st.lossSelectedMap[p.code] : true;
+    return sel;
+  });
+  if (selected.length === 0) {
+    errors.push('未勾选任何产品，请至少勾选一只参与调仓。');
+  } else {
       if (st.subMode === 'bp') {
         const hasBp = selected.some(p => (st.bpData[p.code] ?? p.defaultBP) > 0);
         if (!hasBp) {
@@ -3126,7 +2970,6 @@ function syncToSystem() {
         errors.push('以下产品未选择赎回来源专户：' + missingSrc.map(p => p.code).join('、'));
       }
     }
-  }
 
   if (errors.length > 0) {
     const msg = '以下项目未完成，请完善后再同步：\n\n' + errors.map((e, i) => (i + 1) + '. ' + e).join('\n');
@@ -3189,7 +3032,7 @@ function showSyncModal() {
   const data = pendingSyncData;
   if (!data) return;
   const { acc, st, syncedProducts, sumF, sumI, sumK } = data;
-  const modeLabel = '调仓（' + (st.subMode === 'bp' ? 'BP分摊' : '万元金额分摊') + '）';
+  const modeLabel = '调仓（' + (st.subMode === 'bp' ? 'BP分摊' : '金额分摊') + '）';
   const summaryTotal = (() => {
     const sumRedQty = syncedProducts.reduce((s, p) => s + (p.redQty || 0), 0);
     return `<span>分摊合计 <strong style="color:var(--primary);">${(sumF/10000).toLocaleString()} 万</strong></span> <span style="margin-left:16px;">实际偿付合计 <strong style="color:var(--success);">${(sumI/10000).toLocaleString()} 万</strong></span> <span style="margin-left:16px;">赎回份额合计 <strong>${sumRedQty.toLocaleString()} 份</strong></span>`;
@@ -3937,17 +3780,8 @@ function init() {
         });
       }
     })();
-    // 演示：预填宁聚5号（拉壳）和鑫和14号（调仓）的示例数据
+    // 演示：预填鑫和14号（调仓）的示例数据
     (() => {
-      const stNingju = getState('ningju5');
-      if (stNingju && stNingju.status === 'pending') {
-        stNingju.status = 'done';
-        const acc = getAccount('ningju5');
-        const targets = allAccounts.filter(a => a.id !== 'ningju5').map(a => a.id);
-        acc.holdings.filter(p => p.defaultSelected).forEach((p, i) => {
-          stNingju.profitTargetMap[p.code] = targets[i % targets.length];
-        });
-      }
       const stXinhe = getState('xinhe14');
       if (stXinhe && stXinhe.status === 'pending') {
         stXinhe.status = 'done';
@@ -4950,8 +4784,8 @@ function confirmAddSpv() {
   }
   const sortVal = parseInt(document.getElementById('newSpvSortOrder').value) || spvMaintList.length + 1;
   const newId = 'spv_' + Date.now();
-  allAccounts.push({ id: newId, code, name, shortName, tVal, nature, totalBP: 0, accountSize: 0, defaultMode: 'profit', holdings: [] });
   spvMaintList.push({ id: newId, online: true, sortOrder: sortVal, tVal, nature, shortName });
+  allAccounts.push({ id: newId, code, name, shortName, tVal, nature, totalBP: 0, accountSize: 0, holdings: [] });
   spvMaintList.sort((a, b) => a.sortOrder - b.sortOrder);
   saveSpvMaintList();
   closeAddSpvModal();
@@ -5939,10 +5773,7 @@ function addProductFromSearch(code) {
     defaultSelected: false,
     feeRatio: 1.0033613,
   });
-  st.selectedMap[prod.code] = false;
   st.bpData[prod.code] = 0;
-  st.feeRatioData[prod.code] = 1.0033613;
-  st.spvHoldingAdj[prod.code] = 0;
 
   // 关闭下拉
   document.getElementById('productSearchDropdown').style.display = 'none';
