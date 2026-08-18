@@ -1834,6 +1834,14 @@
   }
   .spvq-summary-bar .ss-item { display: flex; align-items: center; gap: 4px; }
   .spvq-summary-bar .ss-value { font-weight: 600; color: var(--text); }
+  /* Toast 提示（3 秒自动消失） */
+  .toast {
+    position: fixed; top: 84px; left: 50%; transform: translateX(-50%);
+    background: rgba(31, 41, 55, 0.92); color: #fff; padding: 10px 20px;
+    border-radius: 8px; font-size: 13px; z-index: 9999;
+    opacity: 0; transition: opacity 0.3s ease; pointer-events: none; max-width: 80vw;
+  }
+  .toast.show { opacity: 1; }
 </style>
 </head>
 <body>
@@ -2633,6 +2641,21 @@ function fmtNum(v) {
   return v.toLocaleString('zh-CN', {minimumFractionDigits: 2, maximumFractionDigits: 2});
 }
 
+// Toast 提示（默认 3 秒自动消失）
+function showToast(message) {
+  let toast = document.getElementById('appToast');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = 'appToast';
+    toast.className = 'toast';
+    document.body.appendChild(toast);
+  }
+  toast.textContent = message;
+  toast.classList.add('show');
+  clearTimeout(toast._timer);
+  toast._timer = setTimeout(() => toast.classList.remove('show'), 3000);
+}
+
 // ==================== ACTIONS ====================
 
 function onBPChange(code, value) {
@@ -2673,7 +2696,7 @@ function onAllRedeemOne(code) {
 
   // 校验：未选赎回来源专户时提示
   if (!st.lossRedSourceMap[code]) {
-    alert('请先选择该产品的「赎回来源专户」，再点「全赎」。');
+    showToast('请先选择该产品的「赎回来源专户」，再点「全赎」。');
     return;
   }
 
