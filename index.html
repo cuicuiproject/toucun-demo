@@ -2687,6 +2687,42 @@ function showToast(message) {
   toast._timer = setTimeout(() => toast.classList.remove('show'), 3000);
 }
 
+// ==================== 系统确认弹窗（替代浏览器原生 confirm） ====================
+function showConfirmDialog(opts) {
+  const { title, bodyHTML, confirmText = '确认', danger = false, onConfirm } = opts;
+  const old = document.getElementById('appConfirmModal');
+  if (old) old.remove();
+  const html = `
+    <div class="modal-overlay show" id="appConfirmModal" onclick="closeConfirmDialog(event)">
+      <div class="modal" style="width:440px;max-width:90vw;" onclick="event.stopPropagation()">
+        <div class="modal-header">
+          <h3>${title}</h3>
+          <span class="modal-close" onclick="closeConfirmDialog()" style="display:flex;cursor:pointer;font-size:20px;color:var(--text-muted);padding:4px;line-height:1;">×</span>
+        </div>
+        <div class="modal-body">${bodyHTML}</div>
+        <div class="modal-footer">
+          <button class="btn btn-outline" onclick="closeConfirmDialog()">取消</button>
+          <button class="btn" style="${danger ? 'background:var(--danger);color:#fff;' : ''}" onclick="confirmDialogOK()">${confirmText}</button>
+        </div>
+      </div>
+    </div>`;
+  document.body.insertAdjacentHTML('beforeend', html);
+  window.__confirmDialogCb = onConfirm;
+}
+
+function closeConfirmDialog(e) {
+  if (e && e.target && e.target.id !== 'appConfirmModal') return;
+  const modal = document.getElementById('appConfirmModal');
+  if (modal) modal.remove();
+  window.__confirmDialogCb = null;
+}
+
+function confirmDialogOK() {
+  const cb = window.__confirmDialogCb;
+  closeConfirmDialog();
+  if (cb) cb();
+}
+
 // ==================== ACTIONS ====================
 
 function onBPChange(code, value) {
@@ -4927,10 +4963,26 @@ function toggleSpvOnline(idx) {
   const item = spvMaintList[idx];
   if (item.terminated) return; // 已清仓为终态，禁止任何状态切换
   const accName = (allAccounts.find(a => a.id === item.id) || {}).name || '该专户';
+
+  const finishToggle = () => {
+    // 重新排列在线产品的序号
+    const onlineList = spvMaintList.filter(p => p.online && !p.terminated);
+    onlineList.forEach((p, i) => { p.sortOrder = i + 1; });
+    saveSpvMaintList();
+    renderSpvMaintPage();
+  };
+
   if (item.online) {
     // 上线 → 下线：需确认
-    if (!confirm('确认将「' + accName + '」下线？下线后该专户在头寸管理页面不再展示。')) return;
-    item.online = false;
+    showConfirmDialog({
+      title: '下线专户',
+      bodyHTML: `
+        <p style="font-size:14px;color:var(--text);margin-bottom:12px;">确认将「<strong>${escHtml(accName)}</strong>」下线？</p>
+        <div style="background:#FEF2F2;border:1px solid #FECACA;border-radius:6px;padding:10px 12px;font-size:13px;color:#991B1B;">⚠️ 下线后该专户在头寸管理页面不再展示。</div>`,
+      confirmText: '确认下线',
+      danger: true,
+      onConfirm: () => { item.online = false; finishToggle(); }
+    });
   } else {
     // 下线 → 上线：恢复展示，移动到上线列表末尾
     item.online = true;
@@ -4938,26 +4990,37 @@ function toggleSpvOnline(idx) {
     let lastOnline = -1;
     spvMaintList.forEach((p, i) => { if (p.online && !p.terminated) lastOnline = i; });
     spvMaintList.splice(lastOnline + 1, 0, item);
+    finishToggle();
   }
-  // 重新排列在线产品的序号
-  const onlineList = spvMaintList.filter(p => p.online && !p.terminated);
-  onlineList.forEach((p, i) => { p.sortOrder = i + 1; });
-  saveSpvMaintList();
-  renderSpvMaintPage();
 }
 
 function terminateSpv(idx) {
   const item = spvMaintList[idx];
   if (item.terminated) return; // 已清仓不可重复操作
   const accName = (allAccounts.find(a => a.id === item.id) || {}).name || '该专户';
-  if (!confirm('确认将「' + accName + '」清仓？\n\n清仓适用于专户永久终止运作的场景，为终态操作：\n· 清仓后专户从头寸管理页面永久移除\n· 不可再恢复上线\n· 仅保留在「已清仓」Tab 中作为历史记录\n\n如仅为临时下线，请改用「下线」按钮。')) return;
-  item.online = false;
-  item.terminated = true;
-  // 重新排列在线产品的序号
-  const onlineList = spvMaintList.filter(p => p.online && !p.terminated);
-  onlineList.forEach((p, i) => { p.sortOrder = i + 1; });
-  saveSpvMaintList();
-  renderSpvMaintPage();
+  showConfirmDialog({
+    title: '清仓专户',
+    bodyHTML: `
+      <p style="font-size:14px;color:var(--text);margin-bottom:12px;">确认将「<strong>${escHtml(accName)}</strong>」清仓？</p>
+      <div style="background:#FEF2F2;border:1px solid #FECACA;border-radius:6px;padding:10px 12px;font-size:13px;color:#991B1B;line-height:1.9;">
+        ⚠️ 清仓适用于专户永久终止运作的场景，为终态操作：<br>
+        · 清仓后专户从头寸管理页面永久移除<br>
+        · 不可再恢复上线<br>
+        · 仅保留在「已清仓」Tab 中作为历史记录
+      </div>
+      <p style="font-size:13px;color:var(--text-muted);margin-top:10px;">如仅为临时下线，请改用「下线」按钮。</p>`,
+    confirmText: '确认清仓',
+    danger: true,
+    onConfirm: () => {
+      item.online = false;
+      item.terminated = true;
+      // 重新排列在线产品的序号
+      const onlineList = spvMaintList.filter(p => p.online && !p.terminated);
+      onlineList.forEach((p, i) => { p.sortOrder = i + 1; });
+      saveSpvMaintList();
+      renderSpvMaintPage();
+    }
+  });
 }
 
 function onSpvSortOrderChange(idx, val) {
