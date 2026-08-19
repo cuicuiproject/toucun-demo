@@ -4453,25 +4453,27 @@ function renderSpvMaintPage() {
   const offlineCount = spvMaintList.filter(p => !p.online && !p.terminated).length;
   const terminatedCount = spvMaintList.filter(p => p.terminated).length;
   const tabLabelMap = { online: '上线中', offline: '已下线', terminated: '已清仓' };
+  const isTerminatedTab = spvMaintOnlineTab === 'terminated';
 
   let rowsHTML = pageItems.map((p, idx) => {
     const acc = allAccounts.find(a => a.id === p.id);
     if (!acc) return '';
     const realIdx = spvMaintList.findIndex(pm => pm.id === p.id);
     return `
-      <tr draggable="true" data-idx="${idx}"
+      <tr draggable="${isTerminatedTab ? 'false' : 'true'}" data-idx="${idx}" ${isTerminatedTab ? '' : `
           ondragstart="onSpvMaintDragStart(event, ${idx})"
           ondragover="onSpvMaintDragOver(event)"
           ondragleave="onSpvMaintDragLeave(event)"
           ondrop="onSpvMaintDrop(event, ${idx})"
-          ondragend="onSpvMaintDragEnd(event)">
+          ondragend="onSpvMaintDragEnd(event)"`}>
+        ${isTerminatedTab ? '' : `
         <td style="width:36px;text-align:center;">
           <span class="drag-handle" title="拖拽排序">⋮⋮</span>
         </td>
         <td style="width:60px;text-align:center;">
           <input type="number" class="sort-input" value="${p.sortOrder}" min="1"
             onchange="onSpvSortOrderChange(${realIdx}, this.value)" onfocus="this.select()">
-        </td>
+        </td>`}
         <td style="font-weight:500;">${acc.code}</td>
         <td style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${acc.name}">${acc.name}</td>
         <td style="width:130px;">
@@ -4538,8 +4540,9 @@ function renderSpvMaintPage() {
     <table class="product-maint-table">
       <thead>
         <tr>
+          ${isTerminatedTab ? '' : `
           <th style="width:36px;text-align:center;">⋮⋮</th>
-          <th style="width:60px;text-align:center;">序号</th>
+          <th style="width:60px;text-align:center;">序号</th>`}
           <th style="width:130px;">专户代码</th>
           <th>专户名称</th>
           <th style="width:130px;">专户简称</th>
@@ -4548,7 +4551,7 @@ function renderSpvMaintPage() {
           <th style="width:130px;text-align:center;">操作</th>
         </tr>
       </thead>
-      <tbody>${rowsHTML || `<tr><td colspan="8" style="padding:24px;text-align:center;color:var(--text-muted);">暂无${tabLabelMap[spvMaintOnlineTab] || '该状态'}专户</td></tr>`}</tbody>
+      <tbody>${rowsHTML || `<tr><td colspan="${isTerminatedTab ? 6 : 8}" style="padding:24px;text-align:center;color:var(--text-muted);">暂无${tabLabelMap[spvMaintOnlineTab] || '该状态'}专户</td></tr>`}</tbody>
     </table>
     <div class="pagination-bar">
       <span class="page-info">共 ${filtered.length} 条</span>
