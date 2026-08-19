@@ -4985,12 +4985,21 @@ function toggleSpvOnline(idx) {
     });
   } else {
     // 下线 → 上线：恢复展示，移动到上线列表末尾
-    item.online = true;
-    spvMaintList.splice(idx, 1);
-    let lastOnline = -1;
-    spvMaintList.forEach((p, i) => { if (p.online && !p.terminated) lastOnline = i; });
-    spvMaintList.splice(lastOnline + 1, 0, item);
-    finishToggle();
+    showConfirmDialog({
+      title: '上线专户',
+      bodyHTML: `
+        <p style="font-size:14px;color:var(--text);margin-bottom:4px;">确认将「<strong>${escHtml(accName)}</strong>」上线？</p>
+        <p style="font-size:13px;color:var(--text-muted);">上线后该专户将在头寸管理页面展示。</p>`,
+      confirmText: '确认上线',
+      onConfirm: () => {
+        item.online = true;
+        spvMaintList.splice(idx, 1);
+        let lastOnline = -1;
+        spvMaintList.forEach((p, i) => { if (p.online && !p.terminated) lastOnline = i; });
+        spvMaintList.splice(lastOnline + 1, 0, item);
+        finishToggle();
+      }
+    });
   }
 }
 
@@ -5002,13 +5011,7 @@ function terminateSpv(idx) {
     title: '清仓专户',
     bodyHTML: `
       <p style="font-size:14px;color:var(--text);margin-bottom:12px;">确认将「<strong>${escHtml(accName)}</strong>」清仓？</p>
-      <div style="background:#FEF2F2;border:1px solid #FECACA;border-radius:6px;padding:10px 12px;font-size:13px;color:#991B1B;line-height:1.9;">
-        ⚠️ 清仓适用于专户永久终止运作的场景，为终态操作：<br>
-        · 清仓后专户从头寸管理页面永久移除<br>
-        · 不可再恢复上线<br>
-        · 仅保留在「已清仓」Tab 中作为历史记录
-      </div>
-      <p style="font-size:13px;color:var(--text-muted);margin-top:10px;">如仅为临时下线，请改用「下线」按钮。</p>`,
+      <div style="background:#FEF2F2;border:1px solid #FECACA;border-radius:6px;padding:10px 12px;font-size:13px;color:#991B1B;">⚠️ 清仓为终态操作，清仓后不可恢复上线，仅保留在「已清仓」Tab 中。</div>`,
     confirmText: '确认清仓',
     danger: true,
     onConfirm: () => {
