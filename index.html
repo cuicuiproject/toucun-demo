@@ -2044,7 +2044,7 @@ const allAccounts = [
 // ==================== 理财产品候选来源 ====================
 // 2026-08-17 起不再维护独立产品库：拉壳/调仓「添加理财产品」候选
 // 统一取自「SPV持仓查询」页数据（positionData），见 getAddableProducts()
-// 已下线产品排除、未维护产品可添加（标注"未上线"）、规模带出持仓总规模
+// 已下线产品排除、未维护产品可添加（标注"未上线"）、规模带出持有专户总规模
 
 // ==================== GLOBAL STATE ====================
 // accountState: { accountId: { mode, subMode, bpData, status, feeRateN, bpLoss, totalLoss, lossAdjData, lossSelectedMap, subSelectedMap, lossRedeemAmt, subAmountMap, bpGrowth, accountSize } }
@@ -2166,7 +2166,14 @@ function renderSidebar() {
       return `
         <div class="sidebar-item${active}" data-account="${acc.id}" onclick="switchAccount('${acc.id}')">
           <span class="item-name" title="${acc.name}（${acc.code}）">${acc.name}<span style="color:var(--text-muted);font-size:11px;margin-left:6px;">${acc.code}</span></span>
-          ${status === 'done' ? '<span style="font-size:10px;color:#1A8353;background:#DCFCE7;border-radius:3px;padding:1px 6px;flex-shrink:0;margin-left:4px;">' + (st.subMode === 'bp' ? 'BP分摊' : '金额分摊') + '</span>' : ''}
+          ${(() => {
+            // 演示专户：鑫和14号=BP模式示例，宁聚5号=金额直填示例，始终显示模式标签
+            if (acc.id === 'xinhe14') return '<span style="font-size:10px;color:#1D4ED8;background:#DBEAFE;border-radius:3px;padding:1px 6px;flex-shrink:0;margin-left:4px;">BP模式示例</span>';
+            if (acc.id === 'ningju5') return '<span style="font-size:10px;color:#6D1786;background:#F3E8FF;border-radius:3px;padding:1px 6px;flex-shrink:0;margin-left:4px;">金额直填示例</span>';
+            // 其余专户：已同步时显示分摊模式
+            if (status === 'done') return '<span style="font-size:10px;color:#1A8353;background:#DCFCE7;border-radius:3px;padding:1px 6px;flex-shrink:0;margin-left:4px;">' + (st.subMode === 'bp' ? 'BP分摊' : '金额分摊') + '</span>';
+            return '';
+          })()}
           <span class="item-remove" title="${canRemove ? '移除该专户' : '已同步，需先撤销同步才能移除'}" onclick="event.stopPropagation();removeAccount('${acc.id}')">×</span>
         </div>
       `;
@@ -4029,15 +4036,17 @@ function init() {
         });
       }
     })();
-    // 演示：预填鑫和14号（调仓）的示例数据
+    // 演示：预填鑫和14号（BP模式）的BP分配数据（各产品BP = defaultBP，总BP = 各产品BP之和）
     (() => {
       const stXinhe = getState('xinhe14');
       if (stXinhe && stXinhe.status === 'pending') {
-        stXinhe.status = 'done';
+        let bpSum = 0;
         const acc = getAccount('xinhe14');
-        acc.holdings.forEach((p, i) => {
+        acc.holdings.forEach((p) => {
           stXinhe.bpData[p.code] = p.defaultBP;
+          bpSum += p.defaultBP;
         });
+        stXinhe.totalLoss = bpSum;  // 总BP = 各产品BP之和
       }
     })();
     // 演示：将未上线示例产品（EW9101~EW9105）从产品维护列表移除，标记为"未上线"
@@ -4649,7 +4658,7 @@ function renderSpvQueryByProduct() {
       else if (maintItem && !maintItem.online) { statusLabel = '已下线'; statusClass = 'offline'; }
       else { statusLabel = '未上线'; statusClass = 'unmaint'; }
 
-      // 持仓总规模
+      // 持有专户总规模
       const totalScale = holdings.reduce((sum, h) => sum + (h.scale || (h.qty * h.nav) || 0), 0);
 
       // 一级行
@@ -4731,7 +4740,7 @@ function renderSpvQueryByProduct() {
               <th class="center" style="width:90px;">维护状态</th>
               <th class="center" style="width:110px;">导入日期</th>
               <th class="num" style="width:80px;">专户数</th>
-              <th class="num" style="width:140px;">持仓总规模（元）</th>
+              <th class="num" style="width:140px;">持有专户总规模（元）</th>
               <th class="num" style="width:100px;">单位净值</th>
               <th class="num" style="width:140px;">持有规模（元）</th>
               <th class="num" style="width:100px;">持有份额</th>
@@ -6017,7 +6026,7 @@ function exportPositionData() {
 
 // ==================== 产品搜索添加 ====================
 // 候选来源：「SPV持仓查询」页数据（positionData），不再使用独立产品库
-// 已下线产品排除；未维护产品可添加（标注"未上线"）；规模带出持仓总规模（元）
+// 已下线产品排除；未维护产品可添加（标注"未上线"）；规模带出持有专户总规模（元）
 
 function getAddableProducts() {
   return positionData
@@ -6076,7 +6085,7 @@ function addProductFromSearch(code) {
     return;
   }
 
-  // 规模带出口径：SPV持仓查询页该产品持仓总规模（Σ 各专户持仓市值，元）
+  // 规模带出口径：SPV持仓查询页该产品持有专户总规模（Σ 各专户持仓市值，元）
   const holdings = getSPVData(code);
   const totalScale = holdings.reduce((sum, h) => sum + (h.scale || (h.qty * h.nav) || 0), 0);
 
@@ -6255,7 +6264,7 @@ document.addEventListener('click', function(e) {
     </div>
     <div class="modal-body" style="padding:0;">
       <div style="padding:10px 16px 8px;border-bottom:1px solid var(--border);">
-        <div style="font-size:11px;color:var(--text-muted);margin-bottom:8px;">候选来源：<strong>SPV持仓查询</strong>页面理财产品（已下线产品不可添加，规模自动带出持仓总规模）</div>
+        <div style="font-size:11px;color:var(--text-muted);margin-bottom:8px;">候选来源：<strong>SPV持仓查询</strong>页面理财产品（已下线产品不可添加，规模自动带出持有专户总规模）</div>
         <input type="text" id="chProdSearch" class="form-input" placeholder="搜索产品代码 / 名称..."
           oninput="renderChannelProductPicker(this.value)" style="width:100%;box-sizing:border-box;">
       </div>
