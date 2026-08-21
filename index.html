@@ -600,6 +600,11 @@
     background: #F5F5F5;
     color: #999;
   }
+  .loss-red-input.unclicked-hint {
+    background: #F5F5F5;
+    color: #B0B0B0;
+    cursor: pointer;
+  }
 
   .config-card {
     border-left: 4px solid var(--primary);
@@ -1780,6 +1785,7 @@
   .spvq-status-tag.online { background: #EDE9FE; color: #6D28D9; }
   .spvq-status-tag.offline { background: #F3F4F6; color: #6B7280; }
   .spvq-status-tag.unmaint { background: #FFF7ED; color: #C2410C; }
+  .spvq-status-tag.terminated { background: #F3F4F6; color: #9CA3AF; border: 1px solid #E5E7EB; }
   /* 展开行动画 */
   .spvq-lv2-row { animation: spvqSlideDown 0.2s ease; }
   @keyframes spvqSlideDown { from { opacity: 0; } to { opacity: 1; } }
@@ -2066,8 +2072,8 @@ function getState(accountId) {
       bpData: {},
       status: 'pending',  // pending | progress | done
       feeRateN: 0.0066,
-      bpLoss: 149,
-      totalLoss: 149,
+      bpLoss: 0,
+      totalLoss: 0,
       lossAdjData: {},
       lossSelectedMap: {},         // 调仓左栏（赎回端）勾选状态 { productCode: boolean }
       subSelectedMap: {},          // 调仓右栏（申购端）勾选状态 { productCode: boolean }
@@ -2079,16 +2085,24 @@ function getState(accountId) {
     acc.holdings.forEach(p => {
       state.lossSelectedMap[p.code] = false;  // 赎回端默认不选（进入时不默认全选）
       state.subSelectedMap[p.code] = isDemo ? p.defaultSelected : false;  // 演示账户预勾选默认产品
-      state.bpData[p.code] = p.defaultBP;
+      // BP明细不预填默认值，由客户逐行输入（bpData 输入后写入）
     });
     // 鑫和14号演示「BP模式」：左栏勾选3只产品并预填赎回金额（展示调仓赎回来源）
     if (accountId === 'xinhe14') {
+      // 监管互斥：左栏勾选的产品同步清除右栏勾选+清零申购金额（与 onLossToggleSelect 运行时行为一致），
+      // 否则右栏 subSelectedMap 残留 true 会导致左栏赎回金额输入框被禁用
       state.lossSelectedMap['EW3517'] = true;   // 阳光金增利稳健天天购13号
       state.lossRedeemAmt['EW3517'] = 5000000;
+      state.subSelectedMap['EW3517'] = false;
+      state.subAmountMap['EW3517'] = 0;
       state.lossSelectedMap['EW0599'] = true;   // 阳光金私享增利稳健天天购
       state.lossRedeemAmt['EW0599'] = 8000000;
+      state.subSelectedMap['EW0599'] = false;
+      state.subAmountMap['EW0599'] = 0;
       state.lossSelectedMap['EW4217'] = true;   // 阳光金丰利617期
       state.lossRedeemAmt['EW4217'] = 3000000;
+      state.subSelectedMap['EW4217'] = false;
+      state.subAmountMap['EW4217'] = 0;
     }
     // 宁聚5号演示「金额直填」：预填申购金额示例 + 左栏勾选3只产品并预填赎回金额
     if (accountId === 'ningju5') {
@@ -2097,13 +2111,13 @@ function getState(accountId) {
       state.subAmountMap['EW4659'] = 1000000;
       state.subAmountMap['EW6287'] = 3000000;
       state.subAmountMap['EW5208'] = 500000;
-      // 左栏赎回示例
-      state.lossSelectedMap['EW6287'] = true;   // 阳光金增利稳健乐享天天购49号
-      state.lossRedeemAmt['EW6287'] = 5000000;
-      state.lossSelectedMap['EW4659'] = true;   // 阳光金增利稳健天天购16号
-      state.lossRedeemAmt['EW4659'] = 2000000;
-      state.lossSelectedMap['EW5208'] = true;   // 阳光金增利稳健天天购27号
-      state.lossRedeemAmt['EW5208'] = 1000000;
+      // 左栏赎回示例：换用未在右栏勾选的产品（EW0599/EW3517/EW4217），避免同一产品两端同时选中触发监管互斥禁用
+      state.lossSelectedMap['EW0599'] = true;   // 阳光金私享增利稳健天天购（300天最低持有）
+      state.lossRedeemAmt['EW0599'] = 2000000;
+      state.lossSelectedMap['EW3517'] = true;   // 阳光金增利稳健天天购13号（7天最低持有）
+      state.lossRedeemAmt['EW3517'] = 1500000;
+      state.lossSelectedMap['EW4217'] = true;   // 阳光金丰利617期
+      state.lossRedeemAmt['EW4217'] = 1200000;
     }
     accountState[accountId] = state;
   }
@@ -2247,11 +2261,12 @@ function renderContent(acc, st) {
       ${st.subMode === 'bp' ? `
       <span style="color:var(--border);margin:0 4px;">|</span>
       <span style="font-size:12px;color:var(--text-muted);">总BP</span>
-      <input type="number" id="totalBPInput" value="${st.totalLoss || 0}" step="1" min="0"
+      <input type="number" id="totalBPInput" value="${st.totalLoss || ''}" step="1" min="0" placeholder="输入总BP"
         style="font-weight:800;font-size:18px;color:#1A3C6D;background:linear-gradient(135deg,#F0F9FF,#E0F2FE);border:2px solid #93C5FD;border-radius:8px;padding:6px 16px;width:140px;text-align:center;"
         oninput="onTotalBPChange(this.value)"
         title="投资经理输入总BP，各产品BP为明细分配，占比 = 产品BP ÷ 总BP">
       <span style="font-size:12px;font-weight:600;color:#1D4ED8;">BP</span>
+      <span class="total-bp-hint" style="display:${st.totalLoss ? 'none' : 'inline-flex'};align-items:center;font-size:11px;font-weight:600;color:#C2410C;background:#FFF7ED;border:1px solid #FDBA74;border-radius:4px;padding:2px 8px;margin-left:6px;white-space:nowrap;" title="占比 = 该产品BP ÷ 总BP，总BP未输入时占比与申购金额均为0">⚠ 总BP未输入，申购金额暂无法计算</span>
       ` : ''}
       <div style="flex:1;"></div>
       <div class="mode-selector" id="modeSelector">
@@ -2270,7 +2285,7 @@ function renderContent(acc, st) {
         </div>
         <div class="section-actions">
           <span style="font-size:12px;color:var(--text-muted);">已选 <strong id="selectedCount">${selCount}</strong> / <strong id="totalProductCount">${totalCount}</strong> 只</span>
-          <span style="font-size:12px;color:var(--text-muted);margin-left:8px;">总BP <input type="number" id="totalBPInput" value="${st.totalLoss || acc.totalBP || 0}" step="1" min="0" style="font-weight:700;font-size:14px;width:60px;text-align:center;border:1px solid #93C5FD;border-radius:4px;padding:2px 6px;" oninput="onTotalBPChange(this.value)" title="投资经理输入总BP"></span>
+          <span style="font-size:12px;color:var(--text-muted);margin-left:8px;">总BP <input type="number" id="totalBPInput" value="${st.totalLoss || ''}" step="1" min="0" placeholder="输入" style="font-weight:700;font-size:14px;width:60px;text-align:center;border:1px solid #93C5FD;border-radius:4px;padding:2px 6px;" oninput="onTotalBPChange(this.value)" title="投资经理输入总BP"></span><span class="total-bp-hint" style="display:${st.totalLoss ? 'none' : 'inline-flex'};align-items:center;font-size:10px;font-weight:600;color:#C2410C;margin-left:4px;white-space:nowrap;">⚠ 请先输入总BP</span>
           <button class="btn" onclick="exportData()" style="background:#E6A23C;color:#fff;border:none;font-size:12px;padding:5px 14px;border-radius:4px;cursor:pointer;margin-left:12px;">导出 Excel</button>
         </div>
       </div>
@@ -2339,7 +2354,6 @@ function renderContent(acc, st) {
       }
 
       const leftRows = acc.holdings.map(p => {
-        const bp = st.bpData[p.code] ?? p.defaultBP;
         const redAmt = st.lossRedeemAmt?.[p.code] ?? 0;
         const sel = (st.lossSelectedMap && st.lossSelectedMap[p.code] !== false);
         const sizeYuan = fmtNum(p.size);
@@ -2358,11 +2372,12 @@ function renderContent(acc, st) {
             <td class="num" style="width:90px;">${sizeYuan}</td>
             <td style="white-space:nowrap;width:150px;padding-right:0;">
               <div style="display:flex;align-items:center;justify-content:flex-end;gap:2px;">
-                <input type="text" inputmode="numeric" class="loss-red-input" id="lossRedeemInput_${p.code}" value="${redAmt ? redAmt.toLocaleString('zh-CN') : ''}"
-                  placeholder="输入赎回金额"
-                  ${disabled || !sel || subOccupied ? 'disabled' : ''}
+                <input type="text" inputmode="numeric" class="loss-red-input${!sel && !subOccupied ? ' unclicked-hint' : ''}" id="lossRedeemInput_${p.code}" value="${redAmt ? redAmt.toLocaleString('zh-CN') : ''}"
+                  placeholder="${!sel && !subOccupied ? '需先勾选' : '输入赎回金额'}"
+                  ${disabled || subOccupied ? 'disabled' : ''}
+                  ${!sel && !subOccupied ? 'readonly onclick="onUnselectedInputClick()"' : ''}
                   oninput="onLossRedeemAmtChange('${p.code}', this.value)" onfocus="this.select()"
-                  style="width:80px;padding:4px 6px;">
+                  style="width:95px;padding:4px 6px;">
                 <button class="btn" id="allRedeemBtn_${p.code}" onclick="onAllRedeemOne('${p.code}')" ${disabled || !sel || subOccupied ? 'disabled' : ''} style="font-size:11px;padding:4px 6px;background:#DC2626;color:#fff;border:none;border-radius:4px;cursor:pointer;white-space:nowrap;">全赎</button>
               </div>
             </td>
@@ -2370,7 +2385,7 @@ function renderContent(acc, st) {
       }).join('');
 
       const rightRows = acc.holdings.map(p => {
-        const bp = st.bpData[p.code] ?? p.defaultBP;
+        const bp = st.bpData[p.code] || '';  // 未输入时显示空，由客户输入
         const adj = st.lossAdjData[p.code] ?? 0;
         const subSel = (st.subSelectedMap && st.subSelectedMap[p.code] !== false);
         const subAmt = st.subAmountMap?.[p.code] ?? 0;
@@ -2395,18 +2410,20 @@ function renderContent(acc, st) {
             <td class="num" id="ratio_${p.code}">--</td>
             <td>
               <input type="text" inputmode="numeric" class="table-input" id="subAmtInput_${p.code}" value="${subAmt ? subAmt.toLocaleString('zh-CN') : ''}"
-                placeholder="${st.subMode === 'bp' ? '自动分摊' : '输入金额'}"
+                placeholder="${st.subMode === 'bp' ? '自动分摊' : (!subSel && !lossOccupied ? '需先勾选' : '输入金额')}"
                 ${st.subMode === 'bp' ? 'readonly' : ''}
-                ${disabled || !subSel || subChkDisabled ? 'disabled' : ''}
+                ${disabled || lossOccupied ? 'disabled' : ''}
+                ${!subSel && !lossOccupied && st.subMode !== 'bp' ? 'readonly onclick="onUnselectedInputClick()"' : ''}
                 oninput="${st.subMode === 'bp' ? '' : 'onSubAmountChange(\'' + p.code + '\', this.value)'}"
                 title="${st.subMode === 'bp' ? '申购金额 = 占比 × 产品规模（取整到万），如需调整请修改BP或调减金额' : '投资经理直接输入申购金额，占比自动反算'}"
-                style="width:100px;${st.subMode === 'bp' ? 'background:#F8FAFC;color:#1E3A5F;font-weight:600;' : 'background:#fff;color:#1E3A5F;font-weight:600;'}">
+                style="width:100px;${st.subMode === 'bp' ? 'background:#F8FAFC;color:#1E3A5F;font-weight:600;' : (!subSel && !lossOccupied ? 'background:#F5F5F5;color:#B0B0B0;cursor:pointer;' : 'background:#fff;color:#1E3A5F;font-weight:600;')}">
             </td>
+            ${st.subMode === 'bp' ? `
             <td>
               <input type="text" inputmode="numeric" class="table-input" value="${adj ? adj.toLocaleString('zh-CN') : ''}"
                 ${disabled ? 'disabled' : ''}
                 oninput="onLossAdjChange('${p.code}', this.value)" onfocus="onLossAdjFocus(this)" onblur="onLossAdjBlur(this)" style="width:85px;">
-            </td>
+            </td>` : ''}
             <td class="num" style="font-weight:600;" id="I_${p.code}">--</td>
           </tr>`;
       }).join('');
@@ -2470,10 +2487,10 @@ function renderContent(acc, st) {
                   <th style="width:70px;">产品代码</th>
                   <th style="width:90px;">产品名称</th>
                   ${st.subMode === 'bp' ? '<th style="text-align:center;width:50px;">BP</th>' : ''}
-                  <th style="text-align:right;width:60px;">${st.subMode === 'bp' ? '占比' : '占比'}<i class="th-help" data-tip="${st.subMode === 'bp' ? '占比 = 该产品BP ÷ 总BP × 100%，申购金额 = 占比 × 产品规模（取整到万）' : '占比 = 该产品申购金额 ÷ 勾选产品申购金额合计 × 100%（自动反算）'}">i</i></th>
-                  <th style="text-align:right;width:100px;">申购金额（元）</th>
-                  <th style="text-align:right;width:80px;">调减金额（元）</th>
-                  <th style="text-align:right;width:85px;">实际金额（元）<i class="th-help" data-tip="实际金额 = 申购金额 − 调减金额。实际金额为最终同步至头寸管理的执行金额。">i</i></th>
+                  <th style="text-align:right;width:60px;">${st.subMode === 'bp' ? '占比' : '占比'}<i class="th-help" data-tip="${st.subMode === 'bp' ? '占比 = 该产品BP ÷ 总BP × 100%。总BP为顶部输入值。' : '占比 = 该产品申购金额 ÷ 勾选产品申购金额合计 × 100%（自动反算）'}">i</i></th>
+                  <th style="text-align:right;width:100px;">申购金额（元）${st.subMode === 'bp' ? '<i class="th-help" data-tip="申购金额 = 占比 × 该产品持有专户规模。">i</i>' : ''}</th>
+                  ${st.subMode === 'bp' ? '<th style="text-align:right;width:80px;">调减金额（元）</th>' : ''}
+                  <th style="text-align:right;width:85px;">实际金额（元）<i class="th-help" data-tip="${st.subMode === 'bp' ? '实际金额 = 申购金额 − 调减金额。实际金额为最终同步至头寸管理的执行金额。' : '实际金额 = 申购金额（金额直填模式无调减）。实际金额为最终同步至头寸管理的执行金额。'}">i</i></th>
                 </tr>
               </thead>
               <tbody>${rightRows}</tbody>
@@ -2510,6 +2527,10 @@ function renderContent(acc, st) {
     if (e.target.disabled) return;
     saveCurrentState();
     st.subMode = e.target.dataset.submode;
+    // 切换到金额直填模式时清空调减金额（该模式下调减无意义，避免残留脏数据）
+    if (st.subMode === 'wan' && st.lossAdjData) {
+      Object.keys(st.lossAdjData).forEach(k => { st.lossAdjData[k] = 0; });
+    }
     renderContent(acc, st);
     recalcCurrent();
   });
@@ -2571,6 +2592,10 @@ function recalcLossMode(acc, st) {
   // 总BP = 投资经理在顶部输入的值（st.totalLoss），各产品BP为明细分配
   const inputTotalBP = st.totalLoss || 0;
 
+  // 总BP未输入提示：BP模式下总BP为空时显示（占比依赖总BP，为空时申购金额无法计算）
+  const bpHintEls = document.querySelectorAll('.total-bp-hint');
+  bpHintEls.forEach(el => { el.style.display = (st.subMode === 'bp' && inputTotalBP <= 0) ? 'inline-flex' : 'none'; });
+
   // 更新各产品BP之和的展示（可选：对比输入总BP）
 
   // 第二步：按占比计算各产品申购金额（占比 × 产品规模，取整到万）
@@ -2585,7 +2610,8 @@ function recalcLossMode(acc, st) {
     const p = acc.holdings.find(h => h.code === code);
     if (!p) return;
     const bp = st.bpData[code] || 0;
-    const adj = st.lossAdjData[code] || 0;
+    // 调减金额仅BP模式生效（申购金额自动分摊无法直改，需调减微调）；金额直填模式下申购金额手输，调减强制为0
+    const adj = st.subMode === 'bp' ? (st.lossAdjData[code] || 0) : 0;
     const pSize = p.size || 0;  // 产品规模（基数）
 
     let ratio = 0, ratioPct = 0;
@@ -2735,7 +2761,12 @@ function confirmDialogOK() {
 function onBPChange(code, value) {
   const st = getState(currentAccountId);
   if (!st) return;
+  const prevBP = st.bpData[code] || 0;
   st.bpData[code] = parseFloat(value) || 0;
+  // 输入明细BP但总BP为空时引导（仅从0变为非0时提示一次，避免逐字符重复弹窗）
+  if (st.subMode === 'bp' && !st.totalLoss && prevBP === 0 && st.bpData[code] > 0) {
+    showToast('请先在顶部输入总BP，输入后申购金额将自动计算');
+  }
   recalcCurrent();
 }
 
@@ -2757,13 +2788,29 @@ function onLossAdjChange(code, value) {
   recalcCurrent();
 }
 
+// 未勾选产品时点击输入框的提示
+function onUnselectedInputClick() {
+  showToast('请先勾选该产品，再输入金额');
+}
+
 // 调仓左栏：赎回金额变更
 function onLossRedeemAmtChange(code, value) {
+  const acc = getAccount(currentAccountId);
   const st = getState(currentAccountId);
-  if (!st) return;
+  if (!acc || !st) return;
   if (!st.lossRedeemAmt) st.lossRedeemAmt = {};
   const raw = String(value).replace(/,/g, '');
-  st.lossRedeemAmt[code] = parseFloat(raw) || 0;
+  let amt = parseFloat(raw) || 0;
+  // 赎回金额上限校验：不得超过该产品持有专户的规模（p.size）
+  const p = acc.holdings.find(h => h.code === code);
+  const maxSize = p ? (p.size || 0) : 0;
+  if (maxSize > 0 && amt > maxSize) {
+    amt = maxSize;
+    const inputEl = document.getElementById('lossRedeemInput_' + code);
+    if (inputEl) inputEl.value = amt.toLocaleString('zh-CN');
+    showToast('赎回金额不能超过该产品持有规模 ' + maxSize.toLocaleString('zh-CN') + ' 元，已按最大可赎回金额调整');
+  }
+  st.lossRedeemAmt[code] = amt;
   recalcCurrent();
 }
 
@@ -3134,7 +3181,7 @@ function showReverseTradeModal(checkResult) {
           </p>
           ${itemsHTML}
           <div style="margin-top:16px;font-size:12px;color:var(--text-muted);">
-            请调整以下产品的调减金额或BP配置，确保净赎回金额 ≥ 0。
+            请调整以下产品的赎回金额或申购金额，或取消其中一端的勾选，确保同一产品仅保留单边操作。
           </div>
         </div>
         <div class="modal-footer">
@@ -3195,6 +3242,15 @@ function syncToSystem() {
     errors.push('左栏无有效赎回记录，请至少输入一只产品的赎回金额。');
   }
 
+  // 赎回金额超限校验：单产品赎回金额不得超过其持有该专户的规模
+  acc.holdings.forEach(p => {
+    const sel = (st.lossSelectedMap && st.lossSelectedMap[p.code] !== undefined) ? st.lossSelectedMap[p.code] : true;
+    const redAmt = st.lossRedeemAmt?.[p.code] || 0;
+    if (sel && redAmt > (p.size || 0)) {
+      errors.push(p.name.split('（')[0] + '（' + p.code + '）赎回金额 ' + redAmt.toLocaleString('zh-CN') + ' 元超过持有规模 ' + (p.size || 0).toLocaleString('zh-CN') + ' 元，请调整后再同步。');
+    }
+  });
+
   // 申购侧：有勾选且有申购金额的产品
   const subSelected = acc.holdings.filter(p => {
     const sel = (st.subSelectedMap && st.subSelectedMap[p.code] !== undefined) ? st.subSelectedMap[p.code] : true;
@@ -3237,8 +3293,8 @@ function syncToSystem() {
     if (!sel) return;
     const subAmt = st.subAmountMap?.[p.code] || 0;
     if (subAmt <= 0) return;
-    const bp = st.bpData[p.code] ?? p.defaultBP;
-    const adj = st.lossAdjData[p.code] || 0;
+    const bp = st.bpData[p.code] || 0;
+    const adj = st.subMode === 'bp' ? (st.lossAdjData[p.code] || 0) : 0;
     const I_val = subAmt - adj;
     sumSub += subAmt; sumI += I_val;
     subscribeProducts.push({ code: p.code, name: p.name.split('（')[0], bp, subAmt, adj, I_val });
@@ -3267,15 +3323,18 @@ function showSyncModal() {
 
   let tableHTML = '';
   if (subscribeProducts.length > 0) {
+    const isBP = st.subMode === 'bp';
     tableHTML += '<div style="font-size:13px;font-weight:600;color:var(--primary);margin:12px 0 6px;">申购侧（申购进当前专户：' + acc.name + '）</div>';
     tableHTML += '<table class="spv-table"><thead><tr>';
-    tableHTML += `<th>产品代码</th><th>产品名称</th><th>BP</th><th>申购金额</th><th>调减金额</th><th>实际金额</th>`;
+    tableHTML += isBP
+      ? `<th>产品代码</th><th>产品名称</th><th>BP</th><th>申购金额</th><th>调减金额</th><th>实际金额</th>`
+      : `<th>产品代码</th><th>产品名称</th><th>申购金额</th><th>实际金额</th>`;
     tableHTML += '</tr></thead><tbody>';
     subscribeProducts.forEach(p => {
       tableHTML += '<tr>';
-      tableHTML += `<td style="font-weight:500;">${p.code}</td><td>${p.name}</td><td class="num">${p.bp}</td>`;
+      tableHTML += `<td style="font-weight:500;">${p.code}</td><td>${p.name}</td>${isBP ? `<td class="num">${p.bp}</td>` : ''}`;
       tableHTML += `<td class="num" style="font-weight:600;">${(p.subAmt/10000).toLocaleString()}万</td>`;
-      tableHTML += `<td class="num">${p.adj ? (p.adj/10000).toLocaleString()+'万' : '--'}</td>`;
+      if (isBP) tableHTML += `<td class="num">${p.adj ? (p.adj/10000).toLocaleString()+'万' : '--'}</td>`;
       tableHTML += `<td class="num" style="font-weight:600;">${(p.I_val/10000).toLocaleString()}万</td>`;
       tableHTML += '</tr>';
     });
@@ -4036,19 +4095,6 @@ function init() {
         });
       }
     })();
-    // 演示：预填鑫和14号（BP模式）的BP分配数据（各产品BP = defaultBP，总BP = 各产品BP之和）
-    (() => {
-      const stXinhe = getState('xinhe14');
-      if (stXinhe && stXinhe.status === 'pending') {
-        let bpSum = 0;
-        const acc = getAccount('xinhe14');
-        acc.holdings.forEach((p) => {
-          stXinhe.bpData[p.code] = p.defaultBP;
-          bpSum += p.defaultBP;
-        });
-        stXinhe.totalLoss = bpSum;  // 总BP = 各产品BP之和
-      }
-    })();
     // 演示：将未上线示例产品（EW9101~EW9105）从产品维护列表移除，标记为"未上线"
     const unmaintCodes = ['EW9101','EW9102','EW9103','EW9104','EW9105'];
     productMaintList = productMaintList.filter(m => !unmaintCodes.includes(m.code));
@@ -4799,15 +4845,18 @@ function getSpvMaintStatus(spvCode) {
     const a = allAccounts.find(ac => ac.id === m.id);
     return a && a.code === spvCode;
   });
-  if (spvMaint && spvMaint.online) return { label: '已上线', cls: 'online' };
+  if (spvMaint && spvMaint.terminated) return { label: '已清仓', cls: 'terminated' };
+  if (spvMaint && spvMaint.online) return { label: '上线中', cls: 'online' };
   if (spvMaint && !spvMaint.online) return { label: '已下线', cls: 'offline' };
   const demoMap = {
     'ZTQX08': 'online', 'ZTYS19': 'online',
     '2021-1147': 'offline', 'B42146': 'offline',
+    '6666666666': 'terminated',
   };
   const s = demoMap[spvCode];
-  if (s === 'online') return { label: '已上线', cls: 'online' };
+  if (s === 'online') return { label: '上线中', cls: 'online' };
   if (s === 'offline') return { label: '已下线', cls: 'offline' };
+  if (s === 'terminated') return { label: '已清仓', cls: 'terminated' };
   return { label: '未上线', cls: 'unmaint' };
 }
 
@@ -4838,13 +4887,14 @@ function renderSpvQueryBySpv() {
     );
   }
 
-  // 按维护状态排序：已上线(0) > 未上线(1) > 已下线(2)
+  // 按维护状态排序：上线中(0) > 未上线(1) > 已下线(2) > 已清仓(3)
   spvList.sort((a, b) => {
     const rank = (s) => {
       const st = getSpvMaintStatus(s.spvCode);
       if (st.cls === 'online') return 0;
+      if (st.cls === 'unmaint') return 1;
       if (st.cls === 'offline') return 2;
-      return 1;
+      return 3;
     };
     return rank(a) - rank(b);
   });
@@ -4853,6 +4903,7 @@ function renderSpvQueryBySpv() {
   const spvCount = spvList.length;
   const onlineSpvCount = spvList.filter(s => getSpvMaintStatus(s.spvCode).cls === 'online').length;
   const unmaintSpvCount = spvList.filter(s => getSpvMaintStatus(s.spvCode).cls === 'unmaint').length;
+  const terminatedSpvCount = spvList.filter(s => getSpvMaintStatus(s.spvCode).cls === 'terminated').length;
   const totalProductRows = spvList.reduce((sum, s) => sum + s.products.length, 0);
 
   let rowsHTML = '';
@@ -4937,8 +4988,9 @@ function renderSpvQueryBySpv() {
       </div>
       <div class="spvq-summary-bar">
         <div class="ss-item">共 <span class="ss-value">${spvCount}</span> 个专户</div>
-        <div class="ss-item">已上线 <span class="ss-value" style="color:#6D28D9;">${onlineSpvCount}</span></div>
+        <div class="ss-item">上线中 <span class="ss-value" style="color:#6D28D9;">${onlineSpvCount}</span></div>
         <div class="ss-item">未上线 <span class="ss-value" style="color:#C2410C;">${unmaintSpvCount}</span></div>
+        <div class="ss-item">已清仓 <span class="ss-value" style="color:#6B7280;">${terminatedSpvCount}</span></div>
         <div class="ss-item">理财产品持仓明细 <span class="ss-value">${totalProductRows}</span> 条</div>
       </div>
     </div>
