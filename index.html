@@ -2119,6 +2119,20 @@ function getState(accountId) {
       state.lossSelectedMap['EW4217'] = true;   // 阳光金丰利617期
       state.lossRedeemAmt['EW4217'] = 1200000;
     }
+    // 鑫和14号（BP模式）已同步示例：预填BP分配，总BP = 右栏已勾选产品BP之和（与占比分摊口径一致），
+    // 只读页面据此展示完整的占比/申购金额计算结果
+    if (accountId === 'xinhe14') {
+      acc.holdings.forEach(p => { state.bpData[p.code] = p.defaultBP; });
+      let bpSum = 0;
+      acc.holdings.forEach(p => { if (state.subSelectedMap[p.code]) bpSum += p.defaultBP; });
+      state.totalLoss = bpSum;
+      state.bpLoss = bpSum;
+    }
+    // 演示账户（鑫和14号、宁聚5号）初始即为「已同步头寸管理」示例：数据锁定只读，
+    // 除非点击重置取消同步（confirmReset 恢复为可编辑）
+    if (isDemo) {
+      state.status = 'done';
+    }
     accountState[accountId] = state;
   }
 
@@ -2181,9 +2195,10 @@ function renderSidebar() {
         <div class="sidebar-item${active}" data-account="${acc.id}" onclick="switchAccount('${acc.id}')">
           <span class="item-name" title="${acc.name}（${acc.code}）">${acc.name}<span style="color:var(--text-muted);font-size:11px;margin-left:6px;">${acc.code}</span></span>
           ${(() => {
-            // 演示专户：鑫和14号=BP模式示例，宁聚5号=金额直填示例，始终显示模式标签
-            if (acc.id === 'xinhe14') return '<span style="font-size:10px;color:#1D4ED8;background:#DBEAFE;border-radius:3px;padding:1px 6px;flex-shrink:0;margin-left:4px;">BP模式示例</span>';
-            if (acc.id === 'ningju5') return '<span style="font-size:10px;color:#6D1786;background:#F3E8FF;border-radius:3px;padding:1px 6px;flex-shrink:0;margin-left:4px;">金额直填示例</span>';
+            // 演示专户：鑫和14号=BP模式示例，宁聚5号=金额直填示例，始终显示模式标签；已同步时再补「已同步」标签
+            const doneTag = '<span style="font-size:10px;color:#1A8353;background:#DCFCE7;border-radius:3px;padding:1px 6px;flex-shrink:0;margin-left:4px;">已同步</span>';
+            if (acc.id === 'xinhe14') return '<span style="font-size:10px;color:#1D4ED8;background:#DBEAFE;border-radius:3px;padding:1px 6px;flex-shrink:0;margin-left:4px;">BP模式示例</span>' + (status === 'done' ? doneTag : '');
+            if (acc.id === 'ningju5') return '<span style="font-size:10px;color:#6D1786;background:#F3E8FF;border-radius:3px;padding:1px 6px;flex-shrink:0;margin-left:4px;">金额直填示例</span>' + (status === 'done' ? doneTag : '');
             // 其余专户：已同步时显示分摊模式
             if (status === 'done') return '<span style="font-size:10px;color:#1A8353;background:#DCFCE7;border-radius:3px;padding:1px 6px;flex-shrink:0;margin-left:4px;">' + (st.subMode === 'bp' ? 'BP分摊' : '金额分摊') + '</span>';
             return '';
@@ -2263,6 +2278,7 @@ function renderContent(acc, st) {
       <span style="font-size:12px;color:var(--text-muted);">总BP</span>
       <input type="number" id="totalBPInput" value="${st.totalLoss || ''}" step="1" min="0" placeholder="输入总BP"
         style="font-weight:800;font-size:18px;color:#1A3C6D;background:linear-gradient(135deg,#F0F9FF,#E0F2FE);border:2px solid #93C5FD;border-radius:8px;padding:6px 16px;width:140px;text-align:center;"
+        ${disabled}
         oninput="onTotalBPChange(this.value)"
         title="投资经理输入总BP，各产品BP为明细分配，占比 = 产品BP ÷ 总BP">
       <span style="font-size:12px;font-weight:600;color:#1D4ED8;">BP</span>
@@ -2424,7 +2440,7 @@ function renderContent(acc, st) {
                 ${disabled ? 'disabled' : ''}
                 oninput="onLossAdjChange('${p.code}', this.value)" onfocus="onLossAdjFocus(this)" onblur="onLossAdjBlur(this)" style="width:85px;">
             </td>` : ''}
-            <td class="num" style="font-weight:600;" id="I_${p.code}">--</td>
+            ${st.subMode === 'bp' ? `<td class="num" style="font-weight:600;" id="I_${p.code}">--</td>` : ''}
           </tr>`;
       }).join('');
 
@@ -2490,7 +2506,7 @@ function renderContent(acc, st) {
                   <th style="text-align:right;width:60px;">${st.subMode === 'bp' ? '占比' : '占比'}<i class="th-help" data-tip="${st.subMode === 'bp' ? '占比 = 该产品BP ÷ 总BP × 100%。总BP为顶部输入值。' : '占比 = 该产品申购金额 ÷ 勾选产品申购金额合计 × 100%（自动反算）'}">i</i></th>
                   <th style="text-align:right;width:100px;">申购金额（元）${st.subMode === 'bp' ? '<i class="th-help" data-tip="申购金额 = 占比 × 该产品持有专户规模。">i</i>' : ''}</th>
                   ${st.subMode === 'bp' ? '<th style="text-align:right;width:80px;">调减金额（元）</th>' : ''}
-                  <th style="text-align:right;width:85px;">实际金额（元）<i class="th-help" data-tip="${st.subMode === 'bp' ? '实际金额 = 申购金额 − 调减金额。实际金额为最终同步至头寸管理的执行金额。' : '实际金额 = 申购金额（金额直填模式无调减）。实际金额为最终同步至头寸管理的执行金额。'}">i</i></th>
+                  ${st.subMode === 'bp' ? '<th style="text-align:right;width:85px;">实际金额（元）<i class="th-help" data-tip="实际金额 = 申购金额 − 调减金额。实际金额为最终同步至头寸管理的执行金额。">i</i></th>' : ''}
                 </tr>
               </thead>
               <tbody>${rightRows}</tbody>
@@ -2500,9 +2516,9 @@ function renderContent(acc, st) {
             <span style="color:#64748B;font-weight:500;">累计申购金额</span>
             <span style="font-weight:800;font-size:15px;color:#1E3A5F;" id="totalSubAmt">0</span>
             <span style="font-size:11px;color:#64748B;">元</span>
-            <span style="margin-left:auto;font-weight:500;color:#64748B;">实际合计</span>
+            ${st.subMode === 'bp' ? `<span style="margin-left:auto;font-weight:500;color:#64748B;">实际合计</span>
             <span style="font-weight:700;font-size:13px;color:#16A34A;" id="totalI_right">0</span>
-            <span style="font-size:11px;color:#64748B;">元</span>
+            <span style="font-size:11px;color:#64748B;">元</span>` : ''}
           </div>
         </div>
       </div>
@@ -3101,9 +3117,9 @@ function showResetModal(acc) {
           <span class="modal-close" onclick="closeResetModal()" style="display:flex;cursor:pointer;font-size:20px;color:var(--text-muted);padding:4px;line-height:1;">×</span>
         </div>
         <div class="modal-body">
-          <p style="font-size:14px;color:var(--text);margin-bottom:12px;">确认重置「<strong>${escHtml(acc.name)}</strong>」的调仓配置？</p>
+          <p style="font-size:14px;color:var(--text);margin-bottom:12px;">确认取消「<strong>${escHtml(acc.name)}</strong>」的同步并重置调仓配置？</p>
           <div style="background:#FEF2F2;border:1px solid #FECACA;border-radius:6px;padding:10px 12px;font-size:13px;color:#991B1B;">
-            ⚠️ 重置将恢复头寸管理中的额度，已同步的调仓指令将被撤销。
+            ⚠️ 重置将撤销已同步至头寸管理的调仓指令、恢复头寸额度；页面恢复为可编辑状态，BP与总BP将清空，需重新输入后再同步。
           </div>
         </div>
         <div class="modal-footer">
@@ -3129,6 +3145,10 @@ function confirmReset() {
   accountState[currentAccountId] = null;
   const st = getState(currentAccountId);
   st.status = 'progress';
+  // 取消同步后恢复「BP由客户输入」初始态：清空BP明细与总BP（勾选与金额恢复初始示例，可编辑）
+  st.bpData = {};
+  st.totalLoss = 0;
+  st.bpLoss = 0;
   renderSidebar();
   renderContent(acc, st);
   recalcCurrent();
@@ -3328,14 +3348,14 @@ function showSyncModal() {
     tableHTML += '<table class="spv-table"><thead><tr>';
     tableHTML += isBP
       ? `<th>产品代码</th><th>产品名称</th><th>BP</th><th>申购金额</th><th>调减金额</th><th>实际金额</th>`
-      : `<th>产品代码</th><th>产品名称</th><th>申购金额</th><th>实际金额</th>`;
+      : `<th>产品代码</th><th>产品名称</th><th>申购金额</th>`;
     tableHTML += '</tr></thead><tbody>';
     subscribeProducts.forEach(p => {
       tableHTML += '<tr>';
       tableHTML += `<td style="font-weight:500;">${p.code}</td><td>${p.name}</td>${isBP ? `<td class="num">${p.bp}</td>` : ''}`;
       tableHTML += `<td class="num" style="font-weight:600;">${(p.subAmt/10000).toLocaleString()}万</td>`;
       if (isBP) tableHTML += `<td class="num">${p.adj ? (p.adj/10000).toLocaleString()+'万' : '--'}</td>`;
-      tableHTML += `<td class="num" style="font-weight:600;">${(p.I_val/10000).toLocaleString()}万</td>`;
+      if (isBP) tableHTML += `<td class="num" style="font-weight:600;">${(p.I_val/10000).toLocaleString()}万</td>`;
       tableHTML += '</tr>';
     });
     tableHTML += '</tbody></table>';
@@ -3358,7 +3378,7 @@ function showSyncModal() {
     <div class="info-line"><span class="info-label">模式</span><span class="info-value">${modeLabel}</span></div>
     <div class="info-line"><span class="info-label">当前专户</span><span class="info-value">${acc.name}（${acc.code}）</span></div>
     <div class="info-line"><span class="info-label">汇总</span><span class="info-value">申购 ${subscribeProducts.length} 只 · 赎回 ${redeemProducts.length} 只</span></div>
-    <div class="info-line" style="padding:8px 0;">申购合计 <strong style="color:var(--primary);">${(sumSub/10000).toLocaleString()} 万</strong> · 实际合计 <strong style="color:var(--success);">${(sumI/10000).toLocaleString()} 万</strong> · 赎回合计 <strong style="color:#C2410C;">${(sumRedAmt/10000).toLocaleString()} 万</strong> · 差额 <strong style="color:${Math.abs(diff)<0.01?'var(--success)':'#DC2626'};">${(diff/10000).toLocaleString()} 万</strong></div>
+    <div class="info-line" style="padding:8px 0;">申购合计 <strong style="color:var(--primary);">${(sumSub/10000).toLocaleString()} 万</strong>${st.subMode === 'bp' ? ` · 实际合计 <strong style="color:var(--success);">${(sumI/10000).toLocaleString()} 万</strong>` : ''} · 赎回合计 <strong style="color:#C2410C;">${(sumRedAmt/10000).toLocaleString()} 万</strong> · 差额 <strong style="color:${Math.abs(diff)<0.01?'var(--success)':'#DC2626'};">${(diff/10000).toLocaleString()} 万</strong></div>
     ${tableHTML}
   `;
   document.getElementById('syncModal').classList.add('show');
