@@ -1061,9 +1061,14 @@
   /* 专户弹窗 - 大弹窗 */
   .modal-wide { width: 1100px; max-width: 95vw; }
   .modal-wide .modal-body { max-height: 60vh; }
-  /* 同步至头寸管理弹窗 - 加高 */
-  #syncModal .modal { max-height: 90vh; }
+  /* 同步至头寸管理弹窗 - 加宽加高（BP模式7列表格需要宽度） */
+  #syncModal .modal { width: 880px; max-width: 92vw; max-height: 90vh; }
   #syncModal .modal-body { max-height: 72vh; }
+  /* 同步弹窗表格：产品名称列允许换行，数字列紧凑不换行 */
+  #syncModal .spv-table td.pname, #syncModal .spv-table th.pname { min-width: 150px; word-break: break-all; white-space: normal; }
+  #syncModal .spv-table td { white-space: nowrap; }
+  #syncModal .spv-table td.pname { white-space: normal; }
+  #syncModal .spv-table td.src-cell { white-space: normal; min-width: 110px; word-break: break-all; }
 
   /* 专户弹窗内的表格 */
   .spv-table { width: 100%; border-collapse: collapse; font-size: 12px; }
@@ -2246,15 +2251,37 @@ function getAccount(accountId) {
 }
 
 // 资金来源映射：返回某理财产品持有的「其他专户」列表（排除当前操作的专户）
-// 用于右栏申购端「资金来源」下拉选项：该笔申购的钱从哪个专户赎回
+// 用于右栏申购端「资金来源」下拉选项：该笔申购 = 该理财产品先从来源专户赎回，再申购当前专户（一申配一赎、同产品同金额）
+// 业务方向为「产品→专户」：理财产品持有的底层专户即其可配对赎回的来源
+// 来源1：管理专户镜像（allAccounts.holdings 含该产品 = 该产品持有此管理专户，专户间腾挪场景）
+// 来源2：SPV持仓查询（getSPVData，产品持有的底层专户/信托计划/资管计划）
+// 两路合并按专户代码去重，管理专户在前（真实维护数据优先）
 function getOtherAccounts(productCode, currentAccId) {
-  return allAccounts
-    .filter(a => a.id !== currentAccId)  // 排除当前专户（申购目标）
-    .filter(a => a.holdings.some(h => h.code === productCode))  // 该产品持有的其他专户
-    .map(a => {
+  const curAcc = allAccounts.find(a => a.id === currentAccId);
+  const result = [];
+  const seen = new Set();
+
+  // 来源1：管理专户（本系统持仓镜像）
+  allAccounts
+    .filter(a => a.id !== currentAccId)
+    .filter(a => a.holdings.some(h => h.code === productCode))
+    .forEach(a => {
       const h = a.holdings.find(x => x.code === productCode);
-      return { id: a.id, code: a.code, name: a.shortName || a.name, size: h.size };
+      if (!seen.has(a.code)) {
+        seen.add(a.code);
+        result.push({ id: a.id, code: a.code, name: a.shortName || a.name, size: h.size });
+      }
     });
+
+  // 来源2：SPV持仓查询的底层专户（排除当前操作专户自身）
+  (getSPVData(productCode) || []).forEach(h => {
+    if (curAcc && h.spvCode === curAcc.code) return;  // 当前专户不可作为自身申购来源
+    if (seen.has(h.spvCode)) return;                    // 与管理专户去重
+    seen.add(h.spvCode);
+    result.push({ id: h.spvCode, code: h.spvCode, name: h.spvName, size: h.scale || (h.qty * h.nav) || 0 });
+  });
+
+  return result;
 }
 
 // ==================== SIDEBAR ====================
@@ -2530,14 +2557,13 @@ function renderContent(acc, st) {
         const subAmt = st.subAmountMap?.[p.code] ?? 0;
         // 右栏产品均为手动添加的非持仓产品，与左栏持仓天然不重叠，无需监管互斥禁用
         const subChkDisabled = disabled;
-        const extraBadge = '<span style="display:inline-block;font-size:9px;padding:1px 5px;border-radius:3px;background:#FEF3C7;color:#B45309;font-weight:600;margin-left:3px;vertical-align:middle;" title="该产品未持有当前专户，申购端临时建仓">非持仓</span>';
-        const removeCell = `<td style="text-align:center;width:60px;"><button class="btn" onclick="removeSubExtraProduct('${p.code}')" ${disabled ? 'disabled' : ''} style="font-size:10px;padding:2px 6px;background:#FEE2E2;color:#DC2626;border:1px solid #FCA5A5;border-radius:3px;cursor:${disabled ? 'not-allowed' : 'pointer'};font-weight:600;" title="从申购端移除该非持仓产品">移除</button></td>`;
+        const removeCell = `<td style="text-align:center;width:60px;"><button class="btn" onclick="removeSubExtraProduct('${p.code}')" ${disabled ? 'disabled' : ''} style="font-size:10px;padding:2px 6px;background:#FEE2E2;color:#DC2626;border:1px solid #FCA5A5;border-radius:3px;cursor:${disabled ? 'not-allowed' : 'pointer'};font-weight:600;" title="从申购端移除该产品">移除</button></td>`;
         return `
           <tr data-code="${p.code}" class="${subSel ? 'selected' : 'not-selected'}">
             <td class="chk-cell">
               <input type="checkbox" ${subSel ? 'checked' : ''} ${subChkDisabled ? 'disabled' : ''} onchange="onSubToggleSelect('${p.code}', this.checked)">
             </td>
-            <td style="font-weight:500;width:74px;white-space:nowrap;">${p.code}${extraBadge}</td>
+            <td style="font-weight:500;width:74px;white-space:nowrap;">${p.code}</td>
             <td style="max-width:96px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding-right:4px;" title="${p.name}">${p.name}</td>
             ${st.subMode === 'bp' ? `
             <td class="col-bp">
@@ -2632,7 +2658,6 @@ function renderContent(acc, st) {
           <div class="loss-panel-header">
             <span>🔵 申购端 — 申购进 <strong style="color:var(--primary);">${acc.name}</strong> · ${st.subMode === 'bp' ? '按BP占比自动分摊' : '投资经理逐笔指定金额'}</span>
             <div style="display:flex;align-items:center;gap:6px;">
-              <button class="btn" onclick="addSubExtraProduct()" style="font-size:10px;padding:2px 8px;border:1px dashed #1D4ED8;background:#EFF6FF;color:#1D4ED8;border-radius:3px;cursor:pointer;font-weight:600;white-space:nowrap;" title="申购端候选池已放开：可不持有本专户的理财产品（如临时建仓）也可添加申购">+ 添加理财产品申购</button>
               <span style="font-size:11px;font-weight:600;color:#1D4ED8;background:rgba(29,78,216,.08);padding:2px 8px;border-radius:4px;white-space:nowrap;">已选 <strong>${subSelCount}</strong> / ${subTotalCount} 只</span>
             </div>
           </div>
@@ -2867,9 +2892,9 @@ function recalcLossMode(acc, st) {
       if (selEl) selEl.style.borderColor = srcId ? '' : '#CBD5E1';
       return;
     }
-    const srcAcc = allAccounts.find(a => a.id === srcId);
-    const srcHold = srcAcc ? srcAcc.holdings.find(h => h.code === p.code) : null;
-    const srcSize = srcHold ? srcHold.size : 0;
+    // 来源规模从统一来源列表取（管理专户镜像 + SPV底层专户），与下拉选项同源
+    const srcInfo = getOtherAccounts(p.code, acc.id).find(o => o.id === srcId);
+    const srcSize = srcInfo ? srcInfo.size : 0;
     const subAmt = st.subAmountMap?.[p.code] || 0;
     const adj = st.subMode === 'bp' ? (st.lossAdjData[p.code] || 0) : 0;
     const actual = subAmt - adj;
@@ -3537,15 +3562,15 @@ function syncToSystem() {
     if (!sel) return;
     const srcId = (st.fundSourceMap && st.fundSourceMap[p.code]) || '';
     if (!srcId) return;  // 未指定来源已在上面拦截，此处仅校验已指定来源的规模
-    const srcAcc = allAccounts.find(a => a.id === srcId);
-    if (!srcAcc) return;
-    const srcHold = srcAcc.holdings.find(h => h.code === p.code);
-    const srcSize = srcHold ? srcHold.size : 0;
+    // 来源规模从统一来源列表取（管理专户镜像 + SPV底层专户），与下拉选项同源
+    const srcInfo = getOtherAccounts(p.code, acc.id).find(o => o.id === srcId);
+    if (!srcInfo) return;
+    const srcSize = srcInfo.size;
     const subAmt = st.subAmountMap?.[p.code] || 0;
     const adj = st.subMode === 'bp' ? (st.lossAdjData[p.code] || 0) : 0;
     const actual = subAmt - adj;
     if (actual > srcSize) {
-      errors.push(p.name.split('（')[0] + '（' + p.code + '）实际申购金额 ' + actual.toLocaleString('zh-CN') + ' 元超过其在资金来源专户「' + (srcAcc.shortName || srcAcc.name) + '」的持有规模 ' + srcSize.toLocaleString('zh-CN') + ' 元，请调整申购金额或改选资金来源。');
+      errors.push(p.name.split('（')[0] + '（' + p.code + '）实际申购金额 ' + actual.toLocaleString('zh-CN') + ' 元超过其在资金来源专户「' + srcInfo.name + '」的持有规模 ' + srcSize.toLocaleString('zh-CN') + ' 元，请调整申购金额或改选资金来源。');
     }
   });
 
@@ -3596,11 +3621,12 @@ function syncToSystem() {
     const adj = st.subMode === 'bp' ? (st.lossAdjData[p.code] || 0) : 0;
     const I_val = subAmt - adj;
     // 资金来源：指定来源的申购，同步时自动生成同产品、同金额的配套赎回流水
+    // 名称从统一来源列表取（管理专户镜像 + SPV底层专户），与下拉选项同源
     const fundSrcId = (st.fundSourceMap && st.fundSourceMap[p.code]) || '';
-    const fundSrcAcc = fundSrcId ? allAccounts.find(a => a.id === fundSrcId) : null;
+    const fundSrcInfo = fundSrcId ? getOtherAccounts(p.code, acc.id).find(o => o.id === fundSrcId) : null;
     sumSub += subAmt; sumI += I_val;
     subscribeProducts.push({ code: p.code, name: p.name.split('（')[0], bp, subAmt, adj, I_val,
-      fundSrcId, fundSrcName: fundSrcAcc ? (fundSrcAcc.shortName || fundSrcAcc.name) : '' });
+      fundSrcId, fundSrcName: fundSrcInfo ? fundSrcInfo.name : '' });
   });
 
   // 赎回侧（左栏）：读 lossRedeemAmt，赎回来源=当前专户
@@ -3630,16 +3656,16 @@ function showSyncModal() {
     tableHTML += '<div style="font-size:13px;font-weight:600;color:var(--primary);margin:12px 0 6px;">申购侧（申购进当前专户：' + acc.name + '）</div>';
     tableHTML += '<table class="spv-table"><thead><tr>';
     tableHTML += isBP
-      ? `<th>产品代码</th><th>产品名称</th><th>BP</th><th>申购金额</th><th>调减金额</th><th>实际金额</th><th>资金来源</th>`
-      : `<th>产品代码</th><th>产品名称</th><th>申购金额</th><th>资金来源</th>`;
+      ? `<th>产品代码</th><th class="pname">产品名称</th><th style="text-align:right;">BP</th><th style="text-align:right;">申购金额</th><th style="text-align:right;">调减金额</th><th style="text-align:right;">实际金额</th><th>资金来源</th>`
+      : `<th>产品代码</th><th class="pname">产品名称</th><th style="text-align:right;">申购金额</th><th>资金来源</th>`;
     tableHTML += '</tr></thead><tbody>';
     subscribeProducts.forEach(p => {
       tableHTML += '<tr>';
-      tableHTML += `<td style="font-weight:500;">${p.code}</td><td>${p.name}</td>${isBP ? `<td class="num">${p.bp}</td>` : ''}`;
+      tableHTML += `<td style="font-weight:500;">${p.code}</td><td class="pname">${p.name}</td>${isBP ? `<td class="num">${p.bp}</td>` : ''}`;
       tableHTML += `<td class="num" style="font-weight:600;">${(p.subAmt/10000).toLocaleString()}万</td>`;
       if (isBP) tableHTML += `<td class="num">${p.adj ? (p.adj/10000).toLocaleString()+'万' : '--'}</td>`;
       if (isBP) tableHTML += `<td class="num" style="font-weight:600;">${(p.I_val/10000).toLocaleString()}万</td>`;
-      tableHTML += `<td style="font-size:12px;${p.fundSrcName ? 'color:#C2410C;font-weight:600;' : 'color:#94A3B8;'}">${p.fundSrcName || '未指定'}</td>`;
+      tableHTML += `<td class="src-cell" style="font-size:12px;${p.fundSrcName ? 'color:#C2410C;font-weight:600;' : 'color:#94A3B8;'}">${p.fundSrcName || '未指定'}</td>`;
       tableHTML += '</tr>';
     });
     tableHTML += '</tbody></table>';
@@ -3648,11 +3674,11 @@ function showSyncModal() {
     if (pairedRedeems.length > 0) {
       tableHTML += '<div style="font-size:13px;font-weight:600;color:#C2410C;margin:12px 0 6px;">配套赎回（系统自动生成 · 同产品同金额，写入来源专户）</div>';
       tableHTML += '<table class="spv-table"><thead><tr>';
-      tableHTML += `<th>产品代码</th><th>产品名称</th><th>赎回来源专户</th><th>赎回金额</th>`;
+      tableHTML += `<th>产品代码</th><th class="pname">产品名称</th><th>赎回来源专户</th><th style="text-align:right;">赎回金额</th>`;
       tableHTML += '</tr></thead><tbody>';
       pairedRedeems.forEach(p => {
         tableHTML += '<tr>';
-        tableHTML += `<td style="font-weight:500;">${p.code}</td><td>${p.name}</td><td style="font-weight:600;color:#C2410C;">${p.fundSrcName}</td>`;
+        tableHTML += `<td style="font-weight:500;">${p.code}</td><td class="pname">${p.name}</td><td class="src-cell" style="font-weight:600;color:#C2410C;">${p.fundSrcName}</td>`;
         tableHTML += `<td class="num" style="font-weight:600;color:#C2410C;">${(p.I_val/10000).toLocaleString()}万</td>`;
         tableHTML += '</tr>';
       });
@@ -3663,11 +3689,11 @@ function showSyncModal() {
   if (redeemProducts.length > 0) {
     tableHTML += '<div style="font-size:13px;font-weight:600;color:var(--primary);margin:12px 0 6px;">赎回侧（从当前专户赎回：' + acc.name + '）</div>';
     tableHTML += '<table class="spv-table"><thead><tr>';
-    tableHTML += `<th>产品代码</th><th>产品名称</th><th>赎回金额</th>`;
+    tableHTML += `<th>产品代码</th><th class="pname">产品名称</th><th style="text-align:right;">赎回金额</th>`;
     tableHTML += '</tr></thead><tbody>';
     redeemProducts.forEach(p => {
       tableHTML += '<tr>';
-      tableHTML += `<td style="font-weight:500;">${p.code}</td><td>${p.name}</td>`;
+      tableHTML += `<td style="font-weight:500;">${p.code}</td><td class="pname">${p.name}</td>`;
       tableHTML += `<td class="num" style="font-weight:600;">${(p.redAmt/10000).toLocaleString()}万</td>`;
       tableHTML += '</tr>';
     });
@@ -3760,8 +3786,15 @@ function exportData() {
 
   const dateStr = new Date().toISOString().slice(0, 10);
   const srcName = id => {
+    if (!id) return '现金申购';
     const o = allAccounts.find(a => a.id === id);
-    return o ? (o.shortName || o.name) : (id ? id : '现金申购');
+    if (o) return o.shortName || o.name;
+    // 底层专户：从各申购产品的 SPV 持仓中反查名称
+    for (const p of (st.subExtraProducts || [])) {
+      const spv = (getSPVData(p.code) || []).find(h => h.spvCode === id);
+      if (spv) return spv.spvName;
+    }
+    return id;
   };
   const cur = st.subMode === 'bp' ? 'BP分摊' : '金额直填';
 
@@ -6692,15 +6725,6 @@ function removeSubExtraProduct(code) {
   recalcCurrent();
 }
 
-// 入口按钮"添加申购产品" → 聚焦到内嵌搜索框
-function addSubExtraProduct() {
-  const input = document.getElementById('subExtraSearchInput');
-  if (input) {
-    input.focus();
-    input.select();
-  }
-}
-
 function addCustomProduct() {
   document.getElementById('addChannelProductModal').classList.add('show');
   const input = document.getElementById('chProdSearch');
@@ -6754,11 +6778,17 @@ function renderChannelProductPicker(query) {
 
 // 点击其他地方关闭搜索下拉
 document.addEventListener('click', function(e) {
+  // 头寸页产品搜索下拉
   const dropdown = document.getElementById('productSearchDropdown');
   const input = document.getElementById('productSearchInput');
-  if (!dropdown || !input) return;
-  if (e.target !== input && !dropdown.contains(e.target)) {
+  if (dropdown && input && e.target !== input && !dropdown.contains(e.target)) {
     dropdown.style.display = 'none';
+  }
+  // 申购端理财产品搜索下拉（点击输入框/下拉内部不关闭，其余区域点击即隐藏）
+  const subDropdown = document.getElementById('subExtraSearchDropdown');
+  const subInput = document.getElementById('subExtraSearchInput');
+  if (subDropdown && subInput && e.target !== subInput && !subDropdown.contains(e.target)) {
+    subDropdown.style.display = 'none';
   }
 });
 
