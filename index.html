@@ -2931,6 +2931,9 @@ function renderContent(acc, st) {
 
   container.innerHTML = `
     ${isLocked ? `<div style="background:#FFF3CD;border:1px solid #FFC107;color:#856404;padding:8px 16px;border-radius:4px;margin-bottom:12px;font-size:13px;">该专户已同步至头寸管理计算，当前为<strong>只读</strong>状态。如需调整，请点击下方<strong>重置</strong>按钮。</div>` : ''}
+    ${!isPositionFresh() ? `<div style="background:#FFF7ED;border:1px solid #FDBA74;color:#9A3412;padding:8px 16px;border-radius:4px;margin-bottom:12px;font-size:13px;">
+      ⚠️ <strong>头寸数据非当日</strong>：当前依据 <strong>${positionDataDate}</strong> 上传的日初头寸计算（今日为 ${getTodayStr()}）。头寸每日变动，基于历史头寸的调仓金额不可用。请先在「头寸管理」页上传<strong>今日</strong>日初头寸文件，上传后本提示自动消失。
+    </div>` : ''}
     <!-- Mode selector & key params -->
     <div class="top-bar" style="align-items:center;gap:12px;padding:8px 16px;">
       <span style="font-weight:700;font-size:14px;color:var(--primary);white-space:nowrap;">${acc.name}</span>
@@ -3016,7 +3019,7 @@ function renderContent(acc, st) {
     <div class="section-card" style="padding:0;">
       <div class="section-header" style="padding:8px 12px;">
         <div class="section-title" style="font-size:13px;">
-          <span class="icon">📊</span> 持有${acc.name}的理财产品
+          <span class="icon">📊</span> ${acc.name}
           <span class="section-subtitle">— 左侧赎回、右侧申购</span>
         </div>
         <div class="section-actions">
@@ -3154,7 +3157,7 @@ function renderContent(acc, st) {
     <div class="section-card" style="padding:0;">
       <div class="section-header" style="padding:8px 12px;">
         <div class="section-title" style="font-size:13px;">
-          <span class="icon">📊</span> 持有${acc.name}的理财产品
+          <span class="icon">📊</span> ${acc.name}
           <span class="section-subtitle">— 左侧赎回、右侧申购</span>
         </div>
         <div class="section-actions">
@@ -3246,15 +3249,11 @@ function renderContent(acc, st) {
               <tbody>${rightRows}</tbody>
             </table>
           </div>
-          <div class="loss-panel-summary" style="flex-wrap:wrap;row-gap:6px;">
+          <div class="loss-panel-summary">
             <span style="color:#64748B;font-weight:500;">累计申购金额</span>
             <span style="font-weight:800;font-size:15px;color:#1E3A5F;" id="totalSubAmt">0</span>
             <span style="font-size:11px;color:#64748B;">元</span>
-            <span style="margin-left:auto;font-weight:500;color:#64748B;">折合</span>
-            <span style="font-weight:700;font-size:13px;color:#1E3A5F;" id="totalSubWan">0</span>
-            <span style="font-size:11px;color:#64748B;" id="totalSubWanUnit">元</span>
-            ${st.subMode === 'bp' ? `<span style="flex-basis:100%;height:0;"></span>
-            <span style="margin-left:auto;font-weight:500;color:#64748B;">实际合计</span>
+            ${st.subMode === 'bp' ? `<span style="margin-left:auto;font-weight:500;color:#64748B;">实际合计</span>
             <span style="font-weight:700;font-size:13px;color:#16A34A;" id="totalI_right">0</span>
             <span style="font-size:11px;color:#64748B;" id="totalIUnit">元</span>` : ''}
           </div>
@@ -3470,15 +3469,10 @@ function recalcLossMode(acc, st) {
     }
   });
 
-  // 更新右栏汇总（累计申购金额 + 折合：元/万元/亿元 智能单位自适应）
+  // 更新右栏汇总（累计申购金额；"折合"展示已移除，仅保留BP模式实际合计）
   const totalSubEl = document.getElementById('totalSubAmt');
   if (totalSubEl) {
     totalSubEl.textContent = sumSub.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    const f = fmtBigAmount(sumSub);
-    const wanEl = document.getElementById('totalSubWan');
-    if (wanEl) wanEl.textContent = f.text;
-    const wanUnitEl = document.getElementById('totalSubWanUnit');
-    if (wanUnitEl) wanUnitEl.textContent = f.unit;
   }
   const tiRightEl = document.getElementById('totalI_right');
   const tiUnitEl = document.getElementById('totalIUnit');
@@ -4098,6 +4092,11 @@ function syncToSystem() {
   // ========== 同步前校验（收集全部问题，一次性提示） ==========
   const errors = [];
 
+  // 头寸数据新鲜度校验：调仓必须基于当日日初头寸文件（头寸每日变动，历史头寸计算结果不可用）
+  if (!isPositionFresh()) {
+    errors.push('头寸数据日期为 ' + positionDataDate + '（非今日 ' + getTodayStr() + '），调仓计算必须基于当日日初头寸文件。请先在「头寸管理」页上传今日头寸后再同步。');
+  }
+
   if (st.subMode === 'bp') {
     // BP驱动模式：校验是否有勾选产品且BP>0
     let hasBP = false;
@@ -4366,6 +4365,21 @@ function confirmSync() {
 }
 
 // ==================== INIT ====================
+
+// ==================== 头寸数据日期（调仓/拉壳计算依据） ====================
+// 实际系统 = 最近一次成功上传的「日初头寸」文件数据日期，由上传动作驱动；
+// Demo 中为静态模拟值，可用控制台调用 simPositionDataDate('today') / simPositionDataDate('2026-06-04') 切换两种提示状态
+let positionDataDate = '2026-06-04';
+function getTodayStr() {
+  const d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
+function isPositionFresh() { return positionDataDate === getTodayStr(); }
+// Demo演示辅助（仅控制台调用，页面无入口）：模拟「今日已上传 / 沿用历史头寸」两种状态（实际系统无此开关）
+function simPositionDataDate(v) {
+  positionDataDate = (v === 'today') ? getTodayStr() : v;
+  renderContent(getAccount(currentAccountId), getState(currentAccountId));
+}
 
 // ==================== TAB SWITCH ====================
 let currentTab = 'position';
@@ -6431,7 +6445,7 @@ function renderPositionPage() {
           <span>⬆️</span> 上传银行交易所数据
         </button>
         <div class="toolbar-info">
-          <span>最新上传日初头寸日期：<strong>2026-06-04</strong></span>
+          <span>最新上传日初头寸日期：<strong style="color:${isPositionFresh() ? 'var(--success)' : '#C2410C'};">${positionDataDate}${isPositionFresh() ? ' ✓今日' : '（非今日）'}</strong></span>
           <span>上传SPV持仓日期：<strong>2026-06-04</strong></span>
           <span>交易所账户：<strong style="color:var(--success);">已配置 ✓</strong></span>
         </div>
