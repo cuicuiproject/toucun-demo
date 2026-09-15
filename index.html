@@ -1294,7 +1294,7 @@
   .modal-wide { width: 1100px; max-width: 95vw; }
   .modal-wide .modal-body { max-height: 60vh; }
   /* 同步至头寸管理弹窗 - 加宽加高（BP模式7列表格需要宽度） */
-  #syncModal .modal { width: 880px; max-width: 92vw; max-height: 90vh; }
+  #syncModal .modal { width: 1200px; max-width: 95vw; max-height: 90vh; }
   #syncModal .modal-body { max-height: 72vh; }
   /* 同步弹窗表格：产品名称列允许换行，数字列紧凑不换行 */
   #syncModal .spv-table td.pname, #syncModal .spv-table th.pname { min-width: 150px; word-break: break-all; white-space: normal; }
@@ -3494,13 +3494,6 @@ function renderContent(acc, st) {
                 style="width:120px;${st.subMode === 'bp' ? 'background:#F8FAFC;color:#1E3A5F;font-weight:600;' : (!subSel ? 'background:#F5F5F5;color:#B0B0B0;cursor:pointer;' : 'background:#fff;color:#6D28D9;font-weight:600;')}">
             </td>
             ${st.subMode === 'wan' ? `<td class="num" id="generatedSubAmt_${p.code}" style="font-weight:600;color:#1E3A5F;background:#F8FAFC;">${subAmt ? subAmt.toLocaleString('zh-CN') : '--'}</td>` : ''}
-            ${st.subMode === 'bp' ? `
-            <td>
-              <input type="text" inputmode="numeric" class="table-input" value="${adj ? adj.toLocaleString('zh-CN') : ''}"
-                disabled title="已停用：最终申购按BP公式计算"
-                oninput="onLossAdjChange('${p.code}', this.value)" onfocus="onLossAdjFocus(this)" onblur="onLossAdjBlur(this)" style="width:100px;">
-            </td>` : ''}
-            ${st.subMode === 'bp' ? `<td class="num" style="font-weight:600;" id="I_${p.code}">--</td>` : ''}
             ${(() => {
               // 资金来源：下拉选择该笔申购资金来自哪个专户的赎回（选项=该产品持有的其他专户）
               // 来源专户的持有规模仅用于校验能否配对赎回，不参与申购金额计算
@@ -3625,8 +3618,6 @@ function renderContent(acc, st) {
                   <th style="text-align:right;width:80px;">占比<i class="th-help" data-tip="${st.subMode === 'bp' ? '产品BP ÷ 总BP。' : '分配收益 ÷ 总收益。'}">i</i></th>
                   <th style="text-align:right;width:120px;">${st.subMode === 'bp' ? '申购金额（元）' : '分配收益金额（元）'}<i class="th-help" data-tip="${st.subMode === 'bp' ? '产品总规模（含今日申赎） × 目标BP ÷ 本次变化BP。' : '输入该产品分配的收益金额。'}">i</i></th>
                   ${st.subMode === 'wan' ? '<th style="text-align:right;width:120px;">自动申购金额（元）<i class="th-help" data-tip="分配占比 × 专户总规模。">i</i></th>' : ''}
-                  ${st.subMode === 'bp' ? '<th style="text-align:right;width:100px;">调减金额（已停用）<i class="th-help" data-tip="已停用，申购金额直接按BP公式生成。">i</i></th>' : ''}
-                  ${st.subMode === 'bp' ? '<th style="text-align:right;width:95px;">实际金额（元）<i class="th-help" data-tip="申购金额 − 调减金额。">i</i></th>' : ''}
                   <th style="width:180px;">资金来源<i class="th-help" data-tip="选择配套赎回的来源专户。">i</i></th>
                   <th style="width:60px;">操作</th>
                 </tr>
@@ -3638,9 +3629,7 @@ function renderContent(acc, st) {
             <span style="color:#64748B;font-weight:500;">累计申购金额</span>
             <span style="font-weight:800;font-size:15px;color:#1E3A5F;" id="totalSubAmt">0</span>
             <span style="font-size:11px;color:#64748B;">元</span>
-            ${st.subMode === 'bp' ? `<span style="margin-left:auto;font-weight:500;color:#64748B;">实际合计</span>
-            <span style="font-weight:700;font-size:13px;color:#16A34A;" id="totalI_right">0</span>
-            <span style="font-size:11px;color:#64748B;" id="totalIUnit">元</span>`
+            ${st.subMode === 'bp' ? ''
             : `<span style="margin-left:auto;font-weight:500;color:#64748B;">总收益</span>
             <span style="font-weight:700;font-size:13px;color:#6D28D9;" id="totalProfitRight">0</span>
             <span style="font-size:11px;color:#64748B;">元</span>
@@ -3655,9 +3644,9 @@ function renderContent(acc, st) {
 
     <div class="summary-row" id="summaryRow">
           <div class="summary-item" style="flex:0 0 auto;margin-left:auto;">
-            <button class="btn btn-outline" onclick="resetAll()" style="font-size:12px;padding:6px 16px;">
+            ${isLocked ? `<button class="btn btn-outline" onclick="resetAll()" style="font-size:12px;padding:6px 16px;">
               重置
-            </button>
+            </button>` : ''}
             ${(isLocked || acc.holdings.length === 0) ? '' : `<button class="btn btn-primary" onclick="syncToSystem()" style="font-size:12px;padding:6px 16px;">
               同步至头寸管理计算
             </button>`}
@@ -3715,7 +3704,7 @@ function rebalanceDifference(redeem, subscribe) {
 function rebalanceMessage(redeem, subscribe) {
   const cents = rebalanceDifference(redeem, subscribe);
   if (!cents) return subscribe > 0 ? '✅ 调仓平衡' : '待输入有效交易';
-  return '⚠️ 多' + (cents > 0 ? '申购' : '赎回') + ' ' + (Math.abs(cents) / 100).toLocaleString('zh-CN', {minimumFractionDigits:2, maximumFractionDigits:2}) + ' 元（阻断同步）';
+  return '⚠️ 多' + (cents > 0 ? '申购' : '赎回') + ' ' + (Math.abs(cents) / 100).toLocaleString('zh-CN', {minimumFractionDigits:2, maximumFractionDigits:2}) + ' 元（仅提示，可继续同步）';
 }
 
 function calcBpRatioPct(bp, totalBP) {
@@ -3959,8 +3948,8 @@ function recalcLossMode(acc, st) {
       }
     } else if (st.subMode === 'bp') {
       const valid = Number.isFinite(inputTotalBP) && inputTotalBP > 0 && subSelectedCodes.length > 0 && subSelectedCodes.every(code => getBpProductScale(st, code) > 0 && Number.isFinite(st.bpData[code]) && st.bpData[code] >= 0);
-      balStatusEl.textContent = valid ? rebalanceMessage(totalRedeemAmt, sumSub) : '⚠ 请填写有效的变化BP、产品规模和目标BP（阻断同步）';
-      balStatusEl.style.color = valid && sumSub > 0 && rebalanceDifference(totalRedeemAmt, sumSub) === 0 ? '#16A34A' : '#DC2626';
+      balStatusEl.textContent = valid ? rebalanceMessage(totalRedeemAmt, sumSub) : '⚠ 请填写有效的变化BP、产品规模和目标BP';
+      balStatusEl.style.color = !valid ? '#DC2626' : (sumSub > 0 && rebalanceDifference(totalRedeemAmt, sumSub) === 0 ? '#16A34A' : '#B45309');
       balStatusEl.title = '最终申购 = 产品总规模（含今日申赎） × 目标BP ÷ 本次变化BP；按分验算。';
     } else if (totalRedeemAmt === 0 && sumSub === 0) {
       balStatusEl.textContent = '待输入';
@@ -4739,9 +4728,7 @@ function syncToSystem() {
   let totalRedeemSync = 0, totalSubSync = 0;
   redeemSelected.forEach(p => { totalRedeemSync += st.lossRedeemAmt?.[p.code] || 0; });
   subSelected.forEach(p => { totalSubSync += st.subAmountMap?.[p.code] || 0; });
-  if (st.subMode === 'bp' && rebalanceDifference(totalRedeemSync, totalSubSync) !== 0) {
-    errors.push(rebalanceMessage(totalRedeemSync, totalSubSync));
-  }
+  // 申赎差额仅提示，不作为同步阻断条件。
 
   if (errors.length > 0) {
     const msg = '以下项目未完成，请完善后再同步：\n\n' + errors.map((e, i) => (i + 1) + '. ' + e).join('\n');
@@ -4811,15 +4798,13 @@ function showSyncModal() {
     tableHTML += '<div style="font-size:13px;font-weight:600;color:var(--primary);margin:12px 0 6px;">申购侧（申购进当前专户：' + acc.name + '）</div>';
     tableHTML += '<table class="spv-table"><thead><tr>';
     tableHTML += isBP
-      ? `<th>产品代码</th><th class="pname">产品名称</th><th style="text-align:right;">目标BP / 产品规模（元）</th><th style="text-align:right;">申购金额</th><th style="text-align:right;">调减金额</th><th style="text-align:right;">实际金额</th><th>资金来源</th>`
+      ? `<th>产品代码</th><th class="pname">产品名称</th><th style="text-align:right;">目标BP / 产品规模（元）</th><th style="text-align:right;">申购金额</th><th>资金来源</th>`
       : `<th>产品代码</th><th class="pname">产品名称</th><th style="text-align:right;">分配收益金额</th><th style="text-align:right;">申购金额</th><th>资金来源</th>`;
     tableHTML += '</tr></thead><tbody>';
     subscribeProducts.forEach(p => {
       tableHTML += '<tr>';
       tableHTML += `<td style="font-weight:500;">${p.code}</td><td class="pname">${p.name}</td>${isBP ? `<td class="num">${p.bp} BP / ${p.productScale.toLocaleString('zh-CN')}</td>` : `<td class="num" style="font-weight:600;color:#6D28D9;">${(p.allocationAmt/10000).toLocaleString()}万</td>`}`;
       tableHTML += `<td class="num" style="font-weight:600;">${(p.subAmt/10000).toLocaleString()}万</td>`;
-      if (isBP) tableHTML += `<td class="num">${p.adj ? (p.adj/10000).toLocaleString()+'万' : '--'}</td>`;
-      if (isBP) tableHTML += `<td class="num" style="font-weight:600;">${(p.I_val/10000).toLocaleString()}万</td>`;
       tableHTML += `<td class="src-cell" style="font-size:12px;${p.fundSrcName ? 'color:#C2410C;font-weight:600;' : 'color:#94A3B8;'}">${p.fundSrcName || '未指定'}</td>`;
       tableHTML += '</tr>';
     });
@@ -4870,10 +4855,11 @@ function showSyncModal() {
 
   document.getElementById('syncModalBody').innerHTML = `
     ${offlineBanner}
+    ${st.subMode === "bp" && rebalanceDifference(sumRedAmt, sumSub) !== 0 ? '<div style="padding:10px 12px;margin-bottom:12px;background:#FFFBEB;border:1px solid #FCD34D;border-radius:6px;color:#92400E;font-size:13px;">' + rebalanceMessage(sumRedAmt, sumSub) + '<br>本次专户净' + (sumSub > sumRedAmt ? '增加' : '减少') + ' ' + (Math.abs(rebalanceDifference(sumRedAmt, sumSub)) / 100).toLocaleString('zh-CN', {minimumFractionDigits:2,maximumFractionDigits:2}) + ' 元，请核对后确认同步。</div>' : ''}
     <div class="info-line"><span class="info-label">模式</span><span class="info-value">${modeLabel}</span></div>
     <div class="info-line"><span class="info-label">当前专户</span><span class="info-value">${acc.name}（${acc.code}）</span></div>
     <div class="info-line"><span class="info-label">汇总</span><span class="info-value">申购 ${subscribeProducts.length} 只 · 赎回 ${redeemProducts.length} 只</span></div>
-    <div class="info-line" style="padding:8px 0;">申购合计 <strong style="color:var(--primary);">${(sumSub/10000).toLocaleString()} 万</strong>${st.subMode === 'bp' ? ` · 实际合计 <strong style="color:var(--success);">${(sumI/10000).toLocaleString()} 万</strong> · 申购基数 <strong style="color:#6D28D9;">各行产品总规模（含今日申赎）</strong>` : ` · 可分配总收益 <strong style="color:#6D28D9;">${((st.totalProfit||0)/10000).toLocaleString()} 万</strong> · 留存未分配 <strong style="color:${((st.totalProfit||0)-sumAssignedProfit) < -0.01 ? '#DC2626' : '#94A3B8'};">${(((st.totalProfit||0)-sumAssignedProfit)/10000).toLocaleString()} 万</strong>`} · 赎回合计 <strong style="color:#C2410C;">${(sumRedAmt/10000).toLocaleString()} 万</strong></div>
+    <div class="info-line" style="padding:8px 0;">申购合计 <strong style="color:var(--primary);">${(sumSub/10000).toLocaleString()} 万</strong>${st.subMode === 'bp' ? ` · 申购基数 <strong style="color:#6D28D9;">各行产品总规模（含今日申赎）</strong>` : ` · 可分配总收益 <strong style="color:#6D28D9;">${((st.totalProfit||0)/10000).toLocaleString()} 万</strong> · 留存未分配 <strong style="color:${((st.totalProfit||0)-sumAssignedProfit) < -0.01 ? '#DC2626' : '#94A3B8'};">${(((st.totalProfit||0)-sumAssignedProfit)/10000).toLocaleString()} 万</strong>`} · 赎回合计 <strong style="color:#C2410C;">${(sumRedAmt/10000).toLocaleString()} 万</strong></div>
     ${tableHTML}
   `;
   document.getElementById('syncModal').classList.add('show');
@@ -8213,29 +8199,27 @@ function addSubExtraProductByCode(code) {
 function removeSubExtraProduct(code) {
   const acc = getAccount(currentAccountId);
   const st = getState(currentAccountId);
-  if (!acc || !st) return;
-  if (!st.subExtraProducts) return;
-
-  // 仅当该产品确实是非持仓产品时才允许移除（持仓产品走不了这个入口）
-  const isInHoldings = acc.holdings.some(h => h.code === code);
-  if (isInHoldings) return;
-
-  const idx = st.subExtraProducts.findIndex(p => p.code === code);
-  if (idx === -1) return;
-
-  if (!confirm('确认从申购端移除产品 ' + code + '？\n相关 BP/申购金额/资金来源 状态将一并清除。')) return;
-
-  st.subExtraProducts.splice(idx, 1);
-  // 清理相关状态
-  delete st.bpData[code];
-  if (st.profitAllocationMap) delete st.profitAllocationMap[code];
-  delete st.subAmountMap[code];
-  delete st.lossAdjData[code];
-  delete st.subSelectedMap[code];
-  delete st.fundSourceMap[code];
-
-  renderContent(acc, st);
-  recalcCurrent();
+  if (!acc || !st || st.status === 'done' || !st.subExtraProducts) return;
+  const product = st.subExtraProducts.find(p => p.code === code);
+  if (!product || acc.holdings.some(h => h.code === code)) return;
+  showConfirmDialog({
+    title: '移除申购产品',
+    bodyHTML: '<p style="margin-bottom:12px;">确认从申购区移除以下产品？</p>' +
+      '<div style="padding:10px 12px;background:#F8FAFC;border:1px solid #E2E8F0;border-radius:6px;margin-bottom:12px;"><strong>' + escHtml(product.name) + '</strong><br><span style="color:#64748B;">' + escHtml(code) + '</span></div>' +
+      '<p style="font-size:13px;color:#64748B;">移除后，将清除该产品本次调仓填写的信息，不影响已有持仓。</p>',
+    confirmText: '确认移除',
+    danger: true,
+    onConfirm: () => {
+      if (currentAccountId !== acc.id || getState(acc.id) !== st || st.status === 'done') return;
+      const idx = st.subExtraProducts.findIndex(p => p.code === code);
+      if (idx === -1) return;
+      st.subExtraProducts.splice(idx, 1);
+      ['bpData','profitAllocationMap','subAmountMap','lossAdjData','subSelectedMap','fundSourceMap'].forEach(key => { if(st[key]) delete st[key][code]; });
+      renderContent(acc, st);
+      recalcCurrent();
+      showToast('已从申购区移除产品 ' + code);
+    }
+  });
 }
 
 function addCustomProduct() {
