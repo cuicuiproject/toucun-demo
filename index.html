@@ -3629,8 +3629,11 @@ function renderContent(acc, st) {
             <span style="color:#64748B;font-weight:500;">累计申购金额</span>
             <span style="font-weight:800;font-size:15px;color:#1E3A5F;" id="totalSubAmt">0</span>
             <span style="font-size:11px;color:#64748B;">元</span>
+            <span style="margin-left:auto;font-size:11px;color:#64748B;">折合</span>
+            <span style="font-weight:700;font-size:13px;color:#1E3A5F;" id="totalSubWan">0</span>
+            <span style="font-size:11px;color:#64748B;" id="totalSubWanUnit">元</span>
             ${st.subMode === 'bp' ? ''
-            : `<span style="margin-left:auto;font-weight:500;color:#64748B;">总收益</span>
+            : `<span style="margin-left:10px;font-weight:500;color:#64748B;">总收益</span>
             <span style="font-weight:700;font-size:13px;color:#6D28D9;" id="totalProfitRight">0</span>
             <span style="font-size:11px;color:#64748B;">元</span>
             <span style="font-weight:500;color:#64748B;margin-left:10px;">留存未分配</span>
@@ -3908,10 +3911,17 @@ function recalcLossMode(acc, st) {
     }
   });
 
-  // 更新右栏汇总（累计申购金额；"折合"展示已移除，仅保留BP模式实际合计）
+  // 更新右栏汇总（累计申购金额及折合单位）
   const totalSubEl = document.getElementById('totalSubAmt');
   if (totalSubEl) {
     totalSubEl.textContent = sumSub.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+  const totalSubWanEl = document.getElementById('totalSubWan');
+  if (totalSubWanEl) {
+    const f = fmtBigAmount(sumSub);
+    totalSubWanEl.textContent = f.text;
+    const uEl = document.getElementById('totalSubWanUnit');
+    if (uEl) uEl.textContent = f.unit;
   }
   const tiRightEl = document.getElementById('totalI_right');
   const tiUnitEl = document.getElementById('totalIUnit');
@@ -3949,7 +3959,7 @@ function recalcLossMode(acc, st) {
     } else if (st.subMode === 'bp') {
       const valid = Number.isFinite(inputTotalBP) && inputTotalBP > 0 && subSelectedCodes.length > 0 && subSelectedCodes.every(code => getBpProductScale(st, code) > 0 && Number.isFinite(st.bpData[code]) && st.bpData[code] >= 0);
       balStatusEl.textContent = valid ? rebalanceMessage(totalRedeemAmt, sumSub) : '⚠ 请填写有效的变化BP、产品规模和目标BP';
-      balStatusEl.style.color = !valid ? '#DC2626' : (sumSub > 0 && rebalanceDifference(totalRedeemAmt, sumSub) === 0 ? '#16A34A' : '#B45309');
+      balStatusEl.style.color = !valid ? '#DC2626' : (sumSub > 0 && rebalanceDifference(totalRedeemAmt, sumSub) === 0 ? '#16A34A' : '#DC2626');
       balStatusEl.title = '最终申购 = 产品总规模（含今日申赎） × 目标BP ÷ 本次变化BP；按分验算。';
     } else if (totalRedeemAmt === 0 && sumSub === 0) {
       balStatusEl.textContent = '待输入';
