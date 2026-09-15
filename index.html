@@ -3283,7 +3283,7 @@ function renderContent(acc, st) {
   const tableTitle = `持有${acc.name}的理财产品 & 亏损分摊`;
 
   container.innerHTML = `
-    ${isLocked ? `<div style="background:#FFF3CD;border:1px solid #FFC107;color:#856404;padding:8px 16px;border-radius:4px;margin-bottom:12px;font-size:13px;">该专户已同步至头寸管理计算，当前为<strong>只读</strong>状态。如需调整，请点击下方<strong>重置</strong>按钮。</div>` : ''}
+    ${isLocked ? `<div style="background:#FFF3CD;border:1px solid #FFC107;color:#856404;padding:8px 16px;border-radius:4px;margin-bottom:12px;font-size:13px;">该专户已同步至头寸管理计算，当前为<strong>只读</strong>状态。如需调整，请先<strong>撤销同步</strong>。</div>` : ''}
     ${!isPositionFresh() ? `<div style="background:#FFF7ED;border:1px solid #FDBA74;color:#9A3412;padding:8px 16px;border-radius:4px;margin-bottom:12px;font-size:13px;">
       ⚠️ <strong>头寸数据非当日</strong>：当前依据 <strong>${positionDataDate}</strong> 上传的日初头寸计算（今日为 ${getTodayStr()}）。头寸每日变动，基于历史头寸的调仓金额不可用。请先在「头寸管理」页上传<strong>今日</strong>日初头寸文件，上传后本提示自动消失。
     </div>` : ''}
@@ -3298,8 +3298,8 @@ function renderContent(acc, st) {
       <i title="所有理财产品持有该专户的规模合计。" style="display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;margin-left:3px;border-radius:50%;background:#94A3B8;color:#fff;font-size:10px;font-style:normal;font-weight:700;cursor:help;vertical-align:middle;flex-shrink:0;">i</i>
       ${st.subMode === 'bp' ? `
       <span style="color:var(--border);margin:0 4px;">|</span>
-      <span style="font-size:12px;color:var(--text-muted);">本次变化BP</span>
-      <input type="number" id="totalBPInput" value="${st.totalLoss || ''}" step="1" min="0" placeholder="输入本次变化BP"
+      <span style="font-size:12px;color:var(--text-muted);">变化BP</span>
+      <input type="number" id="totalBPInput" value="${st.totalLoss || ''}" step="1" min="0" placeholder="请输入BP"
         style="font-weight:800;font-size:18px;color:#1A3C6D;background:linear-gradient(135deg,#F0F9FF,#E0F2FE);border:2px solid #93C5FD;border-radius:8px;padding:6px 16px;width:140px;text-align:center;"
         ${disabled}
         oninput="onTotalBPChange(this.value)"
@@ -3516,13 +3516,13 @@ function renderContent(acc, st) {
                     `<option value="" disabled title="${o.fullName || o.name}｜已清仓为终态，不可作为配对赎回来源">${fmtFundSourceOption(o)}</option>`
                   ).join('') + '</optgroup>'
                 : '';
-              const opts = '<option value="">请选择资金来源</option>' + optHtml + termHtml;
+              const opts = '<option value="">请选择赎回来源</option>' + optHtml + termHtml;
               const termHint = curTerminated
                 ? `<div class="src-terminated-hint">⚠ 原来源「${curTerminated.name}」已清仓，已自动清空，请重新选择</div>`
                 : '';
               return `<td><select id="srcSelect_${p.code}" ${disabled || !subSel ? 'disabled' : ''}
                 onchange="onFundSourceChange('${p.code}', this.value, this)"
-                title="选择配套赎回的来源专户；已清仓专户为终态，不提供选择。"
+                title="选择本笔申购对应的配套赎回专户；已清仓专户为终态，不提供选择。"
                 style="width:230px;font-size:12px;padding:4px 8px;background:${cur ? '#FFFBEB' : '#F8FAFC'};color:${cur ? '#C2410C' : '#94A3B8'};font-weight:${cur ? '600' : '400'};border:1px solid ${cur ? '#FDBA74' : '#CBD5E1'};border-radius:4px;cursor:${disabled || !subSel ? 'not-allowed' : 'pointer'};">${opts}</select><div id="srcWarn_${p.code}" style="display:none;margin-top:2px;font-size:11px;line-height:1.3;color:#DC2626;font-weight:600;"></div>${termHint}</td>`;
             })()}
             ${removeCell}
@@ -3538,7 +3538,7 @@ function renderContent(acc, st) {
           <span class="section-subtitle">— 左侧赎回、右侧申购</span>
         </div>
         <div class="section-actions">
-          <span style="font-size:12px;color:var(--text-muted);" id="balanceDisplay">累计赎回 <strong style="color:#6D28D9;" id="balRedeem">0</strong> · 累计申购 <strong style="color:#1E3A5F;" id="balSub">0</strong> <strong id="balStatus" style="color:#64748B;">待输入BP</strong></span>
+          <span style="font-size:12px;color:var(--text-muted);" id="balanceDisplay">赎回 <strong style="color:#94A3B8;font-weight:600;" id="balRedeem">0</strong> · 申购 <strong style="color:#94A3B8;font-weight:600;" id="balSub">0</strong> · <strong id="balStatus" style="color:#64748B;">待输入目标BP</strong></span>
         </div>
       </div>
       <div class="loss-split-container">
@@ -3606,7 +3606,7 @@ function renderContent(acc, st) {
                   oninput="onSubExtraSearch(this.value)" onfocus="onSubExtraSearch(this.value);this.select()">
                 <div id="subExtraSearchDropdown" style="display:none;position:fixed;z-index:1000;background:#fff;border:1px solid var(--border);border-radius:6px;max-height:200px;overflow-y:auto;width:200px;box-shadow:0 4px 12px rgba(0,0,0,.1);box-sizing:border-box;"></div>
               </div>
-              <span style="font-size:10px;color:var(--text-muted);margin-left:auto;" title="可添加SPV持仓查询中的在售产品。">已添加 <strong>${(st.subExtraProducts || []).length}</strong> 只</span>
+
             </div>
             <table>
               <thead>
@@ -3614,11 +3614,11 @@ function renderContent(acc, st) {
                   <th class="chk-cell" style="text-align:center;"><input type="checkbox" title="全选/取消全选" onchange="onSubHeaderCheck(this.checked)" ${disabled}></th>
                   <th style="width:74px;">产品代码</th>
                   <th style="width:96px;">产品名称</th>
-                  ${st.subMode === 'bp' ? '<th style="min-width:160px;">产品总规模（含今日申赎，元）<i class="th-help" data-tip="默认取自头寸管理页对应产品的总规模。">i</i></th><th style="text-align:center;width:60px;">目标BP<i class="th-help" data-tip="该产品分配的BP。">i</i></th>' : ''}
+                  ${st.subMode === 'bp' ? '<th style="min-width:160px;">产品总规模（元）<i class="th-help" data-tip="用于BP测算的产品规模，口径为含今日申赎后的产品总规模。">i</i></th><th style="text-align:center;width:60px;">目标BP<i class="th-help" data-tip="该产品分配的BP。">i</i></th>' : ''}
                   <th style="text-align:right;width:80px;">占比<i class="th-help" data-tip="${st.subMode === 'bp' ? '产品BP ÷ 总BP。' : '分配收益 ÷ 总收益。'}">i</i></th>
                   <th style="text-align:right;width:120px;">${st.subMode === 'bp' ? '申购金额（元）' : '分配收益金额（元）'}<i class="th-help" data-tip="${st.subMode === 'bp' ? '产品总规模（含今日申赎） × 目标BP ÷ 本次变化BP。' : '输入该产品分配的收益金额。'}">i</i></th>
                   ${st.subMode === 'wan' ? '<th style="text-align:right;width:120px;">自动申购金额（元）<i class="th-help" data-tip="分配占比 × 专户总规模。">i</i></th>' : ''}
-                  <th style="width:180px;">资金来源<i class="th-help" data-tip="选择配套赎回的来源专户。">i</i></th>
+                  <th style="width:180px;">赎回来源<i class="th-help" data-tip="选择本笔申购对应的配套赎回专户。">i</i></th>
                   <th style="width:60px;">操作</th>
                 </tr>
               </thead>
@@ -3648,7 +3648,7 @@ function renderContent(acc, st) {
     <div class="summary-row" id="summaryRow">
           <div class="summary-item" style="flex:0 0 auto;margin-left:auto;">
             ${isLocked ? `<button class="btn btn-outline" onclick="resetAll()" style="font-size:12px;padding:6px 16px;">
-              重置
+              撤销同步
             </button>` : ''}
             ${(isLocked || acc.holdings.length === 0) ? '' : `<button class="btn btn-primary" onclick="syncToSystem()" style="font-size:12px;padding:6px 16px;">
               同步至头寸管理计算
@@ -3901,8 +3901,7 @@ function recalcLossMode(acc, st) {
     const adj = 0; // BP按公式生成最终金额，不允许调减
     const actual = subAmt - adj;
     if (actual > srcSize) {
-      warnEl.textContent = '⚠ 来源持有 ' + (srcSize / 10000).toLocaleString('zh-CN', { maximumFractionDigits: 1 }) +
-        ' 万 < 实际申购 ' + (actual / 10000).toLocaleString('zh-CN', { maximumFractionDigits: 1 }) + ' 万，无法配对赎回';
+      warnEl.textContent = '⚠ 配套赎回金额大于来源持有规模，请调整';
       warnEl.style.display = 'block';
       if (selEl) selEl.style.borderColor = '#DC2626';
     } else {
@@ -3949,7 +3948,7 @@ function recalcLossMode(acc, st) {
         balStatusEl.textContent = '待输入总收益';
         balStatusEl.style.color = '#64748B';
       } else if (remain < 0) {
-        balStatusEl.textContent = '⚠️ 已分配 ' + allocatedPct.toFixed(2) + '% · 超出 ' + Math.abs(remainingPct).toFixed(2) + '%（阻断同步）';
+        balStatusEl.textContent = '⚠️ 已分配 ' + allocatedPct.toFixed(2) + '% · 超出 ' + Math.abs(remainingPct).toFixed(2) + '%，请调减后再同步';
         balStatusEl.style.color = '#DC2626';
       } else {
         balStatusEl.textContent = '✅ 已分配 ' + allocatedPct.toFixed(2) + '% · 剩余 ' + remainingPct.toFixed(2) + '%';
@@ -4104,7 +4103,7 @@ function onFundSourceChange(code, value, el) {
   if (value) {
     const acc = getAccount(currentAccountId);
     const src = getOtherAccounts(code, acc.id).find(o => o.id === value);
-    showToast('已指定资金来源：' + (src ? src.name : '') + '，同步时将自动生成同金额的配套赎回流水');
+    showToast('已指定赎回来源：' + (src ? src.name : '') + '，同步时将自动生成同金额的配套赎回流水');
   }
   // 切换来源后立即重算：刷新行内配对可行性校验提示（来源持有规模 vs 实际申购金额）
   recalcCurrent();
@@ -4477,18 +4476,18 @@ function showResetModal(acc) {
     <div class="modal-overlay show" id="resetModal" onclick="closeResetModal(event)">
       <div class="modal" style="width:420px;max-width:90vw;" onclick="event.stopPropagation()">
         <div class="modal-header">
-          <h3>重置调仓配置</h3>
+          <h3>撤销同步</h3>
           <span class="modal-close" onclick="closeResetModal()" style="display:flex;cursor:pointer;font-size:20px;color:var(--text-muted);padding:4px;line-height:1;">×</span>
         </div>
         <div class="modal-body">
-          <p style="font-size:14px;color:var(--text);margin-bottom:12px;">确认取消「<strong>${escHtml(acc.name)}</strong>」的同步并重置调仓配置？</p>
+          <p style="font-size:14px;color:var(--text);margin-bottom:12px;">确认撤销「<strong>${escHtml(acc.name)}</strong>」已同步至头寸管理计算的调仓结果？</p>
           <div style="background:#FEF2F2;border:1px solid #FECACA;border-radius:6px;padding:10px 12px;font-size:13px;color:#991B1B;">
-            ⚠️ 重置将撤销已同步至头寸管理的调仓指令、恢复头寸额度；页面恢复为可编辑状态，BP与总BP将清空，需重新输入后再同步。
+            ⚠️ 撤销后将取消已同步至头寸管理的调仓指令、恢复头寸额度；页面恢复为可编辑状态，BP与总BP将清空，需重新输入后再同步。
           </div>
         </div>
         <div class="modal-footer">
           <button class="btn btn-outline" onclick="closeResetModal()">取消</button>
-          <button class="btn" style="background:var(--danger);color:#fff;" onclick="confirmReset()">确认重置</button>
+          <button class="btn" style="background:var(--danger);color:#fff;" onclick="confirmReset()">确认撤销同步</button>
         </div>
       </div>
     </div>`;
@@ -4675,7 +4674,7 @@ function syncToSystem() {
     if (!sel || subAmt <= 0) return;
     const srcId = (st.fundSourceMap && st.fundSourceMap[p.code]) || '';
     if (!srcId) {
-      errors.push(p.name.split('（')[0] + '（' + p.code + '）申购金额 ' + subAmt.toLocaleString('zh-CN') + ' 元未指定「资金来源」，请在下拉中选择该笔申购资金来自哪个专户的赎回。');
+      errors.push(p.name.split('（')[0] + '（' + p.code + '）申购金额 ' + subAmt.toLocaleString('zh-CN') + ' 元未指定「赎回来源」，请在下拉中选择本笔申购对应的配套赎回专户。');
     }
   });
 
@@ -4691,7 +4690,7 @@ function syncToSystem() {
     if (!srcInfo) return;  // 失效来源由下方规模校验兜底提示
     if (srcInfo.spvTerminated) {
       // 已清仓在渲染阶段已从下拉移除并清空绑定；此处为残留脏数据（如从旧缓存载入）兜底硬阻断。
-      errors.push(p.name.split('（')[0] + '（' + p.code + '）的资金来源专户「' + srcInfo.name + '」已清仓（终态），不可作为配对赎回来源，已自动清空，请重新选择。');
+      errors.push(p.name.split('（')[0] + '（' + p.code + '）的赎回来源专户「' + srcInfo.name + '」已清仓（终态），不可作为配对赎回来源，已自动清空，请重新选择。');
       if (st.fundSourceMap) st.fundSourceMap[p.code] = '';
     } else if (srcInfo.spvOnline === false) {
       offlineSrcWarns.push(p.name.split('（')[0] + '（' + p.code + '）→ 来源专户「' + srcInfo.name + '」已下线');
@@ -4712,7 +4711,7 @@ function syncToSystem() {
     if (!srcId) return;  // 未指定来源已在上面拦截，此处仅校验已指定来源的规模
     // 来源规模从统一来源列表取（管理专户镜像 + SPV底层专户），与下拉选项同源
     const srcInfo = getOtherAccounts(p.code, acc.id).find(o => o.id === srcId);
-    if (!srcInfo) { errors.push(p.code + "：资金来源已失效，请重新选择。"); return; }
+    if (!srcInfo) { errors.push(p.code + "：赎回来源已失效，请重新选择。"); return; }
     // 已清仓来源不参与规模校验（已在上方状态校验中硬阻断并清空，避免重复报错）
     if (srcInfo.spvTerminated) return;
     const srcSize = srcInfo.size;
@@ -4720,7 +4719,7 @@ function syncToSystem() {
     const adj = 0; // BP按公式生成最终金额，不允许调减
     const actual = subAmt - adj;
     if (actual > srcSize) {
-      errors.push(p.name.split('（')[0] + '（' + p.code + '）实际申购金额 ' + actual.toLocaleString('zh-CN') + ' 元超过其在资金来源专户「' + srcInfo.name + '」的持有规模 ' + srcSize.toLocaleString('zh-CN') + ' 元，请调整申购金额或改选资金来源。');
+      errors.push(p.name.split('（')[0] + '（' + p.code + '）配套赎回金额大于赎回来源专户「' + srcInfo.name + '」的持有规模，请调整。');
     }
   });
 
@@ -4808,8 +4807,8 @@ function showSyncModal() {
     tableHTML += '<div style="font-size:13px;font-weight:600;color:var(--primary);margin:12px 0 6px;">申购侧（申购进当前专户：' + acc.name + '）</div>';
     tableHTML += '<table class="spv-table"><thead><tr>';
     tableHTML += isBP
-      ? `<th>产品代码</th><th class="pname">产品名称</th><th style="text-align:right;">目标BP / 产品规模（元）</th><th style="text-align:right;">申购金额</th><th>资金来源</th>`
-      : `<th>产品代码</th><th class="pname">产品名称</th><th style="text-align:right;">分配收益金额</th><th style="text-align:right;">申购金额</th><th>资金来源</th>`;
+      ? `<th>产品代码</th><th class="pname">产品名称</th><th style="text-align:right;">目标BP / 产品规模（元）</th><th style="text-align:right;">申购金额</th><th>赎回来源</th>`
+      : `<th>产品代码</th><th class="pname">产品名称</th><th style="text-align:right;">分配收益金额</th><th style="text-align:right;">申购金额</th><th>赎回来源</th>`;
     tableHTML += '</tr></thead><tbody>';
     subscribeProducts.forEach(p => {
       tableHTML += '<tr>';
@@ -4856,7 +4855,7 @@ function showSyncModal() {
     ? `<div style="display:flex;align-items:flex-start;gap:8px;background:#FFF7ED;border:1px solid #FDBA74;border-radius:6px;padding:9px 12px;margin-bottom:10px;">
         <span style="font-size:15px;line-height:1.2;">⚠️</span>
         <div style="font-size:12px;line-height:1.7;color:#9A3412;">
-          <strong>本次申购含已下线的资金来源专户：</strong><br>
+          <strong>本次申购含已下线的赎回来源专户：</strong><br>
           ${offlineWarns.map(w => '· ' + w).join('<br>')}
           <div style="margin-top:6px;color:#C2410C;">下线专户可能仍有残留持仓需出清；同步后头寸管理页对应专户列将标注「已下线」。</div>
         </div>
@@ -4865,7 +4864,7 @@ function showSyncModal() {
 
   document.getElementById('syncModalBody').innerHTML = `
     ${offlineBanner}
-    ${st.subMode === "bp" && rebalanceDifference(sumRedAmt, sumSub) !== 0 ? '<div style="padding:10px 12px;margin-bottom:12px;background:#FFFBEB;border:1px solid #FCD34D;border-radius:6px;color:#92400E;font-size:13px;">' + rebalanceMessage(sumRedAmt, sumSub) + '<br>本次专户净' + (sumSub > sumRedAmt ? '增加' : '减少') + ' ' + (Math.abs(rebalanceDifference(sumRedAmt, sumSub)) / 100).toLocaleString('zh-CN', {minimumFractionDigits:2,maximumFractionDigits:2}) + ' 元，请核对后确认同步。</div>' : ''}
+    ${st.subMode === "bp" && rebalanceDifference(sumRedAmt, sumSub) !== 0 ? '<div style="padding:10px 12px;margin-bottom:12px;background:#FEF2F2;border:1px solid #FCA5A5;border-radius:6px;color:#B91C1C;font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + rebalanceMessage(sumRedAmt, sumSub) + '；本次专户净' + (sumSub > sumRedAmt ? '增加' : '减少') + ' ' + (Math.abs(rebalanceDifference(sumRedAmt, sumSub)) / 100).toLocaleString('zh-CN', {minimumFractionDigits:2,maximumFractionDigits:2}) + ' 元，请核对后确认同步。</div>' : ''}
     <div class="info-line"><span class="info-label">模式</span><span class="info-value">${modeLabel}</span></div>
     <div class="info-line"><span class="info-label">当前专户</span><span class="info-value">${acc.name}（${acc.code}）</span></div>
     <div class="info-line"><span class="info-label">汇总</span><span class="info-value">申购 ${subscribeProducts.length} 只 · 赎回 ${redeemProducts.length} 只</span></div>
