@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿<!DOCTYPE html>
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
@@ -3016,42 +3016,18 @@ function renderSidebarAddSelect() {
     .filter(Boolean)
     .filter(a => !inLeftList.has(a.id));
 
-  // 已下线 / 已清仓但仍在左侧栏中的专户，允许从下拉中"清理移除"（避免出现在 allAccounts 里成为幽灵）
-  // 两类终态/过渡态分开展示：已下线可清理；已清仓只提供移除入口，绝不作为新增候选。
-  const offlineInList = spvMaintList
-    .filter(p => !p.online && !p.terminated)
-    .map(p => allAccounts.find(a => a.id === p.id))
-    .filter(Boolean)
-    .filter(a => inLeftList.has(a.id));
-
-  const terminatedInList = spvMaintList
-    .filter(p => p.terminated)
-    .map(p => allAccounts.find(a => a.id === p.id))
-    .filter(Boolean)
-    .filter(a => inLeftList.has(a.id));
-
   const candHtml = candidates.map(a => `<option value="${a.id}">${a.shortName || a.name}（${a.code}）</option>`).join('');
-  const offlineHtml = offlineInList.length > 0
-    ? '<optgroup label="—— 已下线（点击清理移除）——">' + offlineInList.map(a => `<option value="offline::${a.id}">⚠️ ${a.shortName || a.name}（${a.code}）</option>`).join('') + '</optgroup>'
-    : '';
-  // 已清仓：终态，仅保留移除入口（避免其在左侧栏中无法清理）
-  const terminatedHtml = terminatedInList.length > 0
-    ? '<optgroup label="—— 已清仓（终态，点击移出列表）——">' + terminatedInList.map(a => `<option value="offline::${a.id}">✕ ${a.shortName || a.name}（${a.code}）</option>`).join('') + '</optgroup>'
-    : '';
-
   const hasAnyCandidate = candidates.length > 0;
 
   sel.innerHTML =
-    '<option value="">' + (hasAnyCandidate ? '请选择要添加的专户…' : ((offlineInList.length > 0 || terminatedInList.length > 0) ? '在线专户已全部添加…' : '暂无已上线专户…')) + '</option>' +
-    candHtml +
-    offlineHtml +
-    terminatedHtml;
-  // 在线候选为空且无可清理项时禁用「+ 添加」按钮
+    '<option value="">' + (hasAnyCandidate ? '请选择要添加的专户…' : '暂无可添加专户') + '</option>' +
+    candHtml;
+  // 无可添加候选时禁用「+ 添加」按钮
   const btn = document.querySelector('.sidebar-add-bar button');
   sel.disabled = historyView;
   sel.title = historyView ? '历史日期为只读，不支持添加专户' : '从候选池选择要添加到左侧栏的专户';
   if (btn) {
-    btn.disabled = historyView || (!hasAnyCandidate && offlineInList.length === 0 && terminatedInList.length === 0);
+    btn.disabled = historyView || !hasAnyCandidate;
     btn.title = historyView ? '历史日期为只读，不支持添加专户' : '把下拉中选中的专户加入左侧栏';
   }
 }
@@ -3062,112 +3038,6 @@ function addAccountFromSelect() {
   const sel = document.getElementById('sidebarAddSelect');
   if (!sel || !sel.value) return;
   const raw = sel.value;
-  // 区分：正常添加 vs. 已下线专户的「从列表移除」操作
-  if (raw.startsWith('offline::')) {
-    const id = raw.slice('offline::'.length);
-    sel.value = '';
-    if (typeof removeAccount === 'function') {
-      removeAccount(id);
-    } else {
-      renderSidebarAddSelect();
-    }
-    return;
-  }
-  const id = raw;
-  const acc = allAccounts.find(a => a.id === id);
-  if (!acc) return;
-  if (!leftListIds.has(id)) leftListIds.add(id);  // 标记为「已添加到左侧栏」
-  // 兜底：确保专户在 allAccounts 中（演示初始化通常已在，此处只是双保险）
-  if (!allAccounts.some(a => a.id === id)) {
-    allAccounts.unshift(acc);
-  }
-  if (!currentAccountId) currentAccountId = id;
-  sel.value = '';
-  renderSidebarAddSelect();   // 刷新下拉（候选减少）
-  renderSidebar();             // 刷新左侧栏（新增专户出现）
-  if (currentAccountId) {
-    const a = getAccount(currentAccountId);
-    const st = getState(currentAccountId);
-    if (a && st) renderContent(a, st);
-  }
-}
-
-function toggleSidebar() {
-  const sidebar = document.getElementById('sidebar');
-  const btn = document.getElementById('sidebarCollapseBtn');
-  const collapsed = sidebar.classList.toggle('collapsed');
-  btn.textContent = collapsed ? '▶' : '◀';
-  btn.title = collapsed ? '展开专户列表' : '收起专户列表';
-}
-
-function getSidebarItems() {
-  // v2 交互：仅展示「用户主动添加到左侧栏」的专户（leftListIds 集合）。
-  // 演示账户初始化时不会自动加入，必须由用户从顶部下拉「+ 添加」才能出现在左侧栏。
-  // 已下线但仍在 leftListIds 的专户也允许展示（用户已添加过，但「专户产品维护」已下线/清仓，提示用户清理）
-  const filtered = allAccounts.filter(a => leftListIds.has(a.id));
-  // 已同步（done）置顶
-  filtered.sort((a, b) => {
-    const aDone = (getState(a.id) || {}).status === 'done' ? 0 : 1;
-    const bDone = (getState(b.id) || {}).status === 'done' ? 0 : 1;
-    return aDone - bDone;
-  });
-  return filtered;
-}
-
-function renderSidebar() {
-  const items = getSidebarItems();
-  const list = document.getElementById('sidebarList');
-
-  if (items.length === 0) {
-    list.innerHTML = '<div class="sidebar-empty">请先选择专户并添加</div>';
-  } else {
-    list.innerHTML = items.map(acc => {
-      // 已清仓专户（终态）：左侧导航绝对屏蔽——不可点击、不进入调仓。
-      // 保留为灰色不可选行，仅提供「×」移出入口，避免成为无法清理的幽灵行。
-      // 注意：getState() 对终态专户返回 null（不构造调仓状态），故此处先判终态再取状态。
-      const spvStat = getSpvStatusById(acc.id);
-      const isTerminated = spvStat.terminated;
-      const st = isTerminated ? null : getState(acc.id);
-      const status = st ? st.status : 'pending';
-      const active = (!isTerminated && acc.id === currentAccountId) ? ' active' : '';
-      const canRemove = status !== 'done';
-      const clickAttr = isTerminated
-        ? `onclick="event.stopPropagation();showToast('${acc.name} 已清仓（终态），不可进入调仓；请点击「×」移出列表')"`
-        : `onclick="switchAccount('${acc.id}')"`;
-      const rowTitle = isTerminated ? '该专户已清仓（终态），不可进入调仓，请移出列表' : `${acc.name}（${acc.code}）`;
-      return `
-        <div class="sidebar-item${active}${isTerminated ? ' terminated' : ''}" data-account="${acc.id}" ${clickAttr}>
-          <span class="item-name" title="${rowTitle}">${acc.name}<span style="color:var(--text-muted);font-size:11px;margin-left:6px;">${acc.code}</span></span>
-          ${isTerminated ? '<span class="terminated-badge" title="该专户已清仓（终态），不可作为调仓对象">已清仓</span>' : ''}
-          ${isTerminated ? '' : (() => {
-            // 演示专户：鑫和14号=BP模式示例，宁聚5号=收益分配示例，始终显示模式标签；已同步时再补「已同步」标签
-            const doneTag = '<span style="font-size:10px;color:#1A8353;background:#DCFCE7;border-radius:3px;padding:1px 6px;flex-shrink:0;margin-left:4px;">已同步</span>';
-            if (acc.id === 'xinhe14') return '<span style="font-size:10px;color:#1D4ED8;background:#DBEAFE;border-radius:3px;padding:1px 6px;flex-shrink:0;margin-left:4px;">BP模式示例</span>' + (status === 'done' ? doneTag : '');
-            if (acc.id === 'ningju5') return '<span style="font-size:10px;color:#6D1786;background:#F3E8FF;border-radius:3px;padding:1px 6px;flex-shrink:0;margin-left:4px;">收益分配示例</span>' + (status === 'done' ? doneTag : '');
-            // 其余专户：已同步时显示分摊模式
-            if (status === 'done') return '<span style="font-size:10px;color:#1A8353;background:#DCFCE7;border-radius:3px;padding:1px 6px;flex-shrink:0;margin-left:4px;">' + (st.subMode === 'bp' ? 'BP分摊' : '收益分配') + '</span>';
-            return '';
-          })()}
-          <span class="item-remove" title="${canRemove ? '移除该专户' : '已同步，需先撤销同步才能移除'}" onclick="event.stopPropagation();removeAccount('${acc.id}')">×</span>
-        </div>
-      `;
-    }).join('');
-  }
-  // 同步刷新顶部专户下拉（候选池=已上线专户减去左侧栏）
-  renderSidebarAddSelect();
-}
-
-// ==================== ACCOUNT SWITCH ====================
-
-function switchAccount(accountId) {
-  // 终态守卫：已清仓专户不可进入调仓（左侧栏已置灰，此处兜底防止其它入口绕过）
-  const guardStat = getSpvStatusById(accountId);
-  if (guardStat.terminated) {
-    const ga = getAccount(accountId);
-    showToast((ga ? ga.name : '该专户') + ' 已清仓（终态），不可进入调仓');
-    return;
-  }
-
   // save current before switching
   if (currentAccountId && currentAccountId !== accountId) {
     saveCurrentState();
@@ -4598,9 +4468,7 @@ function syncToSystem() {
     const redAmt = st.lossRedeemAmt?.[p.code] || 0;
     return sel && redAmt > 0;
   });
-  if (redeemSelected.length === 0) {
-    errors.push('左栏无有效赎回记录，请至少输入一只产品的赎回金额。');
-  }
+  // 左侧无赎回仅形成差额提示，不单独阻断同步。
 
   // 赎回金额超限校验：单产品赎回金额不得超过其持有该专户的规模
   acc.holdings.forEach(p => {
