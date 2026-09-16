@@ -3380,7 +3380,8 @@ function renderContent(acc, st) {
 
       // 左栏搜索过滤：按产品代码 / 产品名称关键字过滤（不影响数据，仅控制可见行）
       // 已勾选或已填赎回金额的产品始终保留，避免过滤时误以为金额丢失
-      const redKw = (st.redSearchKw || '').trim().toLowerCase();
+      const redRaw = (st.redSearchKw || '').trim();
+      const redKw = redRaw.toLowerCase();
       const redMatch = (p) => p.code.toLowerCase().includes(redKw) || p.name.toLowerCase().includes(redKw);
       // 关键字命中数（不含「因有数据而保留」的行），用于提示过滤效果
       const redHitCount = redKw ? acc.holdings.filter(redMatch).length : acc.holdings.length;
@@ -3528,9 +3529,9 @@ function renderContent(acc, st) {
           <div style="padding:5px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:#FAF7FD;">
             <span style="font-size:11px;color:#6D28D9;font-weight:600;">🔍 查找理财产品：</span>
             <div style="position:relative;">
-              <input type="text" id="redSearchInput" value="${redKw.replace(/"/g, '&quot;')}" placeholder="产品代码/名称..."
+              <input type="text" id="redSearchInput" value="${redRaw.replace(/"/g, '&quot;')}" placeholder="产品代码/名称..."
                 style="width:200px;padding:4px 8px;font-size:11px;border:1px solid #C4B5FD;border-radius:4px;box-sizing:border-box;background:#fff;"
-                oninput="onRedSearchInput(this.value)">
+                oncompositionstart="window.__redSearchComposing=true" oncompositionend="window.__redSearchComposing=false;onRedSearchInput(this.value)" oninput="onRedSearchInput(this.value)">
             </div>
             <span id="redSearchClearWrap" style="display:${redKw ? 'inline-flex' : 'none'};">
               <button class="btn" onclick="clearRedSearch()" style="font-size:10px;padding:3px 8px;background:#EDE9FE;color:#6D28D9;border:1px solid #C4B5FD;border-radius:3px;cursor:pointer;font-weight:600;">清除</button>
@@ -4099,6 +4100,8 @@ function onRedSearchInput(value) {
   if (!st) return;
   const kw = String(value || '');
   st.redSearchKw = kw;
+  // 中文输入法拼音/候选词合成期间不能重渲染，否则会打断输入。
+  if (window.__redSearchComposing) return;
   // 重新聚焦到搜索框（重渲染后焦点丢失），并把光标移到末尾
   const keepFocus = kw !== '';
   renderContent(getAccount(currentAccountId), st);
@@ -4599,6 +4602,7 @@ function syncToSystem() {
       if (st.subSelectedMap?.[p.code] === false) return;
       if (!getBpProductScale(st, p.code)) errors.push(p.code + '：理财产品SPV持仓暂无有效的产品总规模（含今日申赎），请先完善SPV持仓数据。');
       if (!Number.isFinite(st.bpData[p.code]) || st.bpData[p.code] < 0) errors.push(p.code + '：目标BP必须为非负有效数字。');
+      if (Number.isFinite(st.totalLoss) && st.totalLoss > 0 && Number.isFinite(st.bpData[p.code]) && st.bpData[p.code] > st.totalLoss) errors.push(p.code + '：目标BP不得大于调整BP，单行占比不能超过100%。');
     });
   } else {
     // 收益分配模式：校验总收益是否已填、是否有勾选产品且分配收益>0、分配额是否超出总收益
@@ -4616,7 +4620,7 @@ function syncToSystem() {
       errors.push('右栏未勾选产品或分配收益金额均为0，请逐行填写各产品分配收益金额。');
     }
     if (totalProfit > 0 && Math.round(sumAssigned * 100) > Math.round(totalProfit * 100)) {
-      errors.push('分配收益合计 ' + sumAssigned.toLocaleString('zh-CN') + ' 元已超出本次可分配总收益 ' + totalProfit.toLocaleString('zh-CN') + ' 元（超出 ' + (sumAssigned - totalProfit).toLocaleString('zh-CN') + ' 元），请调整分配金额。（分配合计少于总收益时剩余部分留存，不阻断）');
+      errors.push('分配收益合计 ' + sumAssigned.toLocaleString('zh-CN') + ' 元已超出本次可分配总收益 ' + totalProfit.toLocaleString('zh-CN') + ' 元（超出 ' + (sumAssigned - totalProfit).toLocaleString('zh-CN') + ' 元），请调整分配金额。');
     }
   }
 
