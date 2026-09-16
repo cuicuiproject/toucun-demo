@@ -3029,13 +3029,6 @@ function renderSidebarAddSelect() {
     .filter(Boolean)
     .filter(a => !inLeftList.has(a.id));
 
-  // 临时专户候选：不在「专户产品维护」清单中，但当日有调仓数据（_temp）。
-  // 这类专户真实存在且携带数据，必须可被加入左侧栏调仓，否则同步进来的金额无处处理。
-  // 放在正常候选之后，并在下拉中加「临时」后缀提示其维护状态。
-  const tempCandidates = allAccounts
-    .filter(a => a._temp && !spvMaintList.some(p => p.id === a.id))
-    .filter(a => !inLeftList.has(a.id));
-
   // 已下线 / 已清仓但仍在左侧栏中的专户，允许从下拉中"清理移除"（避免出现在 allAccounts 里成为幽灵）
   // 两类终态/过渡态分开展示：已下线可清理；已清仓只提供移除入口，绝不作为新增候选。
   const offlineInList = spvMaintList
@@ -3051,10 +3044,6 @@ function renderSidebarAddSelect() {
     .filter(a => inLeftList.has(a.id));
 
   const candHtml = candidates.map(a => `<option value="${a.id}">${a.shortName || a.name}（${a.code}）</option>`).join('');
-  // 临时专户独立分组，明确其「不在维护清单」的属性，仍可正常添加调仓
-  const tempHtml = tempCandidates.length > 0
-    ? '<optgroup label="—— 临时专户（不在维护清单，当日有调仓数据）——">' + tempCandidates.map(a => `<option value="${a.id}">${a.shortName || a.name}（${a.code}） · 临时</option>`).join('') + '</optgroup>'
-    : '';
   const offlineHtml = offlineInList.length > 0
     ? '<optgroup label="—— 已下线（点击清理移除）——">' + offlineInList.map(a => `<option value="offline::${a.id}">⚠️ ${a.shortName || a.name}（${a.code}）</option>`).join('') + '</optgroup>'
     : '';
@@ -3063,15 +3052,14 @@ function renderSidebarAddSelect() {
     ? '<optgroup label="—— 已清仓（终态，点击移出列表）——">' + terminatedInList.map(a => `<option value="offline::${a.id}">✕ ${a.shortName || a.name}（${a.code}）</option>`).join('') + '</optgroup>'
     : '';
 
-  const hasAnyCandidate = candidates.length > 0 || tempCandidates.length > 0;
+  const hasAnyCandidate = candidates.length > 0;
 
   sel.innerHTML =
     '<option value="">' + (hasAnyCandidate ? '请选择要添加的专户…' : ((offlineInList.length > 0 || terminatedInList.length > 0) ? '在线专户已全部添加…' : '暂无已上线专户…')) + '</option>' +
     candHtml +
-    tempHtml +
     offlineHtml +
     terminatedHtml;
-  // 在线候选（含临时专户）为空且无可清理项时禁用「+ 添加」按钮
+  // 在线候选为空且无可清理项时禁用「+ 添加」按钮
   const btn = document.querySelector('.sidebar-add-bar button');
   sel.disabled = historyView;
   sel.title = historyView ? '历史日期为只读，不支持添加专户' : '从候选池选择要添加到左侧栏的专户';
@@ -3388,7 +3376,9 @@ function renderContent(acc, st) {
       const leftVisible = redKw
         ? acc.holdings.filter(p => {
             const hasAmt = (st.lossRedeemAmt?.[p.code] ?? 0) > 0;
-            const isSel = (st.lossSelectedMap && st.lossSelectedMap[p.code] !== false);
+            // 仅明确勾选（true）的行在未命中搜索词时保留。
+            // 动态加载的持仓可能尚无该键，undefined 不能按已勾选处理，否则所有行都会被保留，表现为搜索无效。
+            const isSel = st.lossSelectedMap?.[p.code] === true;
             return redMatch(p) || hasAmt || isSel;
           })
         : acc.holdings;
@@ -3531,11 +3521,9 @@ function renderContent(acc, st) {
             <div style="position:relative;">
               <input type="text" id="redSearchInput" value="${redRaw.replace(/"/g, '&quot;')}" placeholder="产品代码/名称..."
                 style="width:200px;padding:4px 8px;font-size:11px;border:1px solid #C4B5FD;border-radius:4px;box-sizing:border-box;background:#fff;"
-                oncompositionstart="window.__redSearchComposing=true" oncompositionend="window.__redSearchComposing=false;onRedSearchInput(this.value)" oninput="onRedSearchInput(this.value)">
+                oncompositionstart="window.__redSearchComposing=true" oncompositionend="window.__redSearchComposing=false;onRedSearchInput(this.value, event)" oninput="onRedSearchInput(this.value, event)" onkeydown="if(event.key==='Enter') onRedSearchCommit()">
             </div>
-            <span id="redSearchClearWrap" style="display:${redKw ? 'inline-flex' : 'none'};">
-              <button class="btn" onclick="clearRedSearch()" style="font-size:10px;padding:3px 8px;background:#EDE9FE;color:#6D28D9;border:1px solid #C4B5FD;border-radius:3px;cursor:pointer;font-weight:600;">清除</button>
-            </span>
+            <button class="btn" onclick="onRedSearchCommit()" style="font-size:10px;padding:3px 8px;background:#6D28D9;color:#fff;border:1px solid #6D28D9;border-radius:3px;cursor:pointer;font-weight:600;">搜索</button>
             <span id="redSearchHint" style="font-size:10px;color:var(--text-muted);margin-left:auto;">${redKw ? (redHitCount === 0 ? `无匹配 · 保留 ${redKeptCount} 只已填金额行` : `已过滤 · 显示 <strong style="color:#6D28D9;">${leftVisible.length}</strong> / ${acc.holdings.length} 只${redKeptCount > 0 ? `（含 ${redKeptCount} 只已填金额）` : ''}`) : `共 <strong>${acc.holdings.length}</strong> 只持仓产品`}</span>
           </div>
           <div class="loss-panel-body">
@@ -4095,13 +4083,14 @@ function onUnselectedInputClick() {
 
 // 调仓左栏：赎回端产品搜索（按代码/名称关键字过滤）
 // 仅控制显示，不影响任何勾选/金额数据；已勾选或已填金额的行始终保留
-function onRedSearchInput(value) {
+function onRedSearchInput(value, evt) {
   const st = getState(currentAccountId);
   if (!st) return;
   const kw = String(value || '');
   st.redSearchKw = kw;
   // 中文输入法拼音/候选词合成期间不能重渲染，否则会打断输入。
-  if (window.__redSearchComposing) return;
+  const composing = !!(evt && evt.isComposing) || window.__redSearchComposing;
+  if (composing) return;
   // 重新聚焦到搜索框（重渲染后焦点丢失），并把光标移到末尾
   const keepFocus = kw !== '';
   renderContent(getAccount(currentAccountId), st);
@@ -4111,12 +4100,15 @@ function onRedSearchInput(value) {
   }
 }
 
-// 清除左栏搜索关键字
-function clearRedSearch() {
+function onRedSearchCommit() {
   const st = getState(currentAccountId);
   if (!st) return;
-  st.redSearchKw = '';
+  const el = document.getElementById('redSearchInput');
+  st.redSearchKw = el ? String(el.value || '') : '';
+  window.__redSearchComposing = false;
   renderContent(getAccount(currentAccountId), st);
+  const next = document.getElementById('redSearchInput');
+  if (next) { next.focus(); next.setSelectionRange(next.value.length, next.value.length); }
 }
 
 // 调仓左栏：赎回金额变更
