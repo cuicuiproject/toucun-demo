@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿<!DOCTYPE html>
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
@@ -2532,7 +2532,7 @@
           <input type="date" id="adjustTradeDateInput" onchange="onAdjustTradeDateChange(this.value)">
           <button type="button" id="adjustTodayBtn" onclick="goAdjustToday()">查看今日</button>
         </div>
-        <span id="adjustDateModeTag" class="adjust-date-tag today">今日可编辑</span>
+        <span id="adjustDateModeTag" class="adjust-date-tag today" style="display:none;"></span>
       </div>
       <!-- 顶部专户选择 + 添加（v2 新交互：用户主动添加，左侧栏默认空） -->
       <div class="sidebar-add-bar">
@@ -2772,7 +2772,7 @@ const allAccounts = [
 // ==================== 理财产品候选来源 ====================
 // 2026-08-17 起不再维护独立产品库：拉壳/调仓「添加理财产品」候选
 // 统一取自「SPV持仓查询」页数据（positionData），见 getAddableProducts()
-// 已下线产品排除、未维护产品可添加（标注"未上线"）、规模带出持有专户总规模
+// 已下线产品排除、未维护产品可添加（标注“临时”）、规模带出持有专户总规模
 
 // ==================== GLOBAL STATE ====================
 // accountState: { accountId: { subMode, bpData, totalLoss, totalProfit, profitAllocationMap, subAmountMap, ... } }
@@ -2810,7 +2810,7 @@ function getState(accountId) {
       lossRedeemAmt: {},           // 调仓左栏赎回金额 { productCode: amount }
       profitAllocationMap: {},     // 收益分配模式：各产品分得的收益金额（用户输入）
       subAmountMap: {},            // 系统生成的申购金额；收益分配模式下等于 profitAllocationMap
-      fundSourceMap: {},           // 调仓右栏资金来源 { productCode: 来源专户id }，留空=现金申购
+      fundSourceMap: {},           // 调仓右栏资金来源 { productCode: 来源专户id }，有效申购行必选
       redSearchKw: '',             // 调仓左栏（赎回端）产品搜索关键字（按代码/名称过滤，仅影响显示）
       subExtraProducts: [],        // 调仓右栏申购端手动添加的「非本专户持仓」产品 [{code, name}]，
                                    // 业务放开申购端候选池：申购即「进入」当前专户，是否预先持仓不影响申购能力
@@ -3444,7 +3444,7 @@ function renderContent(acc, st) {
                 ${disabled ? 'disabled' : ''}
                 ${!subSel && st.subMode !== 'bp' ? 'readonly onclick="onUnselectedInputClick()"' : ''}
                 oninput="${st.subMode === 'bp' ? '' : 'onSubAmountChange(\'' + p.code + '\', this.value)'}"
-                title="${st.subMode === 'bp' ? '理财产品SPV持仓中的持有专户总规模（含今日申赎） × 目标BP ÷ 调整BP。' : '输入该产品分配的收益金额。'}"
+                title="${st.subMode === 'bp' ? '根据SPV文件数据，取该理财产品持有所有专户的规模之和，再按目标BP和调整BP计算。' : '输入该产品分配的收益金额。'}"
                 style="width:120px;${st.subMode === 'bp' ? 'background:#F8FAFC;color:#1E3A5F;font-weight:600;' : (!subSel ? 'background:#F5F5F5;color:#B0B0B0;cursor:pointer;' : 'background:#fff;color:#6D28D9;font-weight:600;')}">
             </td>
             ${st.subMode === 'wan' ? `<td class="num" id="generatedSubAmt_${p.code}" style="font-weight:600;color:#1E3A5F;background:#F8FAFC;">${subAmt ? subAmt.toLocaleString('zh-CN') : '--'}</td>` : ''}
@@ -3555,9 +3555,9 @@ function renderContent(acc, st) {
                   <th class="chk-cell" style="text-align:center;"><input type="checkbox" title="全选/取消全选" onchange="onSubHeaderCheck(this.checked)" ${disabled}></th>
                   <th style="width:74px;">产品代码</th>
                   <th style="width:96px;">产品名称</th>
-                  ${st.subMode === 'bp' ? '<th style="min-width:160px;">产品总规模（元）<i class="th-help" data-tip="用于BP测算的产品规模，来源为《理财产品SPV持仓》中该理财产品的持有专户总规模，口径含今日申赎数据。">i</i></th><th style="text-align:center;width:60px;">目标BP<i class="th-help" data-tip="该产品分配的BP。">i</i></th>' : ''}
+                  ${st.subMode === 'bp' ? '<th style="min-width:160px;">产品总规模（元）<i class="th-help" data-tip="根据SPV文件数据，取该理财产品持有所有专户的规模之和。">i</i></th><th style="text-align:center;width:60px;">目标BP<i class="th-help" data-tip="该产品分配的BP。">i</i></th>' : ''}
                   <th style="text-align:right;width:80px;">占比<i class="th-help" data-tip="${st.subMode === 'bp' ? '目标BP ÷ 调整BP。' : '分配收益 ÷ 总收益。'}">i</i></th>
-                  <th style="text-align:right;width:120px;">${st.subMode === 'bp' ? '申购金额（元）' : '分配收益金额（元）'}<i class="th-help" data-tip="${st.subMode === 'bp' ? '理财产品SPV持仓中的持有专户总规模（含今日申赎） × 目标BP ÷ 调整BP。' : '输入该产品分配的收益金额。'}">i</i></th>
+                  <th style="text-align:right;width:120px;">${st.subMode === 'bp' ? '申购金额（元）' : '分配收益金额（元）'}<i class="th-help" data-tip="${st.subMode === 'bp' ? '根据SPV文件数据，取该理财产品持有所有专户的规模之和，再按目标BP和调整BP计算。' : '输入该产品分配的收益金额。'}">i</i></th>
                   ${st.subMode === 'wan' ? '<th style="text-align:right;width:120px;">自动申购金额（元）<i class="th-help" data-tip="分配占比 × 专户总规模。">i</i></th>' : ''}
                   <th style="width:180px;">赎回来源<i class="th-help" data-tip="选择本笔申购对应的配套赎回专户。">i</i></th>
                   <th style="width:60px;">操作</th>
@@ -3889,9 +3889,9 @@ function recalcLossMode(acc, st) {
       }
     } else if (st.subMode === 'bp') {
       const valid = Number.isFinite(inputTotalBP) && inputTotalBP > 0 && subSelectedCodes.length > 0 && subSelectedCodes.every(code => getBpProductScale(st, code) > 0 && Number.isFinite(st.bpData[code]) && st.bpData[code] >= 0);
-      balStatusEl.textContent = valid ? rebalanceMessage(totalRedeemAmt, sumSub) : '⚠ 请填写有效的调整BP、产品规模和目标BP';
+      balStatusEl.textContent = valid ? rebalanceMessage(totalRedeemAmt, sumSub) : '⚠ 请填写有效的调整BP和目标BP';
       balStatusEl.style.color = !valid ? '#DC2626' : (sumSub > 0 && rebalanceDifference(totalRedeemAmt, sumSub) === 0 ? '#16A34A' : '#DC2626');
-      balStatusEl.title = '最终申购 = 理财产品SPV持仓中的持有专户总规模（含今日申赎） × 目标BP ÷ 调整BP；按分验算。';
+      balStatusEl.title = '最终申购 = 该理财产品持有所有专户的规模之和 × 目标BP ÷ 调整BP；按分验算。';
     } else if (totalRedeemAmt === 0 && sumSub === 0) {
       balStatusEl.textContent = '待输入';
       balStatusEl.style.color = '#64748B';
@@ -4064,7 +4064,7 @@ function onRedSearchInput(value, evt) {
   if (!st) return;
   const kw = String(value || '');
   st.redSearchKw = kw;
-  // 中文输入法拼音/候选词合成期间不能重渲染，否则会打断输入。
+  // 输入过程中只更新关键字，搜索结果按稳定时机刷新。
   const composing = !!(evt && evt.isComposing) || window.__redSearchComposing;
   if (composing) return;
   // 重新聚焦到搜索框（重渲染后焦点丢失），并把光标移到末尾
@@ -4863,7 +4863,7 @@ function confirmSync() {
   // 3) 配套赎回：指定资金来源的申购，自动生成同产品、同金额的赎回流水（写入来源专户），
   //    使该产品当日头寸净变动为 0（申购流出 = 赎回流入），头寸表自动平衡
   subscribeProducts.forEach(p => {
-    if (!p.fundSrcId) return;  // 未指定来源 = 现金申购，不生成配套赎回
+    if (!p.fundSrcId) return;  // 未指定来源不生成配套赎回；提交校验会阻断有效申购
     const posRow = ensureRow(p.code, p.name);
     if (!posRow._spv[p.fundSrcId]) posRow._spv[p.fundSrcId] = { sub: null, red: null, subManual: 0, subRebalance: 0, redManual: 0, redRebalance: 0 };
     const srcSpv = posRow._spv[p.fundSrcId];
@@ -4923,7 +4923,8 @@ function renderAdjustDateBar() {
   input.value = adjustTradeDate;
   const history = isAdjustHistoryMode();
   tag.className = 'adjust-date-tag ' + (history ? 'history' : 'today');
-  tag.textContent = history ? ('历史记录：' + adjustTradeDate + '，只读') : '今日可编辑';
+  tag.textContent = history ? ('历史记录：' + adjustTradeDate + '，只读') : '';
+  tag.style.display = history ? 'inline-flex' : 'none';
   if (btn) btn.disabled = !history;
 }
 function onAdjustTradeDateChange(value) {
@@ -5345,7 +5346,7 @@ function getSPVData(productCode) {
 
   // 模拟 6 个专户，净值/渠道各不相同
   // 已取消：不再挂载虚构的「已清仓专户」示例，Demo 中资金来源下拉只展示实际可选来源。
-  //       真实系统的已清仓专户由维护清单置 terminated=true 自动进入下拉占位。
+  //       真实系统的已清仓专户由维护清单置 terminated=true 后自动从资金来源下拉中排除。
   const baseSpv = [
     { spvCode:'ZTQX08', spvName:'中铁信托-乾鑫8号集合资金信托计划', nav:1.11146787, channel:'直销' },
     { spvCode:'2021-1147', spvName:'华润信托·招利33号集合资金信托', nav:1.10354761, channel:'直销' },
@@ -8016,7 +8017,7 @@ function exportPositionData() {
 
 // ==================== 产品搜索添加 ====================
 // 候选来源：「SPV持仓查询」页数据（positionData），不再使用独立产品库
-// 已下线产品排除；未维护产品可添加（标注"未上线"）；规模带出持有专户总规模（元）
+// 已下线产品排除；未维护产品可添加（标注“临时”）；规模带出持有专户总规模（元）
 
 function getAddableProducts() {
   return positionData
@@ -8029,7 +8030,18 @@ function getAddableProducts() {
     })
     .filter(p => p.status !== 'offline');
 }
-
+function getAddProductEmptyText(query, existingCodes) {
+  const q = (query || '').trim().toLowerCase();
+  const matches = positionData.filter(p => p.code.toLowerCase().includes(q) || p.name.toLowerCase().includes(q));
+  if (matches.length === 0) return '该理财产品不在当日SPV持仓中，不可添加';
+  const offlineMatches = matches.filter(p => {
+    const m = productMaintList.find(x => x.code === p.code);
+    return m && !m.online;
+  });
+  if (offlineMatches.length > 0 && offlineMatches.length === matches.length) return '该理财产品已下线，不可作为新增申购目标';
+  if (existingCodes && matches.every(p => existingCodes.has(p.code))) return '该理财产品已在当前列表中';
+  return '未找到符合条件的理财产品，请更换代码或名称重试';
+}
 function onProductSearch(query) {
   const dropdown = document.getElementById('productSearchDropdown');
   const input = document.getElementById('productSearchInput');
@@ -8043,11 +8055,11 @@ function onProductSearch(query) {
   ).slice(0, 8);
 
   if (results.length === 0) {
-    dropdown.innerHTML = '<div style="padding:8px 12px;font-size:12px;color:var(--text-muted);">未找到匹配产品（仅可选SPV持仓查询中的产品）</div>';
+    dropdown.innerHTML = '<div style="padding:8px 12px;font-size:12px;color:var(--text-muted);">' + getAddProductEmptyText(q) + '</div>';
   } else {
     dropdown.innerHTML = results.map(p => {
       const badge = p.status === 'unmaint'
-        ? '<span style="font-size:10px;padding:1px 5px;border-radius:3px;background:#FEF3C7;color:#B45309;">未上线</span>'
+        ? '<span style="font-size:10px;padding:1px 5px;border-radius:3px;background:#FEF3C7;color:#B45309;">临时</span>'
         : '';
       const sizeYi = (p.totalScale / 100000000).toFixed(2);
       return `
@@ -8136,11 +8148,11 @@ function onSubExtraSearch(query) {
   ).slice(0, 8);
 
   if (results.length === 0) {
-    dropdown.innerHTML = '<div style="padding:8px 12px;font-size:12px;color:var(--text-muted);">未找到匹配产品（已剔除本专户持仓与已添加项）</div>';
+    dropdown.innerHTML = '<div style="padding:8px 12px;font-size:12px;color:var(--text-muted);">' + getAddProductEmptyText(q, existing) + '</div>';
   } else {
     dropdown.innerHTML = results.map(p => {
       const badge = p.status === 'unmaint'
-        ? '<span style="font-size:10px;padding:1px 5px;border-radius:3px;background:#FEF3C7;color:#B45309;">未上线</span>'
+        ? '<span style="font-size:10px;padding:1px 5px;border-radius:3px;background:#FEF3C7;color:#B45309;">临时</span>'
         : '';
       const sizeYi = (p.totalScale / 100000000).toFixed(2);
       return `
@@ -8247,7 +8259,7 @@ function renderChannelProductPicker(query) {
   if (q) items = items.filter(p => p.code.toLowerCase().includes(q) || p.name.toLowerCase().includes(q));
 
   if (!items.length) {
-    listEl.innerHTML = '<div style="padding:16px;text-align:center;font-size:12px;color:var(--text-muted);">未找到匹配产品（仅可选SPV持仓查询中的产品）</div>';
+    listEl.innerHTML = '<div style="padding:16px;text-align:center;font-size:12px;color:var(--text-muted);">' + (q ? getAddProductEmptyText(q) : '暂无可添加理财产品') + '</div>';
     return;
   }
 
@@ -8258,7 +8270,7 @@ function renderChannelProductPicker(query) {
     const exists = acc && acc.holdings.find(h => h.code === p.code);
     const badge = p.status === 'online'
       ? '<span style="font-size:10px;padding:1px 5px;border-radius:3px;background:#DCFCE7;color:#15803D;">已上线</span>'
-      : '<span style="font-size:10px;padding:1px 5px;border-radius:3px;background:#FEF3C7;color:#B45309;">未上线</span>';
+      : '<span style="font-size:10px;padding:1px 5px;border-radius:3px;background:#FEF3C7;color:#B45309;">临时</span>';
     const sizeYi = (p.totalScale / 100000000).toFixed(2);
     const btn = exists
       ? '<button disabled style="padding:4px 12px;font-size:11px;border:1px solid var(--border);border-radius:4px;background:#F1F5F9;color:#94A3B8;cursor:not-allowed;">已存在</button>'
