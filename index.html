@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿﻿﻿﻿﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
@@ -305,11 +305,7 @@
     border: 1px solid #E5E7EB; border-radius: 3px;
     padding: 1px 6px; flex-shrink: 0; margin-left: 4px;
   }
-  /* 资金来源下拉中的「已清仓」占位项（不可选，仅告警） */
   select option:disabled { color: #9CA3AF; font-style: italic; }
-  .src-terminated-hint {
-    margin-top: 2px; font-size: 11px; line-height: 1.3; color: #9CA3AF; font-weight: 500;
-  }
 
   /* ============ MAIN CONTENT ============ */
   .content {
@@ -2930,14 +2926,10 @@ function getSpvStatusById(accId) {
 // 来源2：SPV持仓查询（getSPVData，产品持有的底层专户/信托计划/资管计划）
 // 两路合并按专户代码去重，管理专户在前（真实维护数据优先）
 //
-// ⚠ 状态处理策略（2026-09-14 调整）：
-//   已清仓（终态）不再在此处静默剔除，而是「保留 + 打标 spvTerminated=true」返回，
-//   由各调用方按场景决定屏蔽方式：
-//     · 资金来源下拉（renderContent → fmtFundSourceOption）：渲染为 disabled 占位项，
-//       用户看得到「为什么会少一个专户」，但选不中；若历史数据已绑定该来源，自动清空并提示。
-//     · 同步校验 syncToSystem：仍作为「错误」硬阻断（残留脏数据兜底）。
-//     · 配对可行性 / 规模校验：命中已清仓则跳过（不参与计算，也不报误导性错误）。
-//   已下线的保留并打标 spvOnline=false → 下拉允许选择但追加「⚠ 已下线」后缀。
+// 状态处理策略：
+//   已清仓（终态）保留标记供校验使用，但不进入资金来源下拉候选。
+//   已下线保留标记供确认和同步校验使用，来源选择区不展示维护状态。
+//   未维护来源没有维护状态，按实际持仓来源展示。
 function getOtherAccounts(productCode, currentAccId) {
   const curAcc = allAccounts.find(a => a.id === currentAccId);
   const result = [];
@@ -2997,19 +2989,14 @@ function getOtherAccounts(productCode, currentAccId) {
 }
 
 // 资金来源下拉的选项文案：专户短名 · 性质 · 持有 XX万
-// 状态后缀：已下线 → 「 · ⚠ 已下线」（可选）；已清仓 → 「 · ✕ 已清仓（不可选）」（禁用占位）
+// 来源选择区仅展示名称、性质和持有规模；已清仓来源不进入下拉候选
 // 例：「鑫和7号 · 管理专户 · 持有1473.5万」
-//     「宁聚5号 · 债券专户 · 持有3000万 · ⚠ 已下线」
-//     「国联光盈18号 · 资管计划 · 持有1200万 · ✕ 已清仓（不可选）」
 function fmtFundSourceOption(o) {
   const wan = (o.size || 0) / 10000;
   const wanTxt = wan >= 1000
     ? wan.toLocaleString('zh-CN', { maximumFractionDigits: 0 })
     : wan.toLocaleString('zh-CN', { maximumFractionDigits: 1 });
-  const statusSuffix = o.spvTerminated ? ' · ✕ 已清仓（不可选）'
-                      : o.spvStatusLabel ? ` · ⚠ ${o.spvStatusLabel}`
-                      : '';
-  return `${o.name} · ${o.nature} · 持有${wanTxt}万${statusSuffix}`;
+  return `${o.name} · ${o.nature} · 持有${wanTxt}万`;
 }
 
 // ==================== SIDEBAR ====================
@@ -3464,33 +3451,22 @@ function renderContent(acc, st) {
             ${(() => {
               // 资金来源：下拉选择该笔申购资金来自哪个专户的赎回（选项=该产品持有的其他专户）
               // 来源专户的持有规模仅用于校验能否配对赎回，不参与申购金额计算
-              // 已清仓（终态）专户在下拉中保留为 disabled 占位项——用户能看到「少了谁、为什么少」，
-              // 但无法选中；已下线专户仍可选择（追加 ⚠ 提示）。
+              // 来源选择区仅展示可选专户；已清仓（终态）专户不进入下拉候选。
               const othersAll = getOtherAccounts(p.code, acc.id);
               const selectable = othersAll.filter(o => !o.spvTerminated);
               let cur = (st.fundSourceMap && st.fundSourceMap[p.code]) || '';
-              // 历史数据兜底：已绑定的来源若已被清仓，视为失效 → 清空并交由下方提示条告知。
+              // 历史数据兜底：已绑定的来源若已被清仓，视为失效并清空。
               const curTerminated = cur ? othersAll.find(o => o.id === cur && o.spvTerminated) : null;
               if (curTerminated) { st.fundSourceMap[p.code] = ''; cur = ''; }
-              if (selectable.length === 0 && !curTerminated) return '<td style="color:#94A3B8;font-size:11px;" title="该产品没有其他可用专户持仓。">无可选来源</td>';
+              if (selectable.length === 0) return '<td style="color:#94A3B8;font-size:11px;" title="该产品没有其他可用专户持仓。">无可选来源</td>';
               const optHtml = selectable.map(o =>
                 `<option value="${o.id}" ${cur === o.id ? 'selected' : ''} title="${o.fullName || o.name}">${fmtFundSourceOption(o)}</option>`
               ).join('');
-              // 已清仓项：独立 optgroup 且 disabled，明确标注「终态不可选」
-              const termList = othersAll.filter(o => o.spvTerminated);
-              const termHtml = termList.length > 0
-                ? '<optgroup label="—— 已清仓（终态，不可选）——">' + termList.map(o =>
-                    `<option value="" disabled title="${o.fullName || o.name}｜已清仓为终态，不可作为配对赎回来源">${fmtFundSourceOption(o)}</option>`
-                  ).join('') + '</optgroup>'
-                : '';
-              const opts = '<option value="">请选择赎回来源</option>' + optHtml + termHtml;
-              const termHint = curTerminated
-                ? `<div class="src-terminated-hint">⚠ 原来源「${curTerminated.name}」已清仓，已自动清空，请重新选择</div>`
-                : '';
+              const opts = '<option value="">请选择赎回来源</option>' + optHtml;
               return `<td><select id="srcSelect_${p.code}" ${disabled || !subSel ? 'disabled' : ''}
                 onchange="onFundSourceChange('${p.code}', this.value, this)"
-                title="选择本笔申购对应的配套赎回专户；已清仓专户为终态，不提供选择。"
-                style="width:230px;font-size:12px;padding:4px 8px;background:${cur ? '#FFFBEB' : '#F8FAFC'};color:${cur ? '#C2410C' : '#94A3B8'};font-weight:${cur ? '600' : '400'};border:1px solid ${cur ? '#FDBA74' : '#CBD5E1'};border-radius:4px;cursor:${disabled || !subSel ? 'not-allowed' : 'pointer'};">${opts}</select><div id="srcWarn_${p.code}" style="display:none;margin-top:2px;font-size:11px;line-height:1.3;color:#DC2626;font-weight:600;"></div>${termHint}</td>`;
+                title="选择本笔申购对应的配套赎回专户。"
+                style="width:230px;font-size:12px;padding:4px 8px;background:${cur ? '#FFFBEB' : '#F8FAFC'};color:${cur ? '#C2410C' : '#94A3B8'};font-weight:${cur ? '600' : '400'};border:1px solid ${cur ? '#FDBA74' : '#CBD5E1'};border-radius:4px;cursor:${disabled || !subSel ? 'not-allowed' : 'pointer'};">${opts}</select><div id="srcWarn_${p.code}" style="display:none;margin-top:2px;font-size:11px;line-height:1.3;color:#DC2626;font-weight:600;"></div></td>`;
             })()}
             ${removeCell}
           </tr>`;
@@ -3524,7 +3500,7 @@ function renderContent(acc, st) {
                 oncompositionstart="window.__redSearchComposing=true" oncompositionend="window.__redSearchComposing=false;onRedSearchInput(this.value, event)" oninput="onRedSearchInput(this.value, event)" onkeydown="if(event.key==='Enter') onRedSearchCommit()">
             </div>
             <button class="btn" onclick="onRedSearchCommit()" style="font-size:10px;padding:3px 8px;background:#6D28D9;color:#fff;border:1px solid #6D28D9;border-radius:3px;cursor:pointer;font-weight:600;">搜索</button>
-            <span id="redSearchHint" style="font-size:10px;color:var(--text-muted);margin-left:auto;">${redKw ? (redHitCount === 0 ? `无匹配 · 保留 ${redKeptCount} 只已填金额行` : `已过滤 · 显示 <strong style="color:#6D28D9;">${leftVisible.length}</strong> / ${acc.holdings.length} 只${redKeptCount > 0 ? `（含 ${redKeptCount} 只已填金额）` : ''}`) : `共 <strong>${acc.holdings.length}</strong> 只持仓产品`}</span>
+            <span id="redSearchHint" style="font-size:10px;color:var(--text-muted);margin-left:auto;">${redKw ? (redHitCount === 0 ? `无匹配 · 保留 ${redKeptCount} 只已填金额行` : `已过滤 · 显示 <strong style="color:#6D28D9;">${leftVisible.length}</strong> / ${acc.holdings.length} 只${redKeptCount > 0 ? `（含 ${redKeptCount} 只已填金额）` : ''}`) : ''}</span>
           </div>
           <div class="loss-panel-body">
             <table>
@@ -4658,7 +4634,7 @@ function syncToSystem() {
     if (!srcInfo) return;  // 失效来源由下方规模校验兜底提示
     if (srcInfo.spvTerminated) {
       // 已清仓在渲染阶段已从下拉移除并清空绑定；此处为残留脏数据（如从旧缓存载入）兜底硬阻断。
-      errors.push(p.name.split('（')[0] + '（' + p.code + '）的赎回来源专户「' + srcInfo.name + '」已清仓（终态），不可作为配对赎回来源，已自动清空，请重新选择。');
+      errors.push(p.name.split('（')[0] + '（' + p.code + '）的赎回来源已失效，请重新选择。');
       if (st.fundSourceMap) st.fundSourceMap[p.code] = '';
     } else if (srcInfo.spvOnline === false) {
       offlineSrcWarns.push(p.name.split('（')[0] + '（' + p.code + '）→ 来源专户「' + srcInfo.name + '」已下线');
@@ -5368,7 +5344,7 @@ function getSPVData(productCode) {
   const isWarn = demoWarnCodes.includes(productCode);
 
   // 模拟 6 个专户，净值/渠道各不相同
-  // 已取消：不再挂载虚构的「已清仓专户」示例，Demo 中资金来源下拉只展示真实在线/已下线专户。
+  // 已取消：不再挂载虚构的「已清仓专户」示例，Demo 中资金来源下拉只展示实际可选来源。
   //       真实系统的已清仓专户由维护清单置 terminated=true 自动进入下拉占位。
   const baseSpv = [
     { spvCode:'ZTQX08', spvName:'中铁信托-乾鑫8号集合资金信托计划', nav:1.11146787, channel:'直销' },
