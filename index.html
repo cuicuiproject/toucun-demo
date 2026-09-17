@@ -143,7 +143,7 @@
   .sidebar-stats span { white-space: nowrap; }
   .sidebar-stats strong { color: var(--text); }
 
-  /* 顶部专户选择 + 添加（v2 新交互：用户主动从下拉添加，左侧栏默认空） */
+  /* 顶部专户搜索 + 添加（v2 新交互：用户主动搜索添加，左侧栏默认空） */
   .sidebar-add-bar {
     padding: 10px 12px;
     border-bottom: 1px solid var(--border);
@@ -151,10 +151,11 @@
     gap: 6px;
     align-items: center;
     background: #F8FAFC;
+    position: relative;
   }
-  .sidebar-add-bar select {
-    flex: 1;
-    min-width: 0;
+  .sidebar-add-search-wrap { flex: 1; min-width: 0; position: relative; }
+  .sidebar-add-bar input {
+    width: 100%;
     padding: 6px 8px;
     border: 1px solid var(--border);
     border-radius: var(--radius-sm);
@@ -163,10 +164,35 @@
     color: var(--text);
     outline: none;
     transition: border-color 0.15s;
-    cursor: pointer;
+    box-sizing: border-box;
   }
-  .sidebar-add-bar select:focus { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(26,60,109,0.1); }
-  .sidebar-add-bar select:disabled { background: #F3F4F6; color: var(--text-muted); cursor: not-allowed; }
+  .sidebar-add-bar input:focus { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(26,60,109,0.1); }
+  .sidebar-add-bar input:disabled { background: #F3F4F6; color: var(--text-muted); cursor: not-allowed; }
+  .sidebar-add-dropdown {
+    display: none;
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    z-index: 1200;
+    max-height: 220px;
+    overflow-y: auto;
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    box-shadow: 0 8px 20px rgba(15,23,42,.16);
+  }
+  .sidebar-add-option {
+    padding: 8px 10px;
+    cursor: pointer;
+    border-bottom: 1px solid #F1F5F9;
+    font-size: 12px;
+    line-height: 1.35;
+  }
+  .sidebar-add-option:hover { background: #EFF6FF; }
+  .sidebar-add-option .code { color: var(--primary); font-weight: 700; margin-left: 4px; }
+  .sidebar-add-option .meta { color: var(--text-muted); font-size: 10px; margin-top: 2px; }
+  .sidebar-add-empty { padding: 10px 12px; color: var(--text-muted); font-size: 12px; text-align: center; }
   .sidebar-add-bar button {
     flex-shrink: 0;
     padding: 6px 12px;
@@ -2547,12 +2573,15 @@
         </div>
         <span id="adjustDateModeTag" class="adjust-date-tag today" style="display:none;"></span>
       </div>
-      <!-- 顶部专户选择 + 添加（v2 新交互：用户主动添加，左侧栏默认空） -->
+      <!-- 顶部专户搜索 + 添加（v2 新交互：用户主动搜索添加，左侧栏默认空） -->
       <div class="sidebar-add-bar">
-        <select id="sidebarAddSelect" title="从候选池选择要添加到左侧栏的专户">
-          <option value="">请选择要添加的专户…</option>
-        </select>
-        <button onclick="addAccountFromSelect()" title="把下拉中选中的专户加入左侧栏">+ 添加</button>
+        <div class="sidebar-add-search-wrap">
+          <input type="text" id="sidebarAddSearchInput" placeholder="输入专户代码/名称搜索…" autocomplete="off"
+            onfocus="renderSidebarAddDropdown(this.value)" oninput="onSidebarAddSearch(this.value)" onkeydown="onSidebarAddKeydown(event)">
+          <input type="hidden" id="sidebarAddSelectedId">
+          <div id="sidebarAddDropdown" class="sidebar-add-dropdown"></div>
+        </div>
+        <button onclick="addAccountFromSelect()" title="把选中的专户加入左侧栏">+ 添加</button>
       </div>
       <div class="sidebar-list" id="sidebarList"></div>
     </div>
@@ -3018,49 +3047,116 @@ function getAccountHoldingScale(acc) {
 
 // ==================== SIDEBAR ====================
 
-// 顶部下拉：列出未在左侧栏、非已清仓且当日持有规模大于0的专户
-function renderSidebarAddSelect() {
-  const sel = document.getElementById('sidebarAddSelect');
-  if (!sel) return;
-  const historyView = isAdjustHistoryMode();
-  // 已添加到左侧栏的专户id集合
+function getSidebarAddCandidates() {
   const inLeftList = new Set(getSidebarItems().map(a => a.id));
-  // 候选：未清仓、当日持有规模大于0，且尚未在左侧栏展示；已下线可作为临时专户添加
-  const candidates = spvMaintList
+  return spvMaintList
     .filter(p => !p.terminated)
     .sort((a, b) => a.sortOrder - b.sortOrder)
     .map(p => allAccounts.find(a => a.id === p.id))
     .filter(Boolean)
     .filter(a => getAccountHoldingScale(a) > 0)
     .filter(a => !inLeftList.has(a.id));
+}
 
-  const candHtml = candidates.map(a => {
-    const ms = getSpvStatusById(a.id);
-    const tempTag = ms.online ? '' : ' · 临时';
-    return `<option value="${a.id}">${a.shortName || a.name}（${a.code}）${tempTag}</option>`;
-  }).join('');
-  const hasAnyCandidate = candidates.length > 0;
-
-  sel.innerHTML =
-    '<option value="">' + (hasAnyCandidate ? '请选择要添加的专户…' : '暂无可添加专户') + '</option>' +
-    candHtml;
-  // 无可添加候选时禁用「+ 添加」按钮
+// 顶部搜索框：列出未在左侧栏、非已清仓且当日持有规模大于0的专户
+function renderSidebarAddSelect() {
+  const input = document.getElementById('sidebarAddSearchInput');
+  const selected = document.getElementById('sidebarAddSelectedId');
+  const dropdown = document.getElementById('sidebarAddDropdown');
   const btn = document.querySelector('.sidebar-add-bar button');
-  sel.disabled = historyView;
-  sel.title = historyView ? '历史日期为只读，不支持添加专户' : '从候选池选择要添加到左侧栏的专户';
+  if (!input) return;
+  const historyView = isAdjustHistoryMode();
+  const candidates = getSidebarAddCandidates();
+  input.disabled = historyView;
+  input.placeholder = historyView ? '历史日期为只读，不支持添加专户' : (candidates.length ? '输入专户代码/名称搜索…' : '暂无可添加专户');
+  input.title = historyView ? '历史日期为只读，不支持添加专户' : '输入专户代码、简称或名称搜索后选择';
+  if (selected) selected.value = '';
+  if (dropdown) { dropdown.style.display = 'none'; dropdown.innerHTML = ''; }
   if (btn) {
-    btn.disabled = historyView || !hasAnyCandidate;
-    btn.title = historyView ? '历史日期为只读，不支持添加专户' : '把下拉中选中的专户加入左侧栏';
+    btn.disabled = historyView || !candidates.length;
+    btn.title = historyView ? '历史日期为只读，不支持添加专户' : '选择候选专户后加入左侧栏';
+  }
+}
+
+function onSidebarAddSearch(value) {
+  const selected = document.getElementById('sidebarAddSelectedId');
+  if (selected) selected.value = '';
+  renderSidebarAddDropdown(value);
+}
+
+function renderSidebarAddDropdown(value) {
+  if (isAdjustHistoryMode()) return;
+  const dropdown = document.getElementById('sidebarAddDropdown');
+  if (!dropdown) return;
+  const q = String(value || '').trim().toLowerCase();
+  const candidates = getSidebarAddCandidates();
+  let results = candidates;
+  if (q) {
+    results = candidates.filter(a =>
+      String(a.code || '').toLowerCase().includes(q) ||
+      String(a.shortName || '').toLowerCase().includes(q) ||
+      String(a.name || '').toLowerCase().includes(q)
+    );
+  }
+  results = results.slice(0, 30);
+  if (!candidates.length) {
+    dropdown.innerHTML = '<div class="sidebar-add-empty">暂无可添加专户</div>';
+  } else if (!results.length) {
+    dropdown.innerHTML = '<div class="sidebar-add-empty">未找到可添加专户，请更换代码或名称</div>';
+  } else {
+    dropdown.innerHTML = results.map(a => {
+      const ms = getSpvStatusById(a.id);
+      const tempTag = ms.online ? '' : '<span style="color:#B45309;"> · 临时</span>';
+      const scaleTxt = getAccountHoldingScale(a).toLocaleString('zh-CN', { maximumFractionDigits: 2 });
+      const label = escHtml(a.shortName || a.name || a.code);
+      const name = escHtml(a.name || '');
+      const code = escHtml(a.code || '');
+      return `<div class="sidebar-add-option" onclick="selectSidebarAddAccount('${a.id}')">
+        <div>${label}<span class="code">${code}</span>${tempTag}</div>
+        <div class="meta">${name} · 持有规模 ${scaleTxt} 元</div>
+      </div>`;
+    }).join('');
+  }
+  dropdown.style.display = 'block';
+}
+
+function selectSidebarAddAccount(accountId) {
+  const acc = getAccount(accountId);
+  if (!acc) return;
+  const input = document.getElementById('sidebarAddSearchInput');
+  const selected = document.getElementById('sidebarAddSelectedId');
+  const dropdown = document.getElementById('sidebarAddDropdown');
+  if (input) input.value = (acc.shortName || acc.name) + '（' + acc.code + '）';
+  if (selected) selected.value = accountId;
+  if (dropdown) dropdown.style.display = 'none';
+}
+
+function onSidebarAddKeydown(event) {
+  if (event.key !== 'Enter') return;
+  event.preventDefault();
+  const selected = document.getElementById('sidebarAddSelectedId');
+  if (selected && selected.value) { addAccountFromSelect(); return; }
+  const q = String((event.target && event.target.value) || '').trim().toLowerCase();
+  if (!q) return;
+  const matches = getSidebarAddCandidates().filter(a =>
+    String(a.code || '').toLowerCase().includes(q) ||
+    String(a.shortName || '').toLowerCase().includes(q) ||
+    String(a.name || '').toLowerCase().includes(q)
+  );
+  if (matches.length === 1) {
+    selectSidebarAddAccount(matches[0].id);
+    addAccountFromSelect();
+  } else {
+    renderSidebarAddDropdown(q);
   }
 }
 
 // 顶部「+ 添加」按钮：把选中专户加入 leftListIds + allAccounts 并刷新
 function addAccountFromSelect() {
   if (isAdjustHistoryMode()) { showToast('历史日期为只读，不支持添加专户'); return; }
-  const sel = document.getElementById('sidebarAddSelect');
-  if (!sel || !sel.value) return;
-  const raw = sel.value;
-  const accountId = raw;
+  const selected = document.getElementById('sidebarAddSelectedId');
+  const accountId = selected ? selected.value : '';
+  if (!accountId) { showToast('请先搜索并选择要添加的专户'); return; }
   // save current before switching
   if (currentAccountId && currentAccountId !== accountId) {
     saveCurrentState();
@@ -3084,10 +3180,14 @@ function addAccountFromSelect() {
     st.status = 'progress';
   }
 
+  if (selected) selected.value = '';
+  const input = document.getElementById('sidebarAddSearchInput');
+  if (input) input.value = '';
+  const dropdown = document.getElementById('sidebarAddDropdown');
+  if (dropdown) dropdown.style.display = 'none';
   renderSidebar();
   renderContent(acc, st);
 }
-
 function switchAccount(accountId) {
   if (isAdjustHistoryMode()) return;
   if (!leftListIds.has(accountId)) {
@@ -3838,7 +3938,7 @@ function recalcLossMode(acc, st) {
       }
     } else if (st.subMode === 'bp') {
       const valid = Number.isFinite(inputTotalBP) && inputTotalBP > 0 && subSelectedCodes.length > 0 && subSelectedCodes.every(code => getBpProductScale(st, code) > 0 && Number.isFinite(st.bpData[code]) && st.bpData[code] > 0);
-      balStatusEl.textContent = valid ? rebalanceMessage(totalRedeemAmt, sumSub) : '⚠ 请填写正整数调整BP和目标BP';
+      balStatusEl.textContent = valid ? rebalanceMessage(totalRedeemAmt, sumSub) : '⚠ 请填写调整BP和目标BP';
       balStatusEl.style.color = !valid ? '#DC2626' : (sumSub > 0 && rebalanceDifference(totalRedeemAmt, sumSub) === 0 ? '#16A34A' : '#DC2626');
       balStatusEl.title = '最终申购 = 该理财产品持有所有专户的规模之和 × 目标BP ÷ 调整BP；按分验算。';
     } else if (totalRedeemAmt === 0 && sumSub === 0) {
@@ -8052,14 +8152,15 @@ function getAddProductEmptyText(query, existingCodes, options = {}) {
   });
   const holdingCodes = options.holdingCodes || new Set();
   const extraCodes = options.extraCodes || new Set();
-  if (onlineMatches.length > 0 && onlineMatches.every(p => holdingCodes.has(p.code))) {
-    return '匹配产品已在本专户持仓中，不能作为右侧新增申购产品';
+  const exactMatch = onlineMatches.find(p => p.code.toLowerCase() === q);
+  if (exactMatch && holdingCodes.has(exactMatch.code)) {
+    return '该理财产品已在本专户持仓中，不能作为右侧新增申购产品';
   }
-  if (onlineMatches.length > 0 && onlineMatches.every(p => extraCodes.has(p.code))) {
-    return '匹配产品已在右侧申购列表中';
+  if (exactMatch && extraCodes.has(exactMatch.code)) {
+    return '该理财产品已在右侧申购列表中';
   }
   if (existingCodes && onlineMatches.length > 0 && onlineMatches.every(p => existingCodes.has(p.code))) {
-    return '匹配产品已在本专户持仓或右侧申购列表中，暂无可添加产品';
+    return '未找到可添加的理财产品，请输入更完整的产品代码或名称';
   }
   return '未找到可添加的理财产品，请更换代码或名称重试';
 }
