@@ -290,6 +290,19 @@
   .sidebar-item .item-remove:hover { color: var(--danger); background: rgba(217,48,37,0.08); }
   .sidebar-item:hover .item-remove { display: block; }
 
+  .sidebar-demo-tag,
+  .sidebar-sync-tag {
+    font-size: 10px;
+    line-height: 1;
+    border-radius: 4px;
+    padding: 3px 6px;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .sidebar-demo-tag.profit { background: #F3E8FF; color: #7E22CE; }
+  .sidebar-demo-tag.bp { background: #DBEAFE; color: #1D4ED8; }
+  .sidebar-sync-tag { background: #DCFCE7; color: #15803D; border: 1px solid #BBF7D0; }
+
   /* 已清仓专户（终态）：左侧栏绝对屏蔽——不展示、不可选中。占位行仅用于告警与移除入口。 */
   .sidebar-item.terminated {
     cursor: not-allowed;
@@ -2999,24 +3012,29 @@ function fmtFundSourceOption(o) {
   return `${o.name} · ${o.nature} · 持有${wanTxt}万`;
 }
 
+function getAccountHoldingScale(acc) {
+  return (acc && acc.holdings ? acc.holdings : []).reduce((sum, h) => sum + (h.size || 0), 0);
+}
+
 // ==================== SIDEBAR ====================
 
-// 顶部下拉：列出未在左侧栏的已上线专户（候选池 = spvMaintList.online ∩ !terminated 减去左侧栏已展示）
+// 顶部下拉：列出未在左侧栏、非已清仓且当日持有规模大于0的专户
 function renderSidebarAddSelect() {
   const sel = document.getElementById('sidebarAddSelect');
   if (!sel) return;
   const historyView = isAdjustHistoryMode();
   // 已添加到左侧栏的专户id集合
   const inLeftList = new Set(getSidebarItems().map(a => a.id));
-  // 候选：spvMaintList 中已上线专户（按 sortOrder 排序），排除已在左侧栏的
+  // 候选：未清仓、当日持有规模大于0，且尚未在左侧栏展示；已下线可作为临时专户添加
   const candidates = spvMaintList
-    .filter(p => p.online && !p.terminated)
+    .filter(p => !p.terminated)
     .sort((a, b) => a.sortOrder - b.sortOrder)
     .map(p => allAccounts.find(a => a.id === p.id))
     .filter(Boolean)
+    .filter(a => getAccountHoldingScale(a) > 0)
     .filter(a => !inLeftList.has(a.id));
 
-  const candHtml = candidates.map(a => `<option value="${a.id}">${a.shortName || a.name}（${a.code}）</option>`).join('');
+  const candHtml = candidates.map(a => {`n    const ms = getSpvStatusById(a.id);`n    const tempTag = ms.online ? '' : ' · 临时';`n    return `<option value="${a.id}">${a.shortName || a.name}（${a.code}）${tempTag}</option>`;`n  }).join('');
   const hasAnyCandidate = candidates.length > 0;
 
   sel.innerHTML =
@@ -3038,11 +3056,13 @@ function addAccountFromSelect() {
   const sel = document.getElementById('sidebarAddSelect');
   if (!sel || !sel.value) return;
   const raw = sel.value;
+  const accountId = raw;
   // save current before switching
   if (currentAccountId && currentAccountId !== accountId) {
     saveCurrentState();
   }
 
+  leftListIds.add(accountId);
   currentAccountId = accountId;
   const acc = getAccount(accountId);
   const st = getState(accountId);
@@ -3064,6 +3084,62 @@ function addAccountFromSelect() {
   renderContent(acc, st);
 }
 
+function switchAccount(accountId) {
+  if (isAdjustHistoryMode()) return;
+  if (!leftListIds.has(accountId)) {
+    renderSidebar();
+    showToast('该专户已不在左侧栏列表中，无法进入调仓');
+    return;
+  }
+  const acc = getAccount(accountId);
+  const st = getState(accountId);
+  if (!acc || !st) {
+    leftListIds.delete(accountId);
+    if (currentAccountId === accountId) currentAccountId = null;
+    renderSidebar();
+    showToast('该专户已不在左侧栏列表中，无法进入调仓');
+    return;
+  }
+  if (currentAccountId && currentAccountId !== accountId) saveCurrentState();
+  currentAccountId = accountId;
+  if (st.status === 'pending') st.status = 'progress';
+  renderSidebar();
+  renderContent(acc, st);
+}
+function getSidebarItems() {
+  return Array.from(leftListIds)
+    .map(id => getAccount(id))
+    .filter(Boolean)
+    .filter(acc => !getSpvStatusById(acc.id).terminated);
+}
+
+function renderSidebar() {
+  renderSidebarAddSelect();
+  const list = document.getElementById('sidebarList');
+  if (!list) return;
+  const items = getSidebarItems();
+  if (!items.length) {
+    list.innerHTML = '<div class="sidebar-empty">暂无专户，请从顶部下拉选择并点击「+ 添加」</div>';
+    return;
+  }
+  list.innerHTML = items.map(acc => {
+    const st = getState(acc.id);
+    const status = st ? st.status : 'pending';
+    const active = acc.id === currentAccountId ? ' active' : '';
+    const demoTag = acc.id === 'ningju5'
+      ? '<span class="sidebar-demo-tag profit">收益分配示例</span>'
+      : (acc.id === 'xinhe14' ? '<span class="sidebar-demo-tag bp">BP模式示例</span>' : '');
+    const syncTag = status === 'done' ? '<span class="sidebar-sync-tag">已同步</span>' : '';
+    return `
+      <div class="sidebar-item${active}" onclick="switchAccount('${acc.id}')" title="${acc.name}（${acc.code}）">
+        <span class="status-dot ${status}"></span>
+        <span class="item-name">${acc.shortName || acc.name}</span>
+        ${demoTag}
+        ${syncTag}
+        <span class="item-remove" onclick="event.stopPropagation(); removeAccount('${acc.id}')" title="移除">×</span>
+      </div>`;
+  }).join('');
+}
 function saveCurrentState() {
   if (!currentAccountId) return;
   const st = getState(currentAccountId);
@@ -3197,7 +3273,7 @@ function renderContent(acc, st) {
     ${isLoss ? (() => {
       // ====== 调仓模式：左右两栏 ======
 
-      // 无持仓场景：专户已上线但无理财产品持有，显示空表+提示
+      // 无持仓场景：仅用于历史记录或草稿回显；新增候选已过滤持有规模为0的专户
       if (acc.holdings.length === 0) {
         return `
     <!-- 无持仓提示 -->
@@ -4971,7 +5047,7 @@ const SPV_MAINT_PAGE_SIZE = 20;
 function saveSpvMaintList() { try { localStorage.setItem('spv_maint_list', JSON.stringify(spvMaintList)); } catch(e) {} }
 
 function getOnlineSpvList() {
-  const onlineIds = spvMaintList.filter(p => p.online && !p.terminated).sort((a, b) => a.sortOrder - b.sortOrder).map(p => p.id);
+  const onlineIds = spvMaintList.filter(p => !p.terminated).sort((a, b) => a.sortOrder - b.sortOrder).map(p => p.id);
   return onlineIds.map(id => allAccounts.find(a => a.id === id)).filter(Boolean);
 }
 
@@ -6125,7 +6201,7 @@ function confirmAddProduct() {
 
 function getSpvOnlineList() {
   // 三态Tab：online=上线中, offline=已下线, terminated=已清仓
-  if (spvMaintOnlineTab === 'online') return spvMaintList.filter(p => p.online && !p.terminated);
+  if (spvMaintOnlineTab === 'online') return spvMaintList.filter(p => !p.terminated);
   if (spvMaintOnlineTab === 'offline') return spvMaintList.filter(p => !p.online && !p.terminated);
   if (spvMaintOnlineTab === 'terminated') return spvMaintList.filter(p => p.terminated);
   return [];
@@ -6152,7 +6228,7 @@ function renderSpvMaintPage() {
   const start = spvMaintPageIdx * SPV_MAINT_PAGE_SIZE;
   const pageItems = filtered.slice(start, start + SPV_MAINT_PAGE_SIZE);
 
-  const onlineCount = spvMaintList.filter(p => p.online && !p.terminated).length;
+  const onlineCount = spvMaintList.filter(p => !p.terminated).length;
   const offlineCount = spvMaintList.filter(p => !p.online && !p.terminated).length;
   const terminatedCount = spvMaintList.filter(p => p.terminated).length;
   const tabLabelMap = { online: '上线中', offline: '已下线', terminated: '已清仓' };
@@ -6678,7 +6754,7 @@ function toggleSpvOnline(idx) {
 
   const finishToggle = () => {
     // 重新排列在线产品的序号
-    const onlineList = spvMaintList.filter(p => p.online && !p.terminated);
+    const onlineList = spvMaintList.filter(p => !p.terminated);
     onlineList.forEach((p, i) => { p.sortOrder = i + 1; });
     saveSpvMaintList();
     renderSpvMaintPage();
@@ -6730,7 +6806,7 @@ function terminateSpv(idx) {
       item.online = false;
       item.terminated = true;
       // 重新排列在线产品的序号
-      const onlineList = spvMaintList.filter(p => p.online && !p.terminated);
+      const onlineList = spvMaintList.filter(p => !p.terminated);
       onlineList.forEach((p, i) => { p.sortOrder = i + 1; });
       saveSpvMaintList();
       renderSpvMaintPage();
