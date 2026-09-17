@@ -3191,7 +3191,6 @@ function renderContent(acc, st) {
     <!-- Mode selector & key params -->
     <div class="top-bar" style="align-items:center;gap:12px;padding:8px 16px;">
       <span style="font-weight:700;font-size:14px;color:var(--primary);white-space:nowrap;">${acc.name}</span>
-      <span style="font-size:11px;color:var(--text-muted);">${acc.code}</span>
       <span style="font-size:10px;color:${acc.tVal === 'T+0' ? '#1D4ED8' : '#C2410C'};background:${acc.tVal === 'T+0' ? '#DBEAFE' : '#FFF7ED'};border-radius:3px;padding:1px 5px;margin-left:4px;">${acc.tVal || 'T+0'}</span>
       <span style="color:var(--border);margin:0 4px;">|</span>
       <span style="font-size:12px;color:var(--text-muted);">被持有总规模</span>
@@ -3200,7 +3199,7 @@ function renderContent(acc, st) {
       ${st.subMode === 'bp' ? `
       <span style="color:var(--border);margin:0 4px;">|</span>
       <span style="font-size:12px;color:var(--text-muted);">调整BP</span>
-      <input type="number" id="totalBPInput" value="${st.totalLoss || ''}" step="1" min="0" placeholder="请输入BP"
+      <input type="text" inputmode="numeric" id="totalBPInput" value="${st.totalLoss || ''}" placeholder="请输入BP"
         style="font-weight:800;font-size:18px;color:#1A3C6D;background:linear-gradient(135deg,#F0F9FF,#E0F2FE);border:2px solid #93C5FD;border-radius:8px;padding:6px 16px;width:140px;text-align:center;"
         ${disabled}
         oninput="onTotalBPChange(this.value)"
@@ -3211,7 +3210,7 @@ function renderContent(acc, st) {
       <div style="flex:1;"></div>
       ${isLoss && st.subMode === 'wan' ? `
       <span style="font-weight:600;font-size:12px;color:#6D28D9;white-space:nowrap;">💰 总收益</span>
-      <input type="text" inputmode="numeric" id="totalProfitInput" value="${st.totalProfit ? st.totalProfit.toLocaleString('zh-CN') : ''}"
+      <input type="text" inputmode="decimal" id="totalProfitInput" value="${st.totalProfit ? st.totalProfit.toLocaleString('zh-CN') : ''}"
         placeholder="输入专户总收益"
         ${disabled}
         oninput="onTotalProfitChange(this.value)" onfocus="this.select()"
@@ -3236,7 +3235,7 @@ function renderContent(acc, st) {
         </div>
         <div class="section-actions">
           <span style="font-size:12px;color:var(--text-muted);">已选 <strong id="selectedCount">${lossSelCount}</strong> / <strong id="totalProductCount">${lossTotalCount}</strong> 只</span>
-          <span style="font-size:12px;color:var(--text-muted);margin-left:8px;">调整BP <input type="number" id="totalBPInput" value="${st.totalLoss || ''}" step="1" min="0" placeholder="输入" style="font-weight:700;font-size:14px;width:60px;text-align:center;border:1px solid #93C5FD;border-radius:4px;padding:2px 6px;" oninput="onTotalBPChange(this.value)" title="调整BP。"></span>          <span class="total-bp-hint" style="display:${st.totalLoss ? 'none' : 'inline-flex'};align-items:center;font-size:10px;font-weight:600;color:#C2410C;margin-left:4px;white-space:nowrap;">⚠ 请先输入调整BP</span>
+          <span style="font-size:12px;color:var(--text-muted);margin-left:8px;">调整BP <input type="text" inputmode="numeric" id="totalBPInput" value="${st.totalLoss || ''}" placeholder="输入" style="font-weight:700;font-size:14px;width:60px;text-align:center;border:1px solid #93C5FD;border-radius:4px;padding:2px 6px;" oninput="onTotalBPChange(this.value)" title="调整BP。"></span>          <span class="total-bp-hint" style="display:${st.totalLoss ? 'none' : 'inline-flex'};align-items:center;font-size:10px;font-weight:600;color:#C2410C;margin-left:4px;white-space:nowrap;">⚠ 请先输入调整BP</span>
         </div>
       </div>
       <div class="section-body" style="padding:0;">
@@ -3346,7 +3345,7 @@ function renderContent(acc, st) {
             <td class="num" style="width:120px;padding-right:4px;">${sizeYuan}</td>
             <td style="white-space:nowrap;width:170px;padding-right:4px;">
               <div style="display:flex;align-items:center;justify-content:flex-end;gap:3px;">
-                <input type="text" inputmode="numeric" class="loss-red-input${!sel && !subOccupied ? ' unclicked-hint' : ''}" id="lossRedeemInput_${p.code}" value="${redAmt ? redAmt.toLocaleString('zh-CN') : ''}"
+                <input type="text" inputmode="decimal" class="loss-red-input${!sel && !subOccupied ? ' unclicked-hint' : ''}" id="lossRedeemInput_${p.code}" value="${redAmt ? redAmt.toLocaleString('zh-CN') : ''}"
                   placeholder="${!sel && !subOccupied ? '需先勾选' : '输入赎回金额'}"
                   ${disabled || subOccupied ? 'disabled' : ''}
                   ${!sel && !subOccupied ? 'readonly onclick="onUnselectedInputClick()"' : ''}
@@ -3382,13 +3381,13 @@ function renderContent(acc, st) {
             ${st.subMode === 'bp' ? `
             <td><input type="text" class="table-input" style="width:150px;background:#F8FAFC;color:#1E3A5F;font-weight:600;" value="${getBpProductScale(st, p.code) ? getBpProductScale(st, p.code).toLocaleString('zh-CN', {minimumFractionDigits:2, maximumFractionDigits:2}) : ''}" placeholder="头寸管理暂无规模" readonly title="默认取自头寸管理页对应产品的总规模（含今日申赎），与产品信息弹窗口径一致。"></td>
             <td class="col-bp">
-              <input type="number" class="table-input" value="${bp}" step="1" min="0"
+              <input type="text" inputmode="numeric" class="table-input" value="${bp}"
                 ${disabled ? 'disabled' : ''}
                 oninput="onBPChange('${p.code}', this.value)" onfocus="this.select()" style="width:70px;">
             </td>` : ''}
             <td class="num" id="ratio_${p.code}">--</td>
             <td>
-              <input type="text" inputmode="numeric" class="table-input" id="${st.subMode === 'bp' ? 'subAmtInput_' : 'profitAllocationInput_'}${p.code}" value="${subAmt ? subAmt.toLocaleString('zh-CN') : ''}"
+              <input type="text" inputmode="decimal" class="table-input" id="${st.subMode === 'bp' ? 'subAmtInput_' : 'profitAllocationInput_'}${p.code}" value="${subAmt ? subAmt.toLocaleString('zh-CN') : ''}"
                 placeholder="${st.subMode === 'bp' ? '自动计算' : (!subSel ? '需先勾选' : '输入分配收益')}"
                 ${st.subMode === 'bp' ? 'readonly' : ''}
                 ${disabled ? 'disabled' : ''}
@@ -3838,8 +3837,8 @@ function recalcLossMode(acc, st) {
         balStatusEl.title = '收益分配模式下申购金额由分配收益决定，申赎差额仅提示，不阻断同步。';
       }
     } else if (st.subMode === 'bp') {
-      const valid = Number.isFinite(inputTotalBP) && inputTotalBP > 0 && subSelectedCodes.length > 0 && subSelectedCodes.every(code => getBpProductScale(st, code) > 0 && Number.isFinite(st.bpData[code]) && st.bpData[code] >= 0);
-      balStatusEl.textContent = valid ? rebalanceMessage(totalRedeemAmt, sumSub) : '⚠ 请填写有效的调整BP和目标BP';
+      const valid = Number.isFinite(inputTotalBP) && inputTotalBP > 0 && subSelectedCodes.length > 0 && subSelectedCodes.every(code => getBpProductScale(st, code) > 0 && Number.isFinite(st.bpData[code]) && st.bpData[code] > 0);
+      balStatusEl.textContent = valid ? rebalanceMessage(totalRedeemAmt, sumSub) : '⚠ 请填写正整数调整BP和目标BP';
       balStatusEl.style.color = !valid ? '#DC2626' : (sumSub > 0 && rebalanceDifference(totalRedeemAmt, sumSub) === 0 ? '#16A34A' : '#DC2626');
       balStatusEl.title = '最终申购 = 该理财产品持有所有专户的规模之和 × 目标BP ÷ 调整BP；按分验算。';
     } else if (totalRedeemAmt === 0 && sumSub === 0) {
@@ -3937,11 +3936,38 @@ function confirmDialogOK() {
 
 // ==================== ACTIONS ====================
 
+function normalizePositiveIntegerInputValue(value) {
+  const text = String(value || '');
+  if (/[-+.eE]/.test(text)) return '';
+  const raw = text.replace(/\D/g, '');
+  if (!raw) return '';
+  const num = parseInt(raw, 10);
+  return num > 0 ? String(num) : '';
+}
+
+function getPositiveIntegerInputValue(value) {
+  const normalized = normalizePositiveIntegerInputValue(value);
+  const num = normalized ? parseInt(normalized, 10) : 0;
+  return { normalized, num };
+}
+
+function syncPositiveIntegerInputElement(el, normalized) {
+  if (!el || el.value === normalized) return;
+  const pos = el.selectionStart || normalized.length;
+  const oldLen = el.value.length;
+  el.value = normalized;
+  const nextPos = Math.max(0, pos + el.value.length - oldLen);
+  try { el.setSelectionRange(nextPos, nextPos); } catch (e) {}
+}
+
 function onBPChange(code, value) {
   const st = getState(currentAccountId);
   if (!st) return;
   const prevBP = st.bpData[code] || 0;
-  st.bpData[code] = parseFloat(value) || 0;
+  const bpInput = getPositiveIntegerInputValue(value);
+  const el = document.activeElement;
+  syncPositiveIntegerInputElement(el, bpInput.normalized);
+  st.bpData[code] = bpInput.num;
   // 输入明细BP但调整BP为空时引导（仅从0变为非0时提示一次，避免逐字符重复弹窗）
   if (st.subMode === 'bp' && !st.totalLoss && prevBP === 0 && st.bpData[code] > 0) {
     showToast('请先在顶部输入调整BP，输入后申购金额将自动计算');
@@ -3952,22 +3978,49 @@ function onBPChange(code, value) {
 function onTotalBPChange(value) {
   const st = getState(currentAccountId);
   if (!st) return;
-  st.totalLoss = parseFloat(value) || 0;
+  const bpInput = getPositiveIntegerInputValue(value);
+  const el = document.activeElement && document.activeElement.id === 'totalBPInput' ? document.activeElement : document.getElementById('totalBPInput');
+  syncPositiveIntegerInputElement(el, bpInput.normalized);
+  st.totalLoss = bpInput.num;
   recalcCurrent();
 }
 
+function normalizeMoneyInputValue(value) {
+  let raw = String(value || '').replace(/,/g, '');
+  raw = raw.replace(/[^0-9.]/g, '');
+  const firstDot = raw.indexOf('.');
+  if (firstDot !== -1) {
+    raw = raw.slice(0, firstDot + 1) + raw.slice(firstDot + 1).replace(/\./g, '');
+    const parts = raw.split('.');
+    raw = parts[0] + '.' + (parts[1] || '').slice(0, 2);
+  }
+  if (raw.startsWith('.')) raw = '0' + raw;
+  return raw;
+}
+
+function getMoneyInputAmount(value) {
+  const normalized = normalizeMoneyInputValue(value);
+  const amount = parseFloat(normalized);
+  return { normalized, amount: Number.isFinite(amount) ? amount : 0 };
+}
+
+function syncMoneyInputElement(el, normalized) {
+  if (!el || el.value === normalized) return;
+  const pos = el.selectionStart || normalized.length;
+  const oldLen = el.value.length;
+  el.value = normalized;
+  const nextPos = Math.max(0, pos + el.value.length - oldLen);
+  try { el.setSelectionRange(nextPos, nextPos); } catch (e) {}
+}
 // 收益分配模式：本次可分配总收益（分母）变更
 function onTotalProfitChange(value) {
   const st = getState(currentAccountId);
   if (!st) return;
-  const raw = String(value).replace(/,/g, '');
-  st.totalProfit = parseFloat(raw) || 0;
-  recalcCurrent();
-  // 失焦时补千分位（不重渲染，保持输入焦点）
   const el = document.getElementById('totalProfitInput');
-  if (el && document.activeElement !== el && st.totalProfit > 0) {
-    el.value = st.totalProfit.toLocaleString('zh-CN');
-  }
+  const money = getMoneyInputAmount(value);
+  syncMoneyInputElement(el, money.normalized);
+  st.totalProfit = money.amount;
+  recalcCurrent();
 }
 
 // 资金来源切换：记录该笔申购的资金来源专户（同步时生成同产品、同金额的配套赎回流水）
@@ -4043,14 +4096,19 @@ function onLossRedeemAmtChange(code, value) {
   const st = getState(currentAccountId);
   if (!acc || !st) return;
   if (!st.lossRedeemAmt) st.lossRedeemAmt = {};
-  const raw = String(value).replace(/,/g, '');
-  let amt = parseFloat(raw) || 0;
+  const inputEl = document.getElementById('lossRedeemInput_' + code);
+  const money = getMoneyInputAmount(value);
+  syncMoneyInputElement(inputEl, money.normalized);
+  let amt = money.amount;
+  if (money.normalized !== '' && amt <= 0) {
+    amt = 0;
+    if (inputEl) inputEl.value = '';
+  }
   // 赎回金额上限校验：不得超过该产品持有专户的规模（p.size）
   const p = acc.holdings.find(h => h.code === code);
   const maxSize = p ? (p.size || 0) : 0;
   if (maxSize > 0 && amt > maxSize) {
     amt = maxSize;
-    const inputEl = document.getElementById('lossRedeemInput_' + code);
     if (inputEl) inputEl.value = amt.toLocaleString('zh-CN');
     showToast('赎回金额不能超过该产品持有规模 ' + maxSize.toLocaleString('zh-CN') + ' 元，已按最大可赎回金额调整');
   }
@@ -4062,11 +4120,11 @@ function onLossRedeemAmtChange(code, value) {
 function onSubAmountChange(code, value) {
   const st = getState(currentAccountId);
   if (!st) return;
-  // 去掉千分位逗号后解析
-  const raw = String(value).replace(/,/g, '');
-  const amt = parseFloat(raw) || 0;
+  const inputEl = document.getElementById('profitAllocationInput_' + code);
+  const money = getMoneyInputAmount(value);
+  syncMoneyInputElement(inputEl, money.normalized);
   if (!st.profitAllocationMap) st.profitAllocationMap = {};
-  st.profitAllocationMap[code] = amt;
+  st.profitAllocationMap[code] = money.amount;
   recalcCurrent();
 }
 
@@ -4494,6 +4552,11 @@ function syncToSystem() {
   moneyMaps.forEach(map => Object.entries(map || {}).forEach(([code, value]) => {
     if (!Number.isFinite(value) || value < 0) errors.push(code + '：金额必须为非负有效数字。');
   }));
+  acc.holdings.forEach(p => {
+    const sel = st.lossSelectedMap && st.lossSelectedMap[p.code] === true;
+    const redAmt = st.lossRedeemAmt?.[p.code] || 0;
+    if (sel && redAmt <= 0) errors.push(p.code + '：请填写大于0的赎回金额；不参与本次调仓请取消勾选。');
+  });
 
   // 头寸数据新鲜度校验：调仓必须基于当日日初头寸文件（头寸每日变动，历史头寸计算结果不可用）
   // ⚠️ Demo 演示开关：演示环境放行此校验（见 DEMO_SKIP_POSITION_DATE_CHECK 定义处说明），正式系统须恢复。
@@ -4513,13 +4576,13 @@ function syncToSystem() {
     });
     if ((st.totalLoss || 0) <= 0) errors.push('未填写「调整BP」，请先输入调整BP。');
     if (!hasBP) {
-      errors.push('右栏未勾选产品或BP均为0，无法按BP分摊。');
+      errors.push('右栏未勾选产品或目标BP未填写，无法按BP分摊。');
     }
-    if (!Number.isFinite(st.totalLoss)) errors.push('调整BP必须为有效数字。');
+    if (!Number.isFinite(st.totalLoss) || st.totalLoss <= 0) errors.push('调整BP必须为正整数。');
     subProductPool.forEach(p => {
       if (st.subSelectedMap?.[p.code] === false) return;
       if (!getBpProductScale(st, p.code)) errors.push(p.code + '：理财产品SPV持仓暂无有效的产品总规模（含今日申赎），请先完善SPV持仓数据。');
-      if (!Number.isFinite(st.bpData[p.code]) || st.bpData[p.code] < 0) errors.push(p.code + '：目标BP必须为非负有效数字。');
+      if (!Number.isFinite(st.bpData[p.code]) || st.bpData[p.code] <= 0) errors.push(p.code + '：目标BP必须为正整数。');
       if (Number.isFinite(st.totalLoss) && st.totalLoss > 0 && Number.isFinite(st.bpData[p.code]) && st.bpData[p.code] > st.totalLoss) errors.push(p.code + '：目标BP不得大于调整BP，单行占比不能超过100%。');
     });
   } else {
@@ -7450,7 +7513,7 @@ function openPositionSpvModal(productCode, spvId, type) {
             <div class="field-label">输入申购金额</div>
             <div class="spv-input-group">
               <div class="input-row">
-                <input type="text" id="spvSubInput" value="${currentSub !== 0 ? Math.abs(currentSub).toLocaleString('zh-CN') : ''}"
+                <input type="text" inputmode="decimal" id="spvSubInput" value="${currentSub !== 0 ? Math.abs(currentSub).toLocaleString('zh-CN') : ''}"
                   placeholder="${isConfirmed ? '已确认，只读' : '请输入申购金额'}" ${isConfirmed ? 'disabled' : ''} oninput="onSpvSubInput(${nav})">
                 <span class="unit">元</span>
               </div>
@@ -7472,7 +7535,7 @@ function openPositionSpvModal(productCode, spvId, type) {
             <div class="field-label">输入赎回金额</div>
             <div class="spv-input-group">
               <div class="input-row">
-                <input type="text" id="spvRedInput" value="${currentRed !== 0 ? currentRed.toLocaleString('zh-CN') : ''}"
+                <input type="text" inputmode="decimal" id="spvRedInput" value="${currentRed !== 0 ? currentRed.toLocaleString('zh-CN') : ''}"
                   placeholder="${isConfirmed ? '已确认，只读' : '请输入赎回金额'}" ${isConfirmed ? 'disabled' : ''} oninput="onSpvRedInput(${nav},${maxRedQty})">
                 <span class="unit">元</span>
               </div>
@@ -7566,23 +7629,18 @@ function openPositionSpvModal(productCode, spvId, type) {
 function onSpvSubInput(nav) {
   const input = document.getElementById('spvSubInput');
   const hint = document.getElementById('subHint');
-  const raw = input.value.replace(/,/g, '');
-  const val = parseFloat(raw);
-  // 实时千分位格式化（保留用户光标位置）
-  if (!isNaN(val) && val > 0) {
-    const start = input.selectionStart;
-    const beforeLen = input.value.length;
-    input.value = val.toLocaleString('zh-CN');
-    const afterLen = input.value.length;
-    const diff = afterLen - beforeLen;
-    input.setSelectionRange(start + diff, start + diff);
+  if (!input || !hint) return;
+  const money = getMoneyInputAmount(input.value);
+  syncMoneyInputElement(input, money.normalized);
+  const val = money.amount;
+  if (val > 0) {
     hint.textContent = fmtWanYuan(val);
     // 互斥：清空赎回
     const redInput = document.getElementById('spvRedInput');
     if (redInput && redInput.value) { redInput.value = ''; document.getElementById('redHint').textContent = ''; document.getElementById('estRedQty').textContent = '—'; }
-  } else if (raw === '') {
+  } else {
     hint.textContent = '';
-    input.value = '';
+    if (money.normalized === '') input.value = '';
   }
 }
 
@@ -7590,15 +7648,11 @@ function onSpvSubInput(nav) {
 function onSpvRedInput(nav, maxRedQty) {
   const input = document.getElementById('spvRedInput');
   const hint = document.getElementById('redHint');
-  const raw = input.value.replace(/,/g, '');
-  const val = parseFloat(raw);
-  if (!isNaN(val) && val > 0) {
-    const start = input.selectionStart;
-    const beforeLen = input.value.length;
-    input.value = val.toLocaleString('zh-CN');
-    const afterLen = input.value.length;
-    const diff = afterLen - beforeLen;
-    input.setSelectionRange(start + diff, start + diff);
+  if (!input || !hint) return;
+  const money = getMoneyInputAmount(input.value);
+  syncMoneyInputElement(input, money.normalized);
+  const val = money.amount;
+  if (val > 0) {
     hint.textContent = fmtWanYuan(val);
     // 互斥：清空申购
     const subInput = document.getElementById('spvSubInput');
@@ -7606,7 +7660,7 @@ function onSpvRedInput(nav, maxRedQty) {
     // 用实际净值计算预估赎回份额
     const estQty = Math.round(val / nav);
     document.getElementById('estRedQty').textContent = estQty.toLocaleString('zh-CN') + ' 份';
-  } else if (raw === '') {
+  } else {
     hint.textContent = '';
     input.value = '';
     document.getElementById('estRedQty').textContent = '—';
@@ -7701,12 +7755,10 @@ function saveSpvAmount(productCode, spvId) {
   if (isHistoryMode()) { alert('历史查看模式下数据只读，请先返回最新头寸。'); return; }
   const subInput = document.getElementById('spvSubInput');
   const redInput = document.getElementById('spvRedInput');
-
-  const subValStr = subInput ? subInput.value.replace(/,/g, '') : '';
-  const redValStr = redInput ? redInput.value.replace(/,/g, '') : '';
-
-  const subVal = parseFloat(subValStr);
-  const redVal = parseFloat(redValStr);
+  const subMoney = getMoneyInputAmount(subInput ? subInput.value : '');
+  const redMoney = getMoneyInputAmount(redInput ? redInput.value : '');
+  const subVal = subMoney.amount;
+  const redVal = redMoney.amount;
 
   const product = positionData.find(p => p.code === productCode);
   if (!product) return;
@@ -7906,8 +7958,8 @@ function openSPVModal(productCode, type) {
         <td>${s.channel}</td>
         <td class="num">${s.qty.toLocaleString('zh-CN')}</td>
         <td class="num">${s.scale.toLocaleString('zh-CN', {minimumFractionDigits:2})}</td>
-        <td><input type="number" class="spv-input" value="${s.subAmt || ''}" placeholder="0" oninput="onSPVInput(${idx},'subAmt',this.value)" onfocus="this.select()"></td>
-        <td><input type="number" class="spv-input" value="${s.redAmt || ''}" placeholder="0" oninput="onSPVInput(${idx},'redAmt',this.value)" onfocus="this.select()"></td>
+        <td><input type="text" inputmode="decimal" class="spv-input" value="${s.subAmt ? s.subAmt.toLocaleString('zh-CN') : ''}" placeholder="0" oninput="onSPVInput(${idx},'subAmt',this.value,this)" onfocus="this.select()"></td>
+        <td><input type="text" inputmode="decimal" class="spv-input" value="${s.redAmt ? s.redAmt.toLocaleString('zh-CN') : ''}" placeholder="0" oninput="onSPVInput(${idx},'redAmt',this.value,this)" onfocus="this.select()"></td>
         <td class="num">${s.redAmt > 0 ? estRedQty.toLocaleString('zh-CN') : '--'}</td>
         <td class="num">${estHeadroom.toLocaleString('zh-CN', {minimumFractionDigits:2})}</td>
       </tr>`;
@@ -7944,10 +7996,16 @@ function openSPVModal(productCode, type) {
   document.getElementById('spvModal').classList.add('show');
 }
 
-function onSPVInput(idx, field, value) {
+function onSPVInput(idx, field, value, el) {
   if (!positionSpvModalData) return;
-  const raw = parseFloat(value) || 0;
-  positionSpvModalData.spvList[idx][field] = raw;
+  const money = getMoneyInputAmount(value);
+  syncMoneyInputElement(el, money.normalized);
+  if (field === 'redAmt' && money.normalized !== '' && money.amount <= 0) {
+    if (el) el.value = '';
+    positionSpvModalData.spvList[idx][field] = 0;
+  } else {
+    positionSpvModalData.spvList[idx][field] = money.amount;
+  }
   // 重新打开弹窗刷新数据
   const d = positionSpvModalData;
   openSPVModal(d.productCode, d.type);
@@ -7978,7 +8036,7 @@ function getAddableProducts() {
     })
     .filter(p => p.status !== 'offline');
 }
-function getAddProductEmptyText(query, existingCodes) {
+function getAddProductEmptyText(query, existingCodes, options = {}) {
   const q = (query || '').trim().toLowerCase();
   const matches = positionData.filter(p => p.code.toLowerCase().includes(q) || p.name.toLowerCase().includes(q));
   if (matches.length === 0) return '该理财产品不在当日SPV持仓中，不可添加';
@@ -7987,8 +8045,23 @@ function getAddProductEmptyText(query, existingCodes) {
     return m && !m.online;
   });
   if (offlineMatches.length > 0 && offlineMatches.length === matches.length) return '该理财产品已下线，不可作为新增申购目标';
-  if (existingCodes && matches.every(p => existingCodes.has(p.code))) return '该理财产品已在当前列表中';
-  return '未找到符合条件的理财产品，请更换代码或名称重试';
+
+  const onlineMatches = matches.filter(p => {
+    const m = productMaintList.find(x => x.code === p.code);
+    return !(m && !m.online);
+  });
+  const holdingCodes = options.holdingCodes || new Set();
+  const extraCodes = options.extraCodes || new Set();
+  if (onlineMatches.length > 0 && onlineMatches.every(p => holdingCodes.has(p.code))) {
+    return '匹配产品已在本专户持仓中，不能作为右侧新增申购产品';
+  }
+  if (onlineMatches.length > 0 && onlineMatches.every(p => extraCodes.has(p.code))) {
+    return '匹配产品已在右侧申购列表中';
+  }
+  if (existingCodes && onlineMatches.length > 0 && onlineMatches.every(p => existingCodes.has(p.code))) {
+    return '匹配产品已在本专户持仓或右侧申购列表中，暂无可添加产品';
+  }
+  return '未找到可添加的理财产品，请更换代码或名称重试';
 }
 function onProductSearch(query) {
   const dropdown = document.getElementById('productSearchDropdown');
@@ -8031,7 +8104,7 @@ function addProductFromSearch(code) {
   // 检查是否已存在
   const exists = acc.holdings.find(p => p.code === code);
   if (exists) {
-    alert('产品 ' + code + ' 已存在于当前列表中');
+    alert('产品 ' + code + ' 已在本专户持仓列表中，无需重复添加');
     return;
   }
 
@@ -8076,7 +8149,9 @@ function onSubExtraSearch(query) {
   if (!acc || !st) return;
 
   // 候选 = SPV 持仓查询页产品（已下线产品自动排除），且不在本专户持仓中、也不在已添加的额外产品中
-  const existing = new Set([...acc.holdings.map(p => p.code), ...(st.subExtraProducts || []).map(p => p.code)]);
+  const holdingCodes = new Set(acc.holdings.map(p => p.code));
+  const extraCodes = new Set((st.subExtraProducts || []).map(p => p.code));
+  const existing = new Set([...holdingCodes, ...extraCodes]);
   const addable = getAddableProducts().filter(p => !existing.has(p.code));
 
   const q = (query || '').trim().toLowerCase();
@@ -8096,7 +8171,7 @@ function onSubExtraSearch(query) {
   ).slice(0, 8);
 
   if (results.length === 0) {
-    dropdown.innerHTML = '<div style="padding:8px 12px;font-size:12px;color:var(--text-muted);">' + getAddProductEmptyText(q, existing) + '</div>';
+    dropdown.innerHTML = '<div style="padding:8px 12px;font-size:12px;color:var(--text-muted);">' + getAddProductEmptyText(q, existing, { holdingCodes, extraCodes }) + '</div>';
   } else {
     dropdown.innerHTML = results.map(p => {
       const badge = p.status === 'unmaint'
