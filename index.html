@@ -3034,7 +3034,11 @@ function renderSidebarAddSelect() {
     .filter(a => getAccountHoldingScale(a) > 0)
     .filter(a => !inLeftList.has(a.id));
 
-  const candHtml = candidates.map(a => {`n    const ms = getSpvStatusById(a.id);`n    const tempTag = ms.online ? '' : ' · 临时';`n    return `<option value="${a.id}">${a.shortName || a.name}（${a.code}）${tempTag}</option>`;`n  }).join('');
+  const candHtml = candidates.map(a => {
+    const ms = getSpvStatusById(a.id);
+    const tempTag = ms.online ? '' : ' · 临时';
+    return `<option value="${a.id}">${a.shortName || a.name}（${a.code}）${tempTag}</option>`;
+  }).join('');
   const hasAnyCandidate = candidates.length > 0;
 
   sel.innerHTML =
@@ -5047,7 +5051,7 @@ const SPV_MAINT_PAGE_SIZE = 20;
 function saveSpvMaintList() { try { localStorage.setItem('spv_maint_list', JSON.stringify(spvMaintList)); } catch(e) {} }
 
 function getOnlineSpvList() {
-  const onlineIds = spvMaintList.filter(p => !p.terminated).sort((a, b) => a.sortOrder - b.sortOrder).map(p => p.id);
+  const onlineIds = spvMaintList.filter(p => p.online && !p.terminated).sort((a, b) => a.sortOrder - b.sortOrder).map(p => p.id);
   return onlineIds.map(id => allAccounts.find(a => a.id === id)).filter(Boolean);
 }
 
@@ -6201,7 +6205,7 @@ function confirmAddProduct() {
 
 function getSpvOnlineList() {
   // 三态Tab：online=上线中, offline=已下线, terminated=已清仓
-  if (spvMaintOnlineTab === 'online') return spvMaintList.filter(p => !p.terminated);
+  if (spvMaintOnlineTab === 'online') return spvMaintList.filter(p => p.online && !p.terminated);
   if (spvMaintOnlineTab === 'offline') return spvMaintList.filter(p => !p.online && !p.terminated);
   if (spvMaintOnlineTab === 'terminated') return spvMaintList.filter(p => p.terminated);
   return [];
@@ -6228,7 +6232,7 @@ function renderSpvMaintPage() {
   const start = spvMaintPageIdx * SPV_MAINT_PAGE_SIZE;
   const pageItems = filtered.slice(start, start + SPV_MAINT_PAGE_SIZE);
 
-  const onlineCount = spvMaintList.filter(p => !p.terminated).length;
+  const onlineCount = spvMaintList.filter(p => p.online && !p.terminated).length;
   const offlineCount = spvMaintList.filter(p => !p.online && !p.terminated).length;
   const terminatedCount = spvMaintList.filter(p => p.terminated).length;
   const tabLabelMap = { online: '上线中', offline: '已下线', terminated: '已清仓' };
@@ -6754,7 +6758,7 @@ function toggleSpvOnline(idx) {
 
   const finishToggle = () => {
     // 重新排列在线产品的序号
-    const onlineList = spvMaintList.filter(p => !p.terminated);
+    const onlineList = spvMaintList.filter(p => p.online && !p.terminated);
     onlineList.forEach((p, i) => { p.sortOrder = i + 1; });
     saveSpvMaintList();
     renderSpvMaintPage();
@@ -6806,7 +6810,7 @@ function terminateSpv(idx) {
       item.online = false;
       item.terminated = true;
       // 重新排列在线产品的序号
-      const onlineList = spvMaintList.filter(p => !p.terminated);
+      const onlineList = spvMaintList.filter(p => p.online && !p.terminated);
       onlineList.forEach((p, i) => { p.sortOrder = i + 1; });
       saveSpvMaintList();
       renderSpvMaintPage();
