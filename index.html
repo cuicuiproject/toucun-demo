@@ -5100,7 +5100,7 @@ function getTodayStr() {
 // 正式系统必须恢复此校验（真实场景下基于历史头寸的调仓金额确实不可用）。
 const DEMO_SKIP_POSITION_DATE_CHECK = true;
 // Demo 数据版本：每次修改默认数据/演示示例后递增。用于在本地缓存中识别旧数据结构，自动清理避免旧缓存污染新 Demo。
-const DEMO_DATA_VERSION = '20250918b';
+const DEMO_DATA_VERSION = '20250918c';
 // 演示环境：直接把「头寸数据日期」锚定为今天，使新鲜度判断、页面日期标签、同步校验三者保持一致。
 // （仅覆写演示变量，不触碰真实读取逻辑；DEMO_SKIP_POSITION_DATE_CHECK 作为双保险保留）
 try {
@@ -5317,7 +5317,15 @@ let positionData = loadPositionData();
 function loadPositionData() {
   const defaultData = [
     { code:'EW0599', name:'阳光金私享增利稳健天天购(300天最低持有)', date:'2026-06-29', dayBegin:4335105.63, subAll:2670000, redAll:-16749789.81, fee:0, t1Back:0, bankExch:1000000 },
-    { code:'EW0580', name:'阳光金私享增利周开(182天最低持有)2号', date:'2026-06-29', dayBegin:5000000, subAll:1000000, redAll:-2000000, fee:-500000, t1Back:3000000, bankExch:0 },
+    {
+      code:'EW0580', name:'阳光金私享增利周开(182天最低持有)2号', date:'2026-06-29',
+      dayBegin:5000000, subAll:1000000, redAll:-2000000, fee:-500000, t1Back:3000000, bankExch:0,
+      // 正式理财产品示例：产品已在维护清单中上线，不显示“临时”，但因专户调仓同步生成金额，显示“调仓已同步”。
+      _spv: {
+        xinhe7: { sub:null, red:1200000, subManual:0, subRebalance:0, redManual:0, redRebalance:1200000 },
+        xinhe14: { sub:-1200000, red:null, subManual:0, subRebalance:1200000, redManual:0, redRebalance:0 }
+      }
+    },
     { code:'EW1340', name:'阳光金私享增利周开(9个月最低持有)2号', date:'2026-06-29', dayBegin:1000000, subAll:2000000, redAll:-4000000, fee:0, t1Back:0, bankExch:0 },
     { code:'EW0515', name:'阳光金私享增利周开(182天最低持有)', date:'2026-06-29', dayBegin:0, subAll:0, redAll:0, fee:0, t1Back:0, bankExch:0 },
     { code:'EW7746', name:'阳光金增利稳健天天购46号(14天最低持有)', date:'2026-06-29', dayBegin:8000000, subAll:500000, redAll:-300000, fee:-10000, t1Back:0, bankExch:500000 },
@@ -8103,15 +8111,15 @@ function fmtMoney(v) {
 }
 
 function fmtMoneyNeg(v) {
-  // 负数用红色显示（专户总申购款）
+  // 申购内部按负数参与计算，页面按生产系统口径展示绝对金额。
   if (v == null || isNaN(v)) return '--';
-  return v.toLocaleString('zh-CN', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+  return Math.abs(v).toLocaleString('zh-CN', {minimumFractionDigits: 2, maximumFractionDigits: 2});
 }
 
 function fmtMoneyPos(v) {
-  // 正数用绿色显示（专户总赎回款）
+  // 赎回内部按正数参与计算，页面按生产系统口径展示绝对金额。
   if (v == null || isNaN(v)) return '--';
-  return v.toLocaleString('zh-CN', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+  return Math.abs(v).toLocaleString('zh-CN', {minimumFractionDigits: 2, maximumFractionDigits: 2});
 }
 
 function escapeHtml(str) {
