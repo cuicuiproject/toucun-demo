@@ -2812,7 +2812,7 @@ const allAccounts = [
 ];
 
 // 演示数据口径：作为赎回来源的管理专户持有规模给足一些，避免默认演示中频繁出现
-// “配套赎回金额超过来源专户当前可用额度”的红色提示；真实超额场景仍可通过手动输入大额申购验证。
+// “配套赎回金额超过来源专户当前可用规模”的红色提示；真实超额场景仍可通过手动输入大额申购验证。
 const DEMO_MIN_SOURCE_HOLDING_SIZE = 20000000;
 allAccounts.forEach(acc => {
   (acc.holdings || []).forEach((holding, idx) => {
@@ -3975,7 +3975,7 @@ function recalcLossMode(acc, st) {
     const adj = 0; // BP按公式生成最终金额，不允许调减
     const actual = subAmt - adj;
     if (actual > srcSize) {
-      warnEl.textContent = '⚠ ' + p.code + '：配套赎回金额超过来源专户当前可用额度' + srcSize.toLocaleString('zh-CN') + '元，请调整。';
+      warnEl.textContent = '⚠ ' + p.code + '：配套赎回金额超过来源专户当前可用规模' + srcSize.toLocaleString('zh-CN') + '元，请调整。';
       warnEl.style.display = 'block';
       if (selEl) selEl.style.borderColor = '#DC2626';
     } else {
@@ -4868,7 +4868,7 @@ function syncToSystem() {
     const adj = 0; // BP按公式生成最终金额，不允许调减
     const actual = subAmt - adj;
     if (actual > srcSize) {
-      errors.push(p.code + '：配套赎回金额超过来源专户当前可用额度' + srcSize.toLocaleString('zh-CN') + '元，请调整。');
+      errors.push(p.code + '：配套赎回金额超过来源专户当前可用规模' + srcSize.toLocaleString('zh-CN') + '元，请调整。');
     }
   });
 
@@ -5456,10 +5456,20 @@ const spvHoldingsData = {
     { spvCode:'DB3275', spvName:'国金资管方恒3号', navDate:'2026-06-27', nav:0.99373356, channel:'基煜', qty:6000000, scale:5962401.36, subAmt:0, redAmt:0 },
   ],
   'EW0580': [
-    { spvCode:'ZTQX08', spvName:'中铁信托-乾鑫8号', navDate:'2026-06-27', nav:1.11146787, channel:'直销', qty:10000000, scale:11114678.70, subAmt:0, redAmt:0 },
-    { spvCode:'2021-1147', spvName:'华润信托·招利33号', navDate:'2026-06-27', nav:1.10354761, channel:'直销', qty:8000000, scale:8828380.88, subAmt:0, redAmt:0 },
-    { spvCode:'O53200', spvName:'陆家嘴信托-悦享3号', navDate:'2026-06-27', nav:1.01555972, channel:'直销', qty:5000000, scale:5077798.60, subAmt:0, redAmt:0 },
-    { spvCode:'SBAT53', spvName:'光大期货光芒16号', navDate:'2026-06-26', nav:0.9744, channel:'直销', qty:3000000, scale:2923200.00, subAmt:0, redAmt:0 },
+    { spvCode:'ZTQX08', spvName:'中铁信托-乾鑫8号', navDate:'2026-06-27', nav:1.11146787, channel:'直销', qty:32000000, scale:35566971.84, subAmt:0, redAmt:0 },
+    { spvCode:'2021-1147', spvName:'华润信托·招利33号', navDate:'2026-06-27', nav:1.10354761, channel:'直销', qty:26000000, scale:28692237.86, subAmt:0, redAmt:0 },
+    { spvCode:'O53200', spvName:'陆家嘴信托-悦享3号', navDate:'2026-06-27', nav:1.01555972, channel:'直销', qty:18000000, scale:18280074.96, subAmt:0, redAmt:0 },
+    { spvCode:'SBAT53', spvName:'光大期货光芒16号', navDate:'2026-06-26', nav:0.9744, channel:'直销', qty:15000000, scale:14616000.00, subAmt:0, redAmt:0 },
+  ],
+  'EW1340': [
+    { spvCode:'ZTQX08', spvName:'中铁信托-乾鑫8号', navDate:'2026-06-27', nav:1.11146787, channel:'直销', qty:28000000, scale:31121100.36, subAmt:0, redAmt:0 },
+    { spvCode:'2021-1147', spvName:'华润信托·招利33号', navDate:'2026-06-27', nav:1.10354761, channel:'直销', qty:22000000, scale:24278047.42, subAmt:0, redAmt:0 },
+    { spvCode:'300245', spvName:'光大永明资产聚优稳鑫13号', navDate:'2026-06-27', nav:1.01691257, channel:'直销', qty:18000000, scale:18304426.26, subAmt:0, redAmt:0 },
+  ],
+  'EW0515': [
+    { spvCode:'ZTQX08', spvName:'中铁信托-乾鑫8号', navDate:'2026-06-27', nav:1.11146787, channel:'直销', qty:24000000, scale:26675228.88, subAmt:0, redAmt:0 },
+    { spvCode:'2021-1147', spvName:'华润信托·招利33号', navDate:'2026-06-27', nav:1.10354761, channel:'直销', qty:20000000, scale:22070952.20, subAmt:0, redAmt:0 },
+    { spvCode:'SAGP35', spvName:'光大期货阳光甄选8号', navDate:'2026-06-27', nav:1.0111, channel:'基煜', qty:16000000, scale:16177600.00, subAmt:0, redAmt:0 },
   ],
   'EW4659': [
     { spvCode:'ZTQX08', spvName:'中铁信托-乾鑫8号', navDate:'2026-06-27', nav:1.11146787, channel:'直销', qty:20000000, scale:22229357.40, subAmt:0, redAmt:0 },
