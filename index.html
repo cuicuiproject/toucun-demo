@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
@@ -2811,6 +2811,17 @@ const allAccounts = [
   },
 ];
 
+// 演示数据口径：作为赎回来源的管理专户持有规模给足一些，避免默认演示中频繁出现
+// “配套赎回金额大于来源持有规模”的红色提示；真实超额场景仍可通过手动输入大额申购验证。
+const DEMO_MIN_SOURCE_HOLDING_SIZE = 20000000;
+allAccounts.forEach(acc => {
+  (acc.holdings || []).forEach((holding, idx) => {
+    if (holding.size > 0 && holding.size < DEMO_MIN_SOURCE_HOLDING_SIZE) {
+      holding.size = DEMO_MIN_SOURCE_HOLDING_SIZE + idx * 250000;
+    }
+  });
+});
+
 // ==================== 理财产品候选来源 ====================
 // 2026-08-17 起不再维护独立产品库：拉壳/调仓「添加理财产品」候选
 // 统一取自「SPV持仓查询」页数据（positionData），见 getAddableProducts()
@@ -2937,10 +2948,99 @@ function getState(accountId) {
     if (isDemo) {
       state.status = 'done';
     }
+    applyAdjustDraftToState(accountId, state);
     accountState[accountId] = state;
   }
 
   return accountState[accountId];
+}
+
+const ADJUST_DRAFT_STORAGE_KEY = 'adjust_draft_v1';
+const ADJUST_DRAFT_FIELDS = [
+  'subMode', 'bpData', 'feeRateN', 'bpLoss', 'totalLoss', 'totalProfit', 'bpBaseSource',
+  'lossAdjData', 'lossSelectedMap', 'subSelectedMap', 'lossRedeemAmt', 'profitAllocationMap',
+  'subAmountMap', 'fundSourceMap', 'redSearchKw', 'subExtraProducts', 'bpGrowth', 'accountSize'
+];
+function cloneAdjustValue(value) {
+  return value == null ? value : JSON.parse(JSON.stringify(value));
+}
+function getAdjustDraftKey(accountId, date) {
+  return (date || adjustTradeDate || getTodayStr()) + '::' + accountId;
+}
+function loadAdjustDrafts() {
+  try {
+    const raw = localStorage.getItem(ADJUST_DRAFT_STORAGE_KEY);
+    const data = raw ? JSON.parse(raw) : {};
+    return data && typeof data === 'object' ? data : {};
+  } catch (e) {
+    return {};
+  }
+}
+function persistAdjustDrafts(drafts) {
+  try { localStorage.setItem(ADJUST_DRAFT_STORAGE_KEY, JSON.stringify(drafts || {})); } catch (e) {}
+}
+function getAdjustDraft(accountId, date) {
+  return loadAdjustDrafts()[getAdjustDraftKey(accountId, date)];
+}
+function buildAdjustDraftPayload(accountId, st) {
+  const payload = {
+    accountId,
+    tradeDate: adjustTradeDate || getTodayStr(),
+    savedAt: new Date().toISOString(),
+    state: {}
+  };
+  ADJUST_DRAFT_FIELDS.forEach(field => {
+    payload.state[field] = cloneAdjustValue(st[field]);
+  });
+  return payload;
+}
+function applyAdjustDraftToState(accountId, st) {
+  if (!st) return false;
+  const draft = getAdjustDraft(accountId);
+  if (!draft || !draft.state) return false;
+  ADJUST_DRAFT_FIELDS.forEach(field => {
+    if (Object.prototype.hasOwnProperty.call(draft.state, field)) {
+      st[field] = cloneAdjustValue(draft.state[field]);
+    }
+  });
+  st.status = 'progress';
+  st._draftRestored = true;
+  st._draftSavedAt = draft.savedAt || '';
+  return true;
+}
+function saveAdjustDraft(accountId) {
+  if (isAdjustHistoryMode()) { showToast('历史日期为只读，不支持保存草稿'); return; }
+  if (!accountId) { showToast('请先添加并选择专户'); return; }
+  const acc = getAccount(accountId);
+  const st = getState(accountId);
+  if (!acc || !st) return;
+  if (st.status === 'done') { showToast('该专户已同步，只读状态不支持保存草稿'); return; }
+  saveCurrentState();
+  recalcCurrent();
+  const drafts = loadAdjustDrafts();
+  drafts[getAdjustDraftKey(accountId)] = buildAdjustDraftPayload(accountId, st);
+  persistAdjustDrafts(drafts);
+  showToast('草稿已保存。');
+}
+function clearAdjustDraft(accountId, date) {
+  if (!accountId) return;
+  const drafts = loadAdjustDrafts();
+  const key = getAdjustDraftKey(accountId, date);
+  if (Object.prototype.hasOwnProperty.call(drafts, key)) {
+    delete drafts[key];
+    persistAdjustDrafts(drafts);
+  }
+}
+function restoreAdjustDraftSidebar() {
+  const drafts = loadAdjustDrafts();
+  const prefix = (adjustTradeDate || getTodayStr()) + '::';
+  Object.keys(drafts).forEach(key => {
+    if (!key.startsWith(prefix)) return;
+    const accountId = key.slice(prefix.length);
+    const acc = getAccount(accountId);
+    if (!acc || getSpvStatusById(accountId).terminated) return;
+    leftListIds.add(accountId);
+  });
 }
 
 function getAccount(accountId) {
@@ -3303,7 +3403,7 @@ function renderContent(acc, st) {
         style="font-weight:800;font-size:18px;color:#1A3C6D;background:linear-gradient(135deg,#F0F9FF,#E0F2FE);border:2px solid #93C5FD;border-radius:8px;padding:6px 16px;width:140px;text-align:center;"
         ${disabled}
         oninput="onTotalBPChange(this.value)"
-        title="调整BP；用于计算各产品占比，不要求明细BP合计等于调整BP。">
+        title="调整BP；用于计算各产品占比，目标BP合计不得超过调整BP，可少分。">
       <span style="font-size:12px;font-weight:600;color:#1D4ED8;">BP</span>
       <span class="total-bp-hint" style="display:${st.totalLoss ? 'none' : 'inline-flex'};align-items:center;font-size:11px;font-weight:600;color:#C2410C;background:#FFF7ED;border:1px solid #FDBA74;border-radius:4px;padding:2px 8px;margin-left:6px;white-space:nowrap;" title="各产品占比的分母。">⚠ 调整BP未输入</span>
       ` : ''}
@@ -3376,7 +3476,7 @@ function renderContent(acc, st) {
     ${isLoss ? (() => {
       // ====== 调仓模式：左右两栏 ======
 
-      // 无持仓场景：仅用于历史记录或草稿回显；新增候选已过滤持有规模为0的专户
+      // 无持仓场景：仅用于历史记录或当前页面回显；新增候选已过滤持有规模为0的专户
       if (acc.holdings.length === 0) {
         return `
     <!-- 无持仓提示 -->
@@ -3633,7 +3733,9 @@ function renderContent(acc, st) {
             ${(!isHistoryView && isLocked) ? `<button class="btn btn-outline" onclick="resetAll()" style="font-size:12px;padding:6px 16px;">
               撤销同步
             </button>` : ''}
-            ${(isHistoryView || isLocked || acc.holdings.length === 0) ? '' : `<button class="btn btn-primary" onclick="syncToSystem()" style="font-size:12px;padding:6px 16px;">
+            ${(isHistoryView || isLocked || acc.holdings.length === 0) ? '' : `<button class="btn btn-outline" onclick="saveAdjustDraft(currentAccountId)" style="font-size:12px;padding:6px 16px;margin-right:8px;">
+              保存草稿
+            </button><button class="btn btn-primary" onclick="syncToSystem()" style="font-size:12px;padding:6px 16px;">
               同步至头寸管理计算
             </button>`}
           </div>
@@ -3656,6 +3758,10 @@ function renderContent(acc, st) {
 
   updateHeaderCheckbox();
   recalcCurrent();
+  if (st._draftRestored && !st._draftToastShown && !isReadOnly) {
+    st._draftToastShown = true;
+    setTimeout(() => showToast('已恢复上次保存的草稿'), 0);
+  }
 }
 
 function getAccountName(sel) {
@@ -3753,10 +3859,10 @@ function recalcLossMode(acc, st) {
     if (sel) subSelectedCodes.push(p.code);
   });
 
-  // 调整BP是各行占比的分母，明细BP不要求合计相等。
+  // 调整BP是各行占比的分母；明细BP合计不得超过调整BP，允许少分。
   const inputTotalBP = st.totalLoss || 0;
 
-  // 调整BP未输入提示：金额仍按行BP计算，但同步前必须补齐调整BP并通过合计校验。
+  // 调整BP未输入提示：金额仍按行BP计算，但同步前必须补齐调整BP并通过合计上限校验。
   const bpHintEls = document.querySelectorAll('.total-bp-hint');
   bpHintEls.forEach(el => { el.style.display = (st.subMode === 'bp' && inputTotalBP <= 0) ? 'inline-flex' : 'none'; });
 
@@ -3937,10 +4043,12 @@ function recalcLossMode(acc, st) {
         balStatusEl.title = '收益分配模式下申购金额由分配收益决定，申赎差额仅提示，不阻断同步。';
       }
     } else if (st.subMode === 'bp') {
-      const valid = Number.isFinite(inputTotalBP) && inputTotalBP > 0 && subSelectedCodes.length > 0 && subSelectedCodes.every(code => getBpProductScale(st, code) > 0 && Number.isFinite(st.bpData[code]) && st.bpData[code] > 0);
-      balStatusEl.textContent = valid ? rebalanceMessage(totalRedeemAmt, sumSub) : '⚠ 请填写调整BP和目标BP';
+      const detailBpTotal = subSelectedCodes.reduce((sum, code) => sum + (st.bpData[code] || 0), 0);
+      const bpTotalExceeded = Number.isFinite(inputTotalBP) && inputTotalBP > 0 && detailBpTotal > inputTotalBP;
+      const valid = Number.isFinite(inputTotalBP) && inputTotalBP > 0 && !bpTotalExceeded && subSelectedCodes.length > 0 && subSelectedCodes.every(code => getBpProductScale(st, code) > 0 && Number.isFinite(st.bpData[code]) && st.bpData[code] > 0);
+      balStatusEl.textContent = bpTotalExceeded ? ('⚠ 目标BP合计' + detailBpTotal + '，已超过调整BP' + inputTotalBP + '，请调整。') : (valid ? rebalanceMessage(totalRedeemAmt, sumSub) : '⚠ 请填写调整BP和目标BP');
       balStatusEl.style.color = !valid ? '#DC2626' : (sumSub > 0 && rebalanceDifference(totalRedeemAmt, sumSub) === 0 ? '#16A34A' : '#DC2626');
-      balStatusEl.title = '最终申购 = 该理财产品持有所有专户的规模之和 × 目标BP ÷ 调整BP；按分验算。';
+      balStatusEl.title = '最终申购 = 该理财产品持有所有专户的规模之和 × 目标BP ÷ 调整BP；目标BP合计不得超过调整BP。';
     } else if (totalRedeemAmt === 0 && sumSub === 0) {
       balStatusEl.textContent = '待输入';
       balStatusEl.style.color = '#64748B';
@@ -4399,8 +4507,7 @@ function removeAccount(accountId) {
     renderSidebar();
     if (currentAccountId === accountId) {
       currentAccountId = null;
-      const main = document.getElementById('mainContent');
-      if (main) main.innerHTML = '<div class="empty-state"><div class="empty-icon">📂</div><div>已清仓专户已移出列表，请从顶部下拉选择其他专户</div></div>';
+      renderAdjustEmptyState();
     }
     showToast('已从左侧列表移出（该专户在「专户产品维护」中仍为已清仓，业务档案保留）');
     return;
@@ -4425,6 +4532,18 @@ function removeAccount(accountId) {
     return;
   }
 
+  const acc = getAccount(accountId);
+  showConfirmDialog({
+    title: '移除专户',
+    bodyHTML: '<p style="font-size:14px;color:var(--text);">移除“<strong>' + escHtml(acc ? acc.name : accountId) + '</strong>”将清除其当前草稿，是否继续？</p>',
+    confirmText: '确认移除',
+    danger: true,
+    onConfirm: () => removeAccountDraft(accountId)
+  });
+}
+
+function removeAccountDraft(accountId) {
+  clearAdjustDraft(accountId);
   // 未同步：仅从左侧栏可见性集合移除。
   // 关键：不得从 allAccounts 删除——allAccounts 是「+ 添加」候选池的数据源，
   //       删除会导致该专户彻底消失、无法再被找回（临时专户/已下线专户尤其明显）。
@@ -4443,8 +4562,7 @@ function removeAccount(accountId) {
     const st2 = getState(currentAccountId);
     if (acc && st2) renderContent(acc, st2);
   } else {
-    const main = document.getElementById('mainContent');
-    if (main) main.innerHTML = '<div class="empty-state"><div class="empty-icon">📂</div><div>暂无专户，请从顶部下拉选择并点击「+ 添加」</div></div>';
+    renderAdjustEmptyState();
   }
 }
 
@@ -4501,13 +4619,13 @@ function confirmRevoke() {
     leftListIds.delete(id);
   }
   renderSidebar();
+  showToast('已撤销同步并移出左侧列表');
   if (currentAccountId) {
     const acc = getAccount(currentAccountId);
     const st2 = getState(currentAccountId);
     if (acc && st2) renderContent(acc, st2);
   } else {
-    const main = document.getElementById('mainContent');
-    if (main) main.innerHTML = '<div class="empty-state"><div class="empty-icon">📂</div><div>暂无专户，请从顶部下拉选择并点击「+ 添加」</div></div>';
+    renderAdjustEmptyState();
   }
 }
 
@@ -4555,6 +4673,7 @@ function confirmReset() {
   const modal = document.getElementById('resetModal');
   if (modal) modal.remove();
   if (!acc) return;
+  clearAdjustDraft(currentAccountId);
   accountState[currentAccountId] = null;
   const st = getState(currentAccountId);
   st.status = 'progress';
@@ -4565,6 +4684,7 @@ function confirmReset() {
   renderSidebar();
   renderContent(acc, st);
   recalcCurrent();
+  showToast('已撤销同步，可重新编辑');
 }
 
 // ==================== 合规风控校验 ====================
@@ -4665,7 +4785,7 @@ function syncToSystem() {
   }
 
   if (st.subMode === 'bp') {
-    // BP驱动模式：校验调整BP与目标BP有效性（目标BP合计不要求等于调整BP）。
+    // BP驱动模式：校验调整BP与目标BP有效性（目标BP合计不得超过调整BP，允许少分）。
     let hasBP = false, detailBpTotal = 0;
     subProductPool.forEach(p => {
       const sel = (st.subSelectedMap && st.subSelectedMap[p.code] !== undefined) ? st.subSelectedMap[p.code] : false;
@@ -4679,10 +4799,11 @@ function syncToSystem() {
       errors.push('右栏未勾选产品或目标BP未填写，无法按BP分摊。');
     }
     if (!Number.isFinite(st.totalLoss) || st.totalLoss <= 0) errors.push('调整BP必须为正整数。');
+    if (Number.isFinite(st.totalLoss) && st.totalLoss > 0 && detailBpTotal > st.totalLoss) {
+      errors.push('目标BP合计' + detailBpTotal + '，已超过调整BP' + st.totalLoss + '，请调整。');
+    }
     subProductPool.forEach(p => {
-      if (st.subSelectedMap?.[p.code] === false) return;
-      if (!getBpProductScale(st, p.code)) errors.push(p.code + '：理财产品SPV持仓暂无有效的产品总规模（含今日申赎），请先完善SPV持仓数据。');
-      if (!Number.isFinite(st.bpData[p.code]) || st.bpData[p.code] <= 0) errors.push(p.code + '：目标BP必须为正整数。');
+      if (st.subSelectedMap?.[p.code] === false) return;      if (!Number.isFinite(st.bpData[p.code]) || st.bpData[p.code] <= 0) errors.push(p.code + '：目标BP必须为正整数。');
       if (Number.isFinite(st.totalLoss) && st.totalLoss > 0 && Number.isFinite(st.bpData[p.code]) && st.bpData[p.code] > st.totalLoss) errors.push(p.code + '：目标BP不得大于调整BP，单行占比不能超过100%。');
     });
   } else {
@@ -4711,7 +4832,9 @@ function syncToSystem() {
     const redAmt = st.lossRedeemAmt?.[p.code] || 0;
     return sel && redAmt > 0;
   });
-  // 左侧无赎回仅形成差额提示，不单独阻断同步。
+  if (redeemSelected.length === 0) {
+    errors.push('左侧无有效赎回记录，请至少勾选一只产品并填写大于0的赎回金额。');
+  }
 
   // 赎回金额超限校验：单产品赎回金额不得超过其持有该专户的规模
   acc.holdings.forEach(p => {
@@ -4983,14 +5106,14 @@ function confirmSync() {
   });
 
   savePositionData();
+  clearAdjustDraft(currentAccountId);
   data.st.status = 'done';
   closeSyncModal();
   renderSidebar();
   const acc2 = getAccount(currentAccountId);
   const st2 = getState(currentAccountId);
   if (acc2 && st2) renderContent(acc2, st2);
-  // 自动跳转头寸管理 Tab 查看效果
-  switchTab('position');
+  showToast('已同步至头寸管理计算，可继续处理其他专户');
 }
 
 // ==================== INIT ====================
@@ -5009,7 +5132,7 @@ function getTodayStr() {
 // 正式系统必须恢复此校验（真实场景下基于历史头寸的调仓金额确实不可用）。
 const DEMO_SKIP_POSITION_DATE_CHECK = true;
 // Demo 数据版本：每次修改默认数据/演示示例后递增。用于在本地缓存中识别旧数据结构，自动清理避免旧缓存污染新 Demo。
-const DEMO_DATA_VERSION = '20250914c';
+const DEMO_DATA_VERSION = '20250918b';
 // 演示环境：直接把「头寸数据日期」锚定为今天，使新鲜度判断、页面日期标签、同步校验三者保持一致。
 // （仅覆写演示变量，不触碰真实读取逻辑；DEMO_SKIP_POSITION_DATE_CHECK 作为双保险保留）
 try {
@@ -5042,6 +5165,7 @@ function onAdjustTradeDateChange(value) {
   const today = getTodayStr();
   adjustTradeDate = value || today;
   if (adjustTradeDate > today) adjustTradeDate = today;
+  restoreAdjustDraftSidebar();
   renderAdjustDateBar();
   renderSidebarAddSelect();
   renderSidebar();
@@ -6000,6 +6124,7 @@ function init() {
     // 仅作用于演示环境：从 allAccounts 中取前 3 个演示账户加入 leftListIds（具体哪几个由 allAccounts 数组顺序决定）。
     // 实际开发后此段移除，由用户通过顶部「+ 添加」主动管理。
     allAccounts.slice(0, 3).forEach(a => leftListIds.add(a.id));
+    restoreAdjustDraftSidebar();
     // 初始化头寸管理 Tab
     currentTab = 'position';
     positionColumns.forEach(c => { visibleColumns[c.key] = c.defaultShow; });
@@ -8583,3 +8708,4 @@ document.addEventListener('click', function(e) {
 
 </body>
 </html>
+
