@@ -2812,7 +2812,7 @@ const allAccounts = [
 ];
 
 // 演示数据口径：作为赎回来源的管理专户持有规模给足一些，避免默认演示中频繁出现
-// “配套赎回金额大于来源持有规模”的红色提示；真实超额场景仍可通过手动输入大额申购验证。
+// “配套赎回金额超过来源专户当前可用额度”的红色提示；真实超额场景仍可通过手动输入大额申购验证。
 const DEMO_MIN_SOURCE_HOLDING_SIZE = 20000000;
 allAccounts.forEach(acc => {
   (acc.holdings || []).forEach((holding, idx) => {
@@ -3385,9 +3385,6 @@ function renderContent(acc, st) {
   container.innerHTML = `
     ${isHistoryView ? `<div style="background:#EFF6FF;border:1px solid #BFDBFE;color:#1E3A8A;padding:8px 16px;border-radius:4px;margin-bottom:12px;font-size:13px;"><strong>历史记录：${adjustTradeDate}</strong>，当前为只读状态，仅用于查看该日调仓信息。</div>` : ''}
     ${(!isHistoryView && isLocked) ? `<div style="background:#FFF3CD;border:1px solid #FFC107;color:#856404;padding:8px 16px;border-radius:4px;margin-bottom:12px;font-size:13px;">该专户已同步至头寸管理计算，当前为<strong>只读</strong>状态。如需调整，请先<strong>撤销同步</strong>。</div>` : ''}
-    ${(!isHistoryView && !isPositionFresh()) ? `<div style="background:#FFF7ED;border:1px solid #FDBA74;color:#9A3412;padding:8px 16px;border-radius:4px;margin-bottom:12px;font-size:13px;">
-      ⚠️ <strong>头寸数据非当日</strong>：当前依据 <strong>${positionDataDate}</strong> 上传的日初头寸计算（今日为 ${getTodayStr()}）。头寸每日变动，基于历史头寸的调仓金额不可用。请先在「头寸管理」页上传<strong>今日</strong>日初头寸文件，上传后本提示自动消失。
-    </div>` : ''}
     <!-- Mode selector & key params -->
     <div class="top-bar" style="align-items:center;gap:12px;padding:8px 16px;">
       <span style="font-weight:700;font-size:14px;color:var(--primary);white-space:nowrap;">${acc.name}</span>
@@ -3399,7 +3396,7 @@ function renderContent(acc, st) {
       ${st.subMode === 'bp' ? `
       <span style="color:var(--border);margin:0 4px;">|</span>
       <span style="font-size:12px;color:var(--text-muted);">调整BP</span>
-      <input type="text" inputmode="numeric" id="totalBPInput" value="${st.totalLoss || ''}" placeholder="请输入BP"
+      <input type="text" inputmode="numeric" id="totalBPInput" value="${st.totalLoss || ''}" placeholder="请输入调整BP"
         style="font-weight:800;font-size:18px;color:#1A3C6D;background:linear-gradient(135deg,#F0F9FF,#E0F2FE);border:2px solid #93C5FD;border-radius:8px;padding:6px 16px;width:140px;text-align:center;"
         ${disabled}
         oninput="onTotalBPChange(this.value)"
@@ -3435,7 +3432,7 @@ function renderContent(acc, st) {
         </div>
         <div class="section-actions">
           <span style="font-size:12px;color:var(--text-muted);">已选 <strong id="selectedCount">${lossSelCount}</strong> / <strong id="totalProductCount">${lossTotalCount}</strong> 只</span>
-          <span style="font-size:12px;color:var(--text-muted);margin-left:8px;">调整BP <input type="text" inputmode="numeric" id="totalBPInput" value="${st.totalLoss || ''}" placeholder="输入" style="font-weight:700;font-size:14px;width:60px;text-align:center;border:1px solid #93C5FD;border-radius:4px;padding:2px 6px;" oninput="onTotalBPChange(this.value)" title="调整BP。"></span>          <span class="total-bp-hint" style="display:${st.totalLoss ? 'none' : 'inline-flex'};align-items:center;font-size:10px;font-weight:600;color:#C2410C;margin-left:4px;white-space:nowrap;">⚠ 请先输入调整BP</span>
+          <span style="font-size:12px;color:var(--text-muted);margin-left:8px;">调整BP <input type="text" inputmode="numeric" id="totalBPInput" value="${st.totalLoss || ''}" placeholder="输入" style="font-weight:700;font-size:14px;width:60px;text-align:center;border:1px solid #93C5FD;border-radius:4px;padding:2px 6px;" oninput="onTotalBPChange(this.value)" title="调整BP。"></span>          <span class="total-bp-hint" style="display:${st.totalLoss ? 'none' : 'inline-flex'};align-items:center;font-size:10px;font-weight:600;color:#C2410C;margin-left:4px;white-space:nowrap;">⚠ 请输入调整BP</span>
         </div>
       </div>
       <div class="section-body" style="padding:0;">
@@ -3548,7 +3545,7 @@ function renderContent(acc, st) {
                 <input type="text" inputmode="decimal" class="loss-red-input${!sel && !subOccupied ? ' unclicked-hint' : ''}" id="lossRedeemInput_${p.code}" value="${redAmt ? redAmt.toLocaleString('zh-CN') : ''}"
                   placeholder="${!sel && !subOccupied ? '需先勾选' : '输入赎回金额'}"
                   ${disabled || subOccupied ? 'disabled' : ''}
-                  ${!sel && !subOccupied ? 'readonly onclick="onUnselectedInputClick()"' : ''}
+                  ${!sel && !subOccupied ? 'readonly' : ''}
                   oninput="onLossRedeemAmtChange('${p.code}', this.value)" onfocus="this.select()"
                   style="width:110px;padding:4px 6px;">
                 <button class="btn" id="allRedeemBtn_${p.code}" onclick="onAllRedeemOne('${p.code}')" ${disabled || !sel || subOccupied ? 'disabled' : ''} style="font-size:11px;padding:4px 6px;background:#8743A9;color:#fff;border:none;border-radius:4px;cursor:pointer;white-space:nowrap;flex-shrink:0;">全赎</button>
@@ -3591,9 +3588,9 @@ function renderContent(acc, st) {
                 placeholder="${st.subMode === 'bp' ? '自动计算' : (!subSel ? '需先勾选' : '输入分配收益')}"
                 ${st.subMode === 'bp' ? 'readonly' : ''}
                 ${disabled ? 'disabled' : ''}
-                ${!subSel && st.subMode !== 'bp' ? 'readonly onclick="onUnselectedInputClick()"' : ''}
+                ${!subSel && st.subMode !== 'bp' ? 'readonly' : ''}
                 oninput="${st.subMode === 'bp' ? '' : 'onSubAmountChange(\'' + p.code + '\', this.value)'}"
-                title="${st.subMode === 'bp' ? '根据SPV文件数据，取该理财产品持有所有专户的规模之和，再按目标BP和调整BP计算。' : '输入该产品分配的收益金额。'}"
+                title="${st.subMode === 'bp' ? '理财产品总规模 × 目标BP ÷ 调整BP。' : '输入该产品分配的收益金额。'}"
                 style="width:120px;${st.subMode === 'bp' ? 'background:#F8FAFC;color:#1E3A5F;font-weight:600;' : (!subSel ? 'background:#F5F5F5;color:#B0B0B0;cursor:pointer;' : 'background:#fff;color:#6D28D9;font-weight:600;')}">
             </td>
             ${st.subMode === 'wan' ? `<td class="num" id="generatedSubAmt_${p.code}" style="font-weight:600;color:#1E3A5F;background:#F8FAFC;">${subAmt ? subAmt.toLocaleString('zh-CN') : '--'}</td>` : ''}
@@ -3704,9 +3701,9 @@ function renderContent(acc, st) {
                   <th class="chk-cell" style="text-align:center;"><input type="checkbox" title="全选/取消全选" onchange="onSubHeaderCheck(this.checked)" ${disabled}></th>
                   <th style="width:74px;">产品代码</th>
                   <th style="width:96px;">产品名称</th>
-                  ${st.subMode === 'bp' ? '<th style="min-width:160px;">产品总规模（元）<i class="th-help" data-tip="根据SPV文件数据，取该理财产品持有所有专户的规模之和。">i</i></th><th style="text-align:center;width:60px;">目标BP<i class="th-help" data-tip="该产品分配的BP。">i</i></th>' : ''}
+                  ${st.subMode === 'bp' ? '<th style="min-width:160px;">产品总规模（元）<i class="th-help" data-tip="根据SPV文件数据，取该理财产品总规模。">i</i></th><th style="text-align:center;width:60px;">目标BP<i class="th-help" data-tip="该产品分配的BP。">i</i></th>' : ''}
                   <th style="text-align:right;width:80px;">占比<i class="th-help" data-tip="${st.subMode === 'bp' ? '目标BP ÷ 调整BP。' : '分配收益 ÷ 总收益。'}">i</i></th>
-                  <th style="text-align:right;width:120px;">${st.subMode === 'bp' ? '申购金额（元）' : '分配收益金额（元）'}<i class="th-help" data-tip="${st.subMode === 'bp' ? '根据SPV文件数据，取该理财产品持有所有专户的规模之和，再按目标BP和调整BP计算。' : '输入该产品分配的收益金额。'}">i</i></th>
+                  <th style="text-align:right;width:120px;">${st.subMode === 'bp' ? '申购金额（元）' : '分配收益金额（元）'}<i class="th-help" data-tip="${st.subMode === 'bp' ? '理财产品总规模 × 目标BP ÷ 调整BP。' : '输入该产品分配的收益金额。'}">i</i></th>
                   ${st.subMode === 'wan' ? '<th style="text-align:right;width:120px;">自动申购金额（元）<i class="th-help" data-tip="分配占比 × 专户总规模。">i</i></th>' : ''}
                   <th style="width:180px;">赎回来源<i class="th-help" data-tip="选择本笔申购对应的配套赎回专户。">i</i></th>
                   <th style="width:60px;">操作</th>
@@ -3758,10 +3755,6 @@ function renderContent(acc, st) {
 
   updateHeaderCheckbox();
   recalcCurrent();
-  if (st._draftRestored && !st._draftToastShown && !isReadOnly) {
-    st._draftToastShown = true;
-    setTimeout(() => showToast('已恢复上次保存的草稿'), 0);
-  }
 }
 
 function getAccountName(sel) {
@@ -3796,7 +3789,10 @@ function rebalanceDifference(redeem, subscribe) {
 function rebalanceMessage(redeem, subscribe) {
   const cents = rebalanceDifference(redeem, subscribe);
   if (!cents) return subscribe > 0 ? '✅ 调仓平衡' : '待输入有效交易';
-  return '⚠️ 多' + (cents > 0 ? '申购' : '赎回') + ' ' + (Math.abs(cents) / 100).toLocaleString('zh-CN', {minimumFractionDigits:2, maximumFractionDigits:2}) + ' 元（仅提示，不阻断）';
+  const subText = subscribe.toLocaleString('zh-CN', {minimumFractionDigits:2, maximumFractionDigits:2});
+  const redText = redeem.toLocaleString('zh-CN', {minimumFractionDigits:2, maximumFractionDigits:2});
+  const diffText = (Math.abs(cents) / 100).toLocaleString('zh-CN', {minimumFractionDigits:2, maximumFractionDigits:2});
+  return '申购总额' + subText + '元，赎回总额' + redText + '元，多' + (cents > 0 ? '申购' : '赎回') + diffText + '元，请核对后确认同步。';
 }
 
 function calcBpRatioPct(bp, totalBP) {
@@ -3862,7 +3858,7 @@ function recalcLossMode(acc, st) {
   // 调整BP是各行占比的分母；明细BP合计不得超过调整BP，允许少分。
   const inputTotalBP = st.totalLoss || 0;
 
-  // 调整BP未输入提示：金额仍按行BP计算，但同步前必须补齐调整BP并通过合计上限校验。
+  // 调整BP未输入时保留目标BP，暂不计算有效申购金额；同步前必须补齐调整BP。
   const bpHintEls = document.querySelectorAll('.total-bp-hint');
   bpHintEls.forEach(el => { el.style.display = (st.subMode === 'bp' && inputTotalBP <= 0) ? 'inline-flex' : 'none'; });
 
@@ -3928,7 +3924,7 @@ function recalcLossMode(acc, st) {
     const warnEl = document.getElementById('profitWarn');
     if (warnEl) {
       if (totalProfit <= 0) {
-        warnEl.textContent = '⚠ 未填总收益，占比无法计算';
+        warnEl.textContent = '⚠ 请输入大于0的总收益金额。';
         warnEl.style.display = 'inline-block';
       } else {
         warnEl.style.display = 'none';
@@ -3979,7 +3975,7 @@ function recalcLossMode(acc, st) {
     const adj = 0; // BP按公式生成最终金额，不允许调减
     const actual = subAmt - adj;
     if (actual > srcSize) {
-      warnEl.textContent = '⚠ 配套赎回金额大于来源持有规模，请调整';
+      warnEl.textContent = '⚠ ' + p.code + '：配套赎回金额超过来源专户当前可用额度' + srcSize.toLocaleString('zh-CN') + '元，请调整。';
       warnEl.style.display = 'block';
       if (selEl) selEl.style.borderColor = '#DC2626';
     } else {
@@ -4023,7 +4019,7 @@ function recalcLossMode(acc, st) {
       const diffCents = Math.round(diff * 100);
       const diffText = diffCents === 0
         ? '申赎相等'
-        : '多' + (diffCents > 0 ? '赎回' : '申购') + ' ' + (Math.abs(diffCents) / 100).toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' 元（仅提示）';
+        : rebalanceMessage(totalRedeemAmt, sumSub);
       const diffHtml = diffCents === 0
         ? '<span style="color:#16A34A;">申赎相等</span>'
         : '<span style="color:#DC2626;">' + diffText + '</span>';
@@ -4171,15 +4167,11 @@ function syncPositiveIntegerInputElement(el, normalized) {
 function onBPChange(code, value) {
   const st = getState(currentAccountId);
   if (!st) return;
-  const prevBP = st.bpData[code] || 0;
   const bpInput = getPositiveIntegerInputValue(value);
   const el = document.activeElement;
   syncPositiveIntegerInputElement(el, bpInput.normalized);
   st.bpData[code] = bpInput.num;
-  // 输入明细BP但调整BP为空时引导（仅从0变为非0时提示一次，避免逐字符重复弹窗）
-  if (st.subMode === 'bp' && !st.totalLoss && prevBP === 0 && st.bpData[code] > 0) {
-    showToast('请先在顶部输入调整BP，输入后申购金额将自动计算');
-  }
+  // 允许先填写目标BP；调整BP缺失由同步前校验明确提示。
   recalcCurrent();
 }
 
@@ -4263,11 +4255,6 @@ function onLossAdjChange(code, value) {
   recalcCurrent();
 }
 
-// 未勾选产品时点击输入框的提示
-function onUnselectedInputClick() {
-  showToast('请先勾选该产品，再输入金额');
-}
-
 // 调仓左栏：赎回端产品搜索（按代码/名称关键字过滤）
 // 仅控制显示，不影响任何勾选/金额数据；已勾选或已填金额的行始终保留
 function onRedSearchInput(value, evt) {
@@ -4318,7 +4305,7 @@ function onLossRedeemAmtChange(code, value) {
   if (maxSize > 0 && amt > maxSize) {
     amt = maxSize;
     if (inputEl) inputEl.value = amt.toLocaleString('zh-CN');
-    showToast('赎回金额不能超过该产品持有规模 ' + maxSize.toLocaleString('zh-CN') + ' 元，已按最大可赎回金额调整');
+    showToast('赎回金额不能超过当前可用额度' + maxSize.toLocaleString('zh-CN') + '元，已按最大可赎回金额调整。');
   }
   st.lossRedeemAmt[code] = amt;
   recalcCurrent();
@@ -4778,11 +4765,6 @@ function syncToSystem() {
     if (sel && redAmt <= 0) errors.push(p.code + '：请填写大于0的赎回金额；不参与本次调仓请取消勾选。');
   });
 
-  // 头寸数据新鲜度校验：调仓必须基于当日日初头寸文件（头寸每日变动，历史头寸计算结果不可用）
-  // ⚠️ Demo 演示开关：演示环境放行此校验（见 DEMO_SKIP_POSITION_DATE_CHECK 定义处说明），正式系统须恢复。
-  if (!isPositionFresh() && !DEMO_SKIP_POSITION_DATE_CHECK) {
-    errors.push('头寸数据日期为 ' + positionDataDate + '（非今日 ' + getTodayStr() + '），调仓计算必须基于当日日初头寸文件。请先在「头寸管理」页上传今日头寸后再同步。');
-  }
 
   if (st.subMode === 'bp') {
     // BP驱动模式：校验调整BP与目标BP有效性（目标BP合计不得超过调整BP，允许少分）。
@@ -4794,11 +4776,10 @@ function syncToSystem() {
         detailBpTotal += st.bpData[p.code] || 0;
       }
     });
-    if ((st.totalLoss || 0) <= 0) errors.push('未填写「调整BP」，请先输入调整BP。');
+    if ((st.totalLoss || 0) <= 0) errors.push('请输入调整BP');
     if (!hasBP) {
-      errors.push('右栏未勾选产品或目标BP未填写，无法按BP分摊。');
+      errors.push('右侧无有效申购记录，请勾选理财产品并填写大于0的目标BP。');
     }
-    if (!Number.isFinite(st.totalLoss) || st.totalLoss <= 0) errors.push('调整BP必须为正整数。');
     if (Number.isFinite(st.totalLoss) && st.totalLoss > 0 && detailBpTotal > st.totalLoss) {
       errors.push('目标BP合计' + detailBpTotal + '，已超过调整BP' + st.totalLoss + '，请调整。');
     }
@@ -4810,7 +4791,7 @@ function syncToSystem() {
     // 收益分配模式：校验总收益是否已填、是否有勾选产品且分配收益>0、分配额是否超出总收益
     const totalProfit = st.totalProfit || 0;
     if (totalProfit <= 0) {
-      errors.push('未填写「本次可分配总收益」，无法计算各产品占比，请先在顶部输入总收益。');
+      errors.push('请输入大于0的总收益金额。');
     }
     let hasAmt = false, sumAssigned = 0;
     subProductPool.forEach(p => {
@@ -4819,10 +4800,10 @@ function syncToSystem() {
       if (sel && amt > 0) { hasAmt = true; sumAssigned += amt; }
     });
     if (!hasAmt) {
-      errors.push('右栏未勾选产品或分配收益金额均为0，请逐行填写各产品分配收益金额。');
+      errors.push('右侧无有效申购记录，请勾选理财产品并填写大于0的分配收益金额。');
     }
     if (totalProfit > 0 && Math.round(sumAssigned * 100) > Math.round(totalProfit * 100)) {
-      errors.push('分配收益合计 ' + sumAssigned.toLocaleString('zh-CN') + ' 元已超出本次可分配总收益 ' + totalProfit.toLocaleString('zh-CN') + ' 元（超出 ' + (sumAssigned - totalProfit).toLocaleString('zh-CN') + ' 元），请调整分配金额。');
+      errors.push('分配收益合计' + sumAssigned.toLocaleString('zh-CN') + '元已超出本次可分配总收益' + totalProfit.toLocaleString('zh-CN') + '元，超出' + (sumAssigned - totalProfit).toLocaleString('zh-CN') + '元，请调整分配金额。');
     }
   }
 
@@ -4833,7 +4814,7 @@ function syncToSystem() {
     return sel && redAmt > 0;
   });
   if (redeemSelected.length === 0) {
-    errors.push('左侧无有效赎回记录，请至少勾选一只产品并填写大于0的赎回金额。');
+    errors.push('左侧无有效赎回记录，请勾选理财产品并填写大于0的赎回金额。');
   }
 
   // 赎回金额超限校验：单产品赎回金额不得超过其持有该专户的规模
@@ -4841,7 +4822,7 @@ function syncToSystem() {
     const sel = (st.lossSelectedMap && st.lossSelectedMap[p.code] !== undefined) ? st.lossSelectedMap[p.code] : true;
     const redAmt = st.lossRedeemAmt?.[p.code] || 0;
     if (sel && redAmt > (p.size || 0)) {
-      errors.push(p.name.split('（')[0] + '（' + p.code + '）赎回金额 ' + redAmt.toLocaleString('zh-CN') + ' 元超过持有规模 ' + (p.size || 0).toLocaleString('zh-CN') + ' 元，请调整后再同步。');
+      errors.push(p.code + '赎回金额超过当前可用额度' + (p.size || 0).toLocaleString('zh-CN') + '元，请调整后重新确认。');
     }
   });
 
@@ -4852,13 +4833,11 @@ function syncToSystem() {
     if (!sel || subAmt <= 0) return;
     const srcId = (st.fundSourceMap && st.fundSourceMap[p.code]) || '';
     if (!srcId) {
-      errors.push(p.name.split('（')[0] + '（' + p.code + '）申购金额 ' + subAmt.toLocaleString('zh-CN') + ' 元未指定「赎回来源」，请在下拉中选择本笔申购对应的配套赎回专户。');
+      errors.push(p.code + '：请选择本笔申购对应的赎回来源专户。');
     }
   });
 
-  // 资金来源专户状态校验：已清仓（终态）禁止作为配对赎回来源；已下线允许但二次确认提示
-  // 背景：右侧申购区选中的来源专户，若在「专户产品维护」中已下线/已清仓，不应凭空生成赎回流水。
-  const offlineSrcWarns = [];
+  // 资金来源专户状态校验：已清仓（终态）禁止作为配对赎回来源。
   subProductPool.forEach(p => {
     const sel = (st.subSelectedMap && st.subSelectedMap[p.code] !== undefined) ? st.subSelectedMap[p.code] : true;
     if (!sel) return;
@@ -4868,19 +4847,11 @@ function syncToSystem() {
     if (!srcInfo) return;  // 失效来源由下方规模校验兜底提示
     if (srcInfo.spvTerminated) {
       // 已清仓在渲染阶段已从下拉移除并清空绑定；此处为残留脏数据（如从旧缓存载入）兜底硬阻断。
-      errors.push(p.name.split('（')[0] + '（' + p.code + '）的赎回来源已失效，请重新选择。');
+      errors.push('赎回来源已失效，请重新选择。');
       if (st.fundSourceMap) st.fundSourceMap[p.code] = '';
     } else if (srcInfo.spvOnline === false) {
-      offlineSrcWarns.push(p.name.split('（')[0] + '（' + p.code + '）→ 来源专户「' + srcInfo.name + '」已下线');
     }
   });
-  // 已下线来源为「警告」而非「错误」：允许继续，但需在最终确认弹窗中显著提示
-  if (offlineSrcWarns.length > 0) {
-    window._offlineSrcWarns = offlineSrcWarns;
-  } else {
-    window._offlineSrcWarns = [];
-  }
-
   // 资金来源规模校验：指定来源时，实际金额不得超过该产品持有来源专户的规模（与赎回超限校验同口径）
   subProductPool.forEach(p => {
     const sel = (st.subSelectedMap && st.subSelectedMap[p.code] !== undefined) ? st.subSelectedMap[p.code] : true;
@@ -4897,7 +4868,7 @@ function syncToSystem() {
     const adj = 0; // BP按公式生成最终金额，不允许调减
     const actual = subAmt - adj;
     if (actual > srcSize) {
-      errors.push(p.name.split('（')[0] + '（' + p.code + '）配套赎回金额大于赎回来源专户「' + srcInfo.name + '」的持有规模，请调整。');
+      errors.push(p.code + '：配套赎回金额超过来源专户当前可用额度' + srcSize.toLocaleString('zh-CN') + '元，请调整。');
     }
   });
 
@@ -4908,7 +4879,18 @@ function syncToSystem() {
     return sel && subAmt > 0;
   });
   if (subSelected.length === 0) {
-    errors.push('右栏无有效申购记录，请至少输入一只产品的申购金额。');
+    errors.push('右侧无有效申购记录，请勾选理财产品并填写大于0的分配BP或分配收益金额。');
+  }
+
+  if (redeemSelected.length === 0 && subSelected.length === 0) {
+    const sideErrors = new Set([
+      '左侧无有效赎回记录，请勾选理财产品并填写大于0的赎回金额。',
+      '右侧无有效申购记录，请勾选理财产品并填写大于0的分配BP或分配收益金额。'
+    ]);
+    for (let i = errors.length - 1; i >= 0; i--) {
+      if (sideErrors.has(errors[i])) errors.splice(i, 1);
+    }
+    errors.push('尚无有效交易，请填写申购和赎回信息。');
   }
 
   // 日终平衡校验
@@ -5008,7 +4990,7 @@ function showSyncModal() {
         tableHTML += '</tr>';
       });
       tableHTML += '</tbody></table>';
-      tableHTML += '<div style="font-size:11px;color:#64748B;margin-top:4px;">注：系统自动生成同金额配套赎回（一申配一赎、同产品同金额）；当日资金影响按到账时效计算，头寸表按记账口径自动平衡。</div>';
+      tableHTML += '<div style="font-size:11px;color:#64748B;margin-top:4px;">注：系统自动生成同金额配套赎回（一申配一赎、同产品同金额）；当日资金影响按到账时效计算</div>';
     }
   }
   if (redeemProducts.length > 0) {
@@ -5025,26 +5007,12 @@ function showSyncModal() {
     tableHTML += '</tbody></table>';
   }
 
-  // 已下线来源专户警示条：置顶展示，提示本次同步将涉及已下线专户
-  const offlineWarns = window._offlineSrcWarns || [];
-  const offlineBanner = offlineWarns.length > 0
-    ? `<div style="display:flex;align-items:flex-start;gap:8px;background:#FFF7ED;border:1px solid #FDBA74;border-radius:6px;padding:9px 12px;margin-bottom:10px;">
-        <span style="font-size:15px;line-height:1.2;">⚠️</span>
-        <div style="font-size:12px;line-height:1.7;color:#9A3412;">
-          <strong>本次申购含已下线的赎回来源专户：</strong><br>
-          ${offlineWarns.map(w => '· ' + w).join('<br>')}
-          <div style="margin-top:6px;color:#C2410C;">下线专户可能仍有残留持仓需出清；同步后头寸管理页对应专户列将标注「已下线」。</div>
-        </div>
-      </div>`
-    : '';
 
   document.getElementById('syncModalBody').innerHTML = `
-    ${offlineBanner}
-    ${st.subMode === "bp" && rebalanceDifference(sumRedAmt, sumSub) !== 0 ? '<div style="padding:10px 12px;margin-bottom:12px;background:#FFF7ED;border:1px solid #FDBA74;border-radius:6px;color:#9A3412;font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + rebalanceMessage(sumRedAmt, sumSub) + '，请核对后确认同步。</div>' : ''}
+    ${st.subMode === "bp" && rebalanceDifference(sumRedAmt, sumSub) !== 0 ? '<div style="padding:10px 12px;margin-bottom:12px;background:#FFF7ED;border:1px solid #FDBA74;border-radius:6px;color:#9A3412;font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + rebalanceMessage(sumRedAmt, sumSub) + '</div>' : ''}
     <div class="info-line"><span class="info-label">模式</span><span class="info-value">${modeLabel}</span></div>
     <div class="info-line"><span class="info-label">当前专户</span><span class="info-value">${acc.name}（${acc.code}）</span></div>
     <div class="info-line"><span class="info-label">汇总</span><span class="info-value">申购 ${subscribeProducts.length} 只 · 赎回 ${redeemProducts.length} 只</span></div>
-    <div class="info-line" style="padding:8px 0;">申购合计 <strong style="color:var(--primary);">${(sumSub/10000).toLocaleString()} 万</strong>${st.subMode === 'bp' ? ` · 申购基数 <strong style="color:#6D28D9;">SPV持仓汇总产品总规模</strong>` : ` · 可分配总收益 <strong style="color:#6D28D9;">${((st.totalProfit||0)/10000).toLocaleString()} 万</strong> · 留存未分配 <strong style="color:${((st.totalProfit||0)-sumAssignedProfit) < -0.01 ? '#DC2626' : '#94A3B8'};">${(((st.totalProfit||0)-sumAssignedProfit)/10000).toLocaleString()} 万</strong>`} · 赎回合计 <strong style="color:#C2410C;">${(sumRedAmt/10000).toLocaleString()} 万</strong></div>
     ${tableHTML}
   `;
   document.getElementById('syncModal').classList.add('show');
@@ -5187,7 +5155,7 @@ function renderAdjustEmptyState() {
   main.innerHTML = `
     <div class="empty-state" style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:var(--text-muted);">
       <div class="empty-icon" style="font-size:64px;margin-bottom:16px;">📋</div>
-      <div style="font-size:16px;font-weight:500;color:var(--text-secondary);margin-bottom:8px;">${history ? '该日期暂无调仓记录' : '从顶部下拉选择专户并点击「+ 添加」 👆'}</div>
+      <div style="font-size:16px;font-weight:500;color:var(--text-secondary);margin-bottom:8px;">${history ? '该日期暂无调仓记录' : '从左侧顶部选择专户并点击「+ 添加」 👆'}</div>
       <div style="font-size:13px;">${history ? '历史日期仅支持查看，不支持新增或同步' : '添加后在这里分配调仓金额'}</div>
     </div>`;
 }
@@ -8467,9 +8435,7 @@ function removeSubExtraProduct(code) {
   if (!product || acc.holdings.some(h => h.code === code)) return;
   showConfirmDialog({
     title: '移除申购产品',
-    bodyHTML: '<p style="margin-bottom:12px;">确认从申购区移除以下产品？</p>' +
-      '<div style="padding:10px 12px;background:#F8FAFC;border:1px solid #E2E8F0;border-radius:6px;margin-bottom:12px;"><strong>' + escHtml(product.name) + '</strong><br><span style="color:#64748B;">' + escHtml(code) + '</span></div>' +
-      '<p style="font-size:13px;color:#64748B;">移除后，将清除该产品本次调仓填写的信息，不影响已有持仓。</p>',
+    bodyHTML: '<p style="font-size:14px;color:var(--text);">移除“<strong>' + escHtml(product.name) + '（' + escHtml(code) + '）</strong>”将清除其本次调仓输入，不影响已有持仓，是否继续？</p>',
     confirmText: '确认移除',
     danger: true,
     onConfirm: () => {
@@ -8708,4 +8674,6 @@ document.addEventListener('click', function(e) {
 
 </body>
 </html>
+
+
 
