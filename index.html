@@ -2534,6 +2534,462 @@
     #rebOverwriteModal .spv-btn-cancel { flex: 1; }
     #rebOverwriteModal .spv-btn-confirm { flex: 2; }
   }
+
+
+  /* position-reference-style-v1 */
+  .position-page { background:#fff; color:#26364a; }
+  .position-page .position-toolbar {
+    padding:10px 0 8px; margin-bottom:0; gap:14px;
+    border:0; border-radius:0; box-shadow:none; background:#fff;
+  }
+  .position-page .position-toolbar-left { gap:12px; flex:1; min-width:0; }
+  .position-page .position-toolbar-right { gap:12px; }
+  .position-page .toolbar-btn {
+    min-height:40px; padding:8px 20px; border-radius:5px;
+    font-size:15px; font-weight:500; line-height:1; box-shadow:none;
+  }
+  .position-page .toolbar-btn.primary,
+  .position-page .toolbar-btn.success,
+  .position-page .position-toolbar-left .toolbar-btn:nth-of-type(3) {
+    background:#285b96 !important; color:#fff !important;
+  }
+  .position-page .toolbar-btn.primary:hover,
+  .position-page .toolbar-btn.success:hover,
+  .position-page .position-toolbar-left .toolbar-btn:nth-of-type(3):hover { background:#1f4d82 !important; }
+  .position-page .toolbar-btn.warning { min-width:138px; justify-content:center; background:#eba333; }
+  .position-page .toolbar-info { gap:0; margin-left:20px; font-size:13px; white-space:nowrap; color:#48576a; }
+  .position-page .toolbar-info span + span::before { content:"，"; margin-right:8px; color:#8795a8; }
+  .position-page .toolbar-info strong { color:#48576a !important; font-weight:400; }
+  .position-page .pos-date-picker { display:none; }
+  .position-page .toolbar-collapse-btn {
+    height:40px; min-width:86px; padding:0 14px; border:1px solid #d8e0ea;
+    border-radius:4px; background:#fff; color:#536176; font-size:13px; cursor:pointer;
+  }
+  .position-page .info-tip-bar {
+    margin:0 0 14px; padding:2px 0 8px; border:0; background:#fff;
+    color:#8491a5; font-size:13px;
+  }
+  .position-page .info-tip-bar .tip-num { display:none; }
+  .position-page .position-progress-bar {
+    min-height:64px; padding:0 18px; gap:12px; margin-bottom:14px;
+    border:1px solid #d6e4ec; border-radius:10px; background:#f3fafc;
+  }
+  .position-page .progress-text { font-size:16px; color:#42526a; }
+  .position-page .progress-text:first-child { color:#14243b; font-weight:600; }
+  .position-page .progress-text strong { color:#145391; }
+  .position-page .progress-track { flex:0 0 106px; max-width:106px; height:10px; background:#e6ebf3; }
+  .position-page .progress-fill { background:#4b86c5; }
+  .position-page .jump-btn {
+    padding:7px 13px; border-color:#ffcabb; border-radius:5px;
+    background:#fff5f2; color:#d15c35; font-size:13px;
+  }
+  .position-page .status-filter-group { gap:14px; }
+  .position-page .status-filter-btn {
+    min-width:88px; padding:9px 14px; border-radius:5px; background:#fff;
+    border-color:#d8e0ea; color:#4d5c70; font-size:13px;
+  }
+  .position-page .status-filter-btn.active { background:#1760a8; border-color:#1760a8; color:#fff; }
+  .position-page .status-filter-btn .filter-count { font-size:13px; }
+  .position-page .filter-bar {
+    min-height:42px; margin:0 !important; padding:0 0 10px;
+    border:0; border-radius:0; background:#fff; box-shadow:none;
+  }
+  .position-page .expand-fields-btn,
+  .position-page .col-toggle-toggle-btn {
+    padding:8px 15px; border-radius:5px; font-size:13px;
+    border-color:#efa333; background:#fffaf2; color:#e49322;
+  }
+  .position-page .filter-bar > span:first-of-type {
+    padding:9px 16px; border-radius:4px; background:#f1f2f4; color:#58677a !important;
+  }
+  .position-page .filter-bar label,
+  .position-page #positionSearchInput,
+  .position-page #positionSearchInput + button { display:none; }
+  .position-page .section-card { border:0; border-radius:0; box-shadow:none; }
+  .position-page .table-container { border:1px solid #e2e8f0; }
+  .position-page .position-table { font-size:13px; }
+  .position-page .position-table th,
+  .position-page .position-table td { border-color:#e2e8f0; }
+  .position-page .position-table thead th {
+    height:40px; padding:9px 10px; color:#19548c; font-weight:500; background:#eaf2fb;
+  }
+  .position-page .position-table thead th.fixed-col { background:#eaf2fb; }
+  .position-page .position-table .spv-group-header {
+    background:#f3ecf7; color:#68476c; border-bottom:1px solid #eadfed;
+  }
+  .position-page .position-table .spv-group-header:nth-child(even) { background:#fff3ec; color:#77442f; }
+  .position-page .position-table .spv-group-header .spv-name { font-size:13px; color:inherit; }
+  .position-page .position-table th.spv-sub-col,
+  .position-page .position-table th.spv-red-col { background:#f7eff8; color:#68476c; font-size:12px; }
+  .position-page .position-table tbody td { height:48px; padding:10px 12px; }
+  .position-page .position-table tbody tr.warn-row,
+  .position-page .position-table tbody tr.warn-row td.fixed-col { background:#fff0f0 !important; }
+  .position-page .position-table tbody tr.warn-row:hover,
+  .position-page .position-table tbody tr.warn-row:hover td.fixed-col { background:#ffe8e8 !important; }
+  .position-page .position-table tbody tr:not(.warn-row):not(.confirmed-row):not(.temp-product-row) td.fixed-col { background:#fff; }
+  .position-page .position-table tbody tr.confirmed-row { opacity:1; background:#f8fafc !important; }
+  .position-page .position-table tbody tr.confirmed-row td { text-decoration:none; color:#758195; }
+  .position-page .pos-status-tag { padding:7px 17px; border-radius:18px; font-size:12px; font-weight:500; }
+  .position-page .pos-status-tag.pending { background:#fff0bf; color:#8d6d38; }
+  .position-page .pos-status-tag.balanced { background:#dff4e9; color:#2f7958; }
+  .position-page .product-link { color:#0756a4; }
+  .position-page .clickable-amount { color:#0756a4; text-decoration-style:solid; }
+  .position-page .pagination-bar { padding:12px 0; }
+  .position-page .position-summary { display:none; }
+  @media (max-width:1200px) {
+    .position-page .toolbar-info { width:100%; margin-left:0; white-space:normal; }
+    .position-page .position-toolbar-right { margin-left:auto; }
+  }
+
+
+
+  /* position-reference-compact-v2 */
+  .position-page .position-toolbar { padding:7px 0 6px; gap:10px; }
+  .position-page .position-toolbar-left { gap:8px; }
+  .position-page .position-toolbar-right { gap:8px; }
+  .position-page .toolbar-btn {
+    min-height:34px; padding:6px 15px; border-radius:4px;
+    font-size:13px; line-height:1;
+  }
+  .position-page .toolbar-btn.warning { min-width:112px; }
+  .position-page .toolbar-info { margin-left:12px; font-size:12px; line-height:1.65; }
+  .position-page .toolbar-info span + span::before { margin-right:5px; }
+  .position-page .toolbar-collapse-btn {
+    height:34px; min-width:74px; padding:0 11px; font-size:12px;
+  }
+  .position-page .info-tip-bar {
+    margin-bottom:9px; padding:1px 0 6px; font-size:12px; line-height:1.5;
+  }
+  .position-page .position-progress-bar {
+    min-height:50px; padding:0 14px; gap:9px; margin-bottom:10px; border-radius:8px;
+  }
+  .position-page .progress-text { font-size:13px; }
+  .position-page .progress-text:first-child { font-size:14px; }
+  .position-page .progress-track { flex-basis:88px; max-width:88px; height:8px; }
+  .position-page .jump-btn { padding:6px 10px; border-radius:4px; font-size:12px; }
+  .position-page .status-filter-group { gap:8px; }
+  .position-page .status-filter-btn {
+    min-width:76px; padding:7px 11px; border-radius:4px; font-size:12px;
+  }
+  .position-page .status-filter-btn .filter-count { font-size:12px; }
+  .position-page .filter-bar { min-height:36px; padding-bottom:8px; gap:8px; }
+  .position-page .expand-fields-btn,
+  .position-page .col-toggle-toggle-btn {
+    padding:6px 12px; border-radius:4px; font-size:12px;
+  }
+  .position-page .filter-bar > span:first-of-type {
+    padding:7px 12px; border-radius:4px; font-size:12px !important;
+  }
+  .position-page .filter-bar > div + span,
+  .position-page .filter-bar > span { line-height:1.3; }
+
+
+
+  /* position-date-picker-v3 */
+  .position-page .pos-date-picker {
+    display:inline-flex;
+    height:34px;
+    box-sizing:border-box;
+    padding:4px 7px 4px 11px;
+    gap:8px;
+    border:1px solid #d9e1ea;
+    border-radius:7px;
+    background:#f8fafc;
+    color:#5d697a;
+    font-size:12px;
+  }
+  .position-page .pos-date-picker label {
+    font-size:12px;
+    font-weight:400;
+    color:#687587;
+  }
+  .position-page .pos-date-picker input[type="date"] {
+    width:124px;
+    height:26px;
+    box-sizing:border-box;
+    padding:2px 7px;
+    border:1px solid #d9e1ea;
+    border-radius:5px;
+    background:#fff;
+    color:#344054;
+    font-size:12px;
+  }
+  .position-page .pos-date-picker input[type="date"]:focus {
+    border-color:#285b96;
+    box-shadow:0 0 0 2px rgba(40,91,150,.10);
+  }
+
+
+
+  /* adjust-reference-style-v4 */
+  #tabAdjust .content { padding:12px 16px 18px; }
+  #tabAdjust .top-bar {
+    min-height:44px;
+    padding:6px 12px !important;
+    gap:9px !important;
+    margin-bottom:10px;
+    border:1px solid #dce4ed;
+    border-radius:6px;
+    box-shadow:none;
+    background:#f8fafc;
+  }
+  #tabAdjust #totalBPInput {
+    width:108px !important;
+    height:32px !important;
+    box-sizing:border-box;
+    padding:4px 9px !important;
+    border:1px solid #9ab9da !important;
+    border-radius:5px !important;
+    background:#fff !important;
+    color:#245892 !important;
+    font-size:13px !important;
+    font-weight:600 !important;
+  }
+  #tabAdjust #totalBPInput:focus {
+    border-color:#285b96 !important;
+    box-shadow:0 0 0 2px rgba(40,91,150,.10);
+    outline:none;
+  }
+  #tabAdjust #totalProfitInput {
+    width:120px !important;
+    height:30px;
+    box-sizing:border-box;
+    font-size:12px !important;
+    border-width:1px !important;
+  }
+  #tabAdjust .mode-selector { padding:2px; border-radius:5px; background:#e9eef5; }
+  #tabAdjust .mode-btn { min-height:28px; padding:4px 12px; border-radius:4px; font-size:12px; }
+  #tabAdjust .adjust-date-bar { padding:7px 10px; gap:5px; background:#f8fafc; }
+  #tabAdjust .adjust-date-row { gap:6px; }
+  #tabAdjust .adjust-date-row input { height:30px; box-sizing:border-box; padding:4px 6px; font-size:12px; }
+  #tabAdjust .adjust-date-row button { height:30px; padding:4px 7px; font-size:11px; }
+  #tabAdjust .sidebar-add-bar { padding:7px 10px; }
+  #tabAdjust .sidebar-add-bar input { height:30px; padding:5px 8px; font-size:12px; }
+  #tabAdjust .sidebar-add-bar button { height:30px; padding:4px 9px; font-size:12px; }
+  #tabAdjust .sidebar-item { padding:8px 12px; gap:8px; font-size:12px; }
+  #tabAdjust .section-card {
+    border:1px solid #dce4ed;
+    border-radius:6px;
+    box-shadow:none;
+    overflow:hidden;
+  }
+  #tabAdjust .section-header { min-height:38px; padding:6px 10px !important; background:#f8fafc; }
+  #tabAdjust .section-title { font-size:12px !important; }
+  #tabAdjust .section-subtitle { font-size:11px; }
+  #tabAdjust .loss-split-container { gap:8px; padding:10px; background:#fff; }
+  #tabAdjust .loss-left-panel,
+  #tabAdjust .loss-right-panel {
+    border:1px solid #dce4ed;
+    border-radius:5px;
+    box-shadow:none;
+  }
+  #tabAdjust .loss-panel-header {
+    min-height:38px;
+    box-sizing:border-box;
+    padding:7px 10px;
+    font-size:12px;
+    font-weight:600;
+  }
+  #tabAdjust .loss-left-panel .loss-panel-header { background:#f5eff8; color:#68476c; }
+  #tabAdjust .loss-right-panel .loss-panel-header { background:#edf4fb; color:#245892; }
+  #tabAdjust .loss-panel-body table { font-size:11px; }
+  #tabAdjust .loss-panel-body th { padding:7px 7px; font-size:11px; }
+  #tabAdjust .loss-panel-body td { padding:6px 6px; }
+  #tabAdjust .loss-right-panel .loss-panel-body td { padding:6px 8px; }
+  #tabAdjust .loss-left-panel .loss-panel-body th { background:#f5eff8; color:#68476c; }
+  #tabAdjust .loss-right-panel .loss-panel-body th { background:#edf4fb; color:#245892; }
+  #tabAdjust .loss-panel-summary { min-height:38px; box-sizing:border-box; padding:7px 10px; }
+  #tabAdjust .loss-left-panel .loss-panel-summary { background:#f8f3fa; }
+  #tabAdjust .loss-right-panel .loss-panel-summary { background:#f2f7fc; }
+  #tabAdjust #totalRedeemAmt,
+  #tabAdjust #totalSubAmt { font-size:13px !important; font-weight:700 !important; }
+  #tabAdjust #totalRedeemWan,
+  #tabAdjust #totalSubWan { font-size:12px !important; }
+  #tabAdjust .loss-arrow-bridge { width:16px; }
+  #tabAdjust .loss-arrow-bridge::before { font-size:15px; color:#a8b3c2; }
+  #tabAdjust .loss-right-panel .loss-panel-body tbody tr.selected {
+    background:#eaf3fc;
+    box-shadow:inset 3px 0 0 #3577b9;
+  }
+  #tabAdjust .loss-right-panel .loss-panel-body tbody tr.selected:hover td { background:#e0eefb; }
+  #tabAdjust .loss-right-panel .loss-panel-body tbody tr.selected td { color:#27445f; }
+  #tabAdjust .loss-right-panel .loss-panel-body tbody tr.selected td.chk-cell,
+  #tabAdjust .loss-right-panel .loss-panel-body tbody tr.selected td:first-child { background:transparent; }
+  #tabAdjust .loss-right-panel .loss-panel-body tbody tr.selected .table-input,
+  #tabAdjust .loss-right-panel .loss-panel-body tbody tr.selected input,
+  #tabAdjust .loss-right-panel .loss-panel-body tbody tr.selected select {
+    background:#fff !important;
+    color:#334155 !important;
+    border-color:#b9c8d8 !important;
+    box-shadow:none;
+  }
+  #tabAdjust .loss-left-panel .loss-panel-body tbody tr.selected {
+    background:#f1e8f6;
+    box-shadow:inset 3px 0 0 #8d5aa5;
+  }
+  #tabAdjust .loss-left-panel .loss-panel-body tbody tr.selected:hover td { background:#eadcf1; }
+  #tabAdjust .summary-row {
+    position:sticky;
+    bottom:0;
+    z-index:20;
+    min-height:48px;
+    padding:7px 10px;
+    margin-top:8px;
+    border:1px solid #dce4ed;
+    border-radius:6px;
+    background:rgba(255,255,255,.97);
+    box-shadow:0 -3px 10px rgba(31,55,82,.07);
+    backdrop-filter:blur(4px);
+  }
+  #tabAdjust .summary-row .btn { min-height:32px; padding:5px 13px !important; font-size:12px !important; }
+  @media (max-width:1250px) {
+    #tabAdjust .top-bar { flex-wrap:wrap; }
+    #tabAdjust .loss-split-container { flex-direction:column; }
+    #tabAdjust .loss-left-panel,
+    #tabAdjust .loss-right-panel { min-width:0; width:100%; }
+    #tabAdjust .loss-arrow-bridge { width:100%; height:14px; }
+    #tabAdjust .loss-arrow-bridge::before { content:'↓'; }
+  }
+
+
+
+  /* remaining-pages-reference-style-v5 */
+  .header { min-height:54px; padding:0 18px; }
+  .header h1 { font-size:17px; }
+  .header-badge { padding:2px 8px; font-size:11px; }
+  .nav-tab { padding:9px 16px; font-size:13px; }
+  .product-maint-page { padding:12px 16px 20px; background:#fff; }
+  .product-maint-page h2 {
+    margin:0 0 10px !important;
+    font-size:15px;
+    line-height:1.5;
+    font-weight:600;
+    color:#26364a;
+  }
+  .product-maint-notice {
+    padding:8px 12px;
+    margin-bottom:10px;
+    gap:0;
+    border:1px solid #d7e5f1;
+    border-radius:5px;
+    background:#f3f8fc;
+    color:#49627b;
+    font-size:11px;
+    line-height:1.55;
+  }
+  .product-maint-notice .notice-icon { display:none; }
+  .maint-tabs {
+    min-height:36px;
+    margin-bottom:10px !important;
+    border-bottom-color:#dce4ed;
+  }
+  .maint-tab {
+    padding:8px 15px;
+    font-size:12px;
+    color:#607086;
+  }
+  .maint-tab.active { color:#245892; border-bottom-color:#245892; }
+  .maint-tab .tab-count { font-size:11px; }
+  .product-maint-toolbar {
+    min-height:34px;
+    gap:8px;
+    margin-bottom:10px;
+    flex-wrap:wrap;
+  }
+  .product-maint-toolbar .form-input,
+  .product-maint-toolbar .form-select {
+    height:32px;
+    box-sizing:border-box;
+    padding:5px 9px;
+    border-radius:4px;
+    font-size:12px;
+  }
+  .product-maint-toolbar button,
+  .product-maint-toolbar .btn {
+    min-height:30px;
+    box-sizing:border-box;
+    padding:5px 12px !important;
+    border-radius:4px !important;
+    font-size:12px !important;
+  }
+  .product-maint-toolbar .toolbar-divider { height:20px; margin:0 2px; }
+  .product-maint-table {
+    border:1px solid #dce4ed;
+    border-radius:0;
+    box-shadow:none;
+    font-size:12px;
+  }
+  .product-maint-table th {
+    height:38px;
+    box-sizing:border-box;
+    padding:8px 10px;
+    background:#eaf2fb;
+    color:#245892;
+    border-bottom:1px solid #d5e1ee;
+    font-size:11px;
+    font-weight:600;
+  }
+  .product-maint-table td { height:42px; box-sizing:border-box; padding:7px 10px; }
+  .product-maint-table tbody tr:hover { background:#f7fafd; }
+  .product-maint-table tbody tr.offline { background:#f8fafc; }
+  .sort-input { width:48px; height:28px; box-sizing:border-box; padding:4px 6px; font-size:12px; }
+  .product-maint-table .switch-track { width:34px; height:18px; border-radius:9px; }
+  .product-maint-table .switch-thumb { width:14px; height:14px; }
+  .product-maint-table .switch-track.on .switch-thumb { left:18px; }
+  .product-maint-table .tag,
+  .terminated-tag { padding:3px 8px; border-radius:9px; font-size:10px; }
+  .toggle-online-btn { min-height:26px; padding:3px 9px; font-size:10px; }
+  .product-maint-page .pagination-bar {
+    padding:10px 0 0;
+    gap:6px;
+    font-size:11px;
+  }
+  .product-maint-page .pagination-bar button,
+  .product-maint-page .pagination-bar select {
+    min-height:28px;
+    padding:4px 9px;
+    font-size:11px;
+  }
+  #spvQueryContent .section-card {
+    margin-top:10px !important;
+    border:1px solid #dce4ed;
+    border-radius:0;
+    box-shadow:none;
+  }
+  .spvq-table { font-size:12px; }
+  .spvq-table th {
+    height:38px;
+    box-sizing:border-box;
+    padding:8px 10px;
+    background:#eaf2fb !important;
+    color:#245892 !important;
+    border-bottom:1px solid #d5e1ee;
+    font-size:11px;
+  }
+  .spvq-table td { height:40px; box-sizing:border-box; padding:7px 10px; }
+  .spvq-lv1-row { background:#fff; }
+  .spvq-lv1-row:hover { background:#f5f9fd; }
+  .spvq-lv1-row.expanded { background:#edf5fc; }
+  .spvq-lv2-row { background:#fafcfe; color:#52647a; }
+  .spvq-lv2-row td:first-child { border-left:3px solid #9ab9da; }
+  .spvq-status-tag { padding:3px 8px; border-radius:9px; font-size:10px; }
+  .spvq-summary-bar {
+    min-height:38px;
+    box-sizing:border-box;
+    padding:7px 12px;
+    border-top:1px solid #dce4ed;
+    background:#f8fafc;
+    font-size:11px;
+  }
+  .spvq-summary-bar .ss-item { padding-right:12px; }
+  .spvq-summary-bar .ss-value { font-size:12px; }
+  @media (max-width:1000px) {
+    .header { align-items:flex-start; flex-direction:column; padding:8px 12px 0; }
+    .nav-tabs { width:100%; overflow-x:auto; }
+    .nav-tab { flex-shrink:0; }
+    .product-maint-page { padding:10px 12px 18px; }
+  }
+
 </style>
 </head>
 <body>
@@ -3406,7 +3862,7 @@ function renderContent(acc, st) {
       ` : ''}
       <div style="flex:1;"></div>
       ${isLoss && st.subMode === 'wan' ? `
-      <span style="font-weight:600;font-size:12px;color:#6D28D9;white-space:nowrap;">💰 总收益</span>
+      <span style="font-weight:600;font-size:12px;color:#6D28D9;white-space:nowrap;">总收益</span>
       <input type="text" inputmode="decimal" id="totalProfitInput" value="${st.totalProfit ? st.totalProfit.toLocaleString('zh-CN') : ''}"
         placeholder="输入专户总收益"
         ${disabled}
@@ -3480,7 +3936,7 @@ function renderContent(acc, st) {
     <div class="section-card" style="padding:0;">
       <div class="section-header" style="padding:8px 12px;">
         <div class="section-title" style="font-size:13px;">
-          <span class="icon">📊</span> ${acc.name}
+          ${acc.name}
           <span class="section-subtitle">— 左侧赎回、右侧申购</span>
         </div>
         <div class="section-actions">
@@ -3623,7 +4079,7 @@ function renderContent(acc, st) {
     <div class="section-card" style="padding:0;">
       <div class="section-header" style="padding:8px 12px;">
         <div class="section-title" style="font-size:13px;">
-          <span class="icon">📊</span> ${acc.name}
+          ${acc.name}
           <span class="section-subtitle">— 左侧赎回、右侧申购</span>
         </div>
         <div class="section-actions">
@@ -3634,12 +4090,12 @@ function renderContent(acc, st) {
         <!-- ===== 左栏：赎回端 ===== -->
         <div class="loss-left-panel">
           <div class="loss-panel-header">
-            <span>🟣 赎回端 — 从 <strong style="color:#6D28D9;">${acc.name}</strong> 赎回 · 逐产品输入</span>
+            <span>赎回端 — 从 <strong style="color:#6D28D9;">${acc.name}</strong> 赎回 · 逐产品输入</span>
             <span style="font-size:11px;font-weight:600;color:#6D28D9;background:rgba(109,40,217,.1);padding:2px 8px;border-radius:4px;white-space:nowrap;">已选 <strong>${lossSelCount}</strong> / ${lossTotalCount} 只</span>
           </div>
           <!-- 左栏产品搜索：持仓产品多时快速定位（按代码/名称过滤） -->
           <div style="padding:5px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:#FAF7FD;">
-            <span style="font-size:11px;color:#6D28D9;font-weight:600;">🔍 查找理财产品：</span>
+            <span style="font-size:11px;color:#6D28D9;font-weight:600;">查找理财产品：</span>
             <div style="position:relative;">
               <input type="text" id="redSearchInput" value="${redRaw.replace(/"/g, '&quot;')}" placeholder="产品代码/名称..."
                 style="width:200px;padding:4px 8px;font-size:11px;border:1px solid #C4B5FD;border-radius:4px;box-sizing:border-box;background:#fff;"
@@ -3678,7 +4134,7 @@ function renderContent(acc, st) {
         <!-- ===== 右栏：申购端 ===== -->
         <div class="loss-right-panel">
           <div class="loss-panel-header">
-            <span>🔵 申购端 — 申购进 <strong style="color:var(--primary);">${acc.name}</strong> · ${st.subMode === 'bp' ? '按BP计算申购' : '分配收益后自动申购'}</span>
+            <span>申购端 — 申购进 <strong style="color:var(--primary);">${acc.name}</strong> · ${st.subMode === 'bp' ? '按BP计算申购' : '分配收益后自动申购'}</span>
             <div style="display:flex;align-items:center;gap:6px;">
               <span style="font-size:11px;font-weight:600;color:#1D4ED8;background:rgba(29,78,216,.08);padding:2px 8px;border-radius:4px;white-space:nowrap;">已选 <strong>${subSelCount}</strong> / ${subTotalCount} 只</span>
             </div>
@@ -4784,7 +5240,8 @@ function syncToSystem() {
       errors.push('目标BP合计' + detailBpTotal + '，已超过调整BP' + st.totalLoss + '，请调整。');
     }
     subProductPool.forEach(p => {
-      if (st.subSelectedMap?.[p.code] === false) return;      if (!Number.isFinite(st.bpData[p.code]) || st.bpData[p.code] <= 0) errors.push(p.code + '：目标BP必须为正整数。');
+      if (st.subSelectedMap?.[p.code] === false) return;
+      if (!Number.isFinite(st.bpData[p.code]) || st.bpData[p.code] <= 0) errors.push(p.code + '：目标BP必须为正整数。');
       if (Number.isFinite(st.totalLoss) && st.totalLoss > 0 && Number.isFinite(st.bpData[p.code]) && st.bpData[p.code] > st.totalLoss) errors.push(p.code + '：目标BP不得大于调整BP，单行占比不能超过100%。');
     });
   } else {
@@ -5253,6 +5710,7 @@ function buildHistoryPositionData(date) {
 // 头寸日期切换
 function setPositionViewDate(date) {
   if (!date) return;
+  if (date > POSITION_TODAY) date = POSITION_TODAY;
   positionViewDate = date;
   spvPageIndex = 0;              // 切换日期回到专户第一页
   historySnapshotCache[date] = historySnapshotCache[date]; // 保留缓存
@@ -6756,6 +7214,7 @@ function renderSpvQueryByProduct() {
   }
 
   container.innerHTML = `
+    <h2>SPV持仓查询</h2>
     <div class="maint-tabs" style="margin-bottom:12px;">
       <div class="maint-tab ${spvQueryDimension === 'product' ? 'active' : ''}" onclick="switchSpvQueryDimension('product')">按理财产品</div>
       <div class="maint-tab ${spvQueryDimension === 'spv' ? 'active' : ''}" onclick="switchSpvQueryDimension('spv')">按专户产品</div>
@@ -6948,6 +7407,7 @@ function renderSpvQueryBySpv() {
   }
 
   container.innerHTML = `
+    <h2>SPV持仓查询</h2>
     <div class="maint-tabs" style="margin-bottom:12px;">
       <div class="maint-tab ${spvQueryDimension === 'product' ? 'active' : ''}" onclick="switchSpvQueryDimension('product')">按理财产品</div>
       <div class="maint-tab ${spvQueryDimension === 'spv' ? 'active' : ''}" onclick="switchSpvQueryDimension('spv')">按专户产品</div>
@@ -7409,30 +7869,30 @@ function renderPositionPage() {
     <div class="position-toolbar">
       <div class="position-toolbar-left">
         <button class="toolbar-btn primary upload-zone-hide" onclick="alert('Demo: 上传日初头寸文件')">
-          <span>⬆️</span> 上传日初头寸
+          上传日初头寸
         </button>
         <button class="toolbar-btn success upload-zone-hide" onclick="alert('Demo: 上传SPV持仓文件')">
-          <span>⬆️</span> 上传SPV持仓
+          上传SPV持仓
         </button>
         <button class="toolbar-btn upload-zone-hide" onclick="alert('Demo: 上传银行交易所数据文件')" style="background:#6366F1;color:#fff;">
-          <span>⬆️</span> 上传银行交易所数据
+          上传银行交易所数据
         </button>
         <div class="toolbar-info">
           <span>最新上传日初头寸日期：<strong style="color:${isPositionFresh() ? 'var(--success)' : '#C2410C'};">${positionDataDate}${isPositionFresh() ? ' ✓今日' : '（非今日）'}</strong></span>
           <span>上传SPV持仓日期：<strong>2026-06-04</strong></span>
-          <span>交易所账户：<strong style="color:var(--success);">已配置 ✓</strong></span>
+          <span>上传银行交易所数据日期：<strong>2026-06-04</strong></span>
         </div>
       </div>
       <div class="position-toolbar-right">
         <!-- 头寸日期选择器：可查看历史某一天的头寸页面 -->
         <div class="pos-date-picker">
           <label>头寸日期</label>
-          <input type="date" value="${positionViewDate}" max="${POSITION_TODAY}"
+          <input type="date" value="${positionViewDate}" min="${POSITION_DATES[POSITION_DATES.length - 1].date}" max="${POSITION_TODAY}"
                  title="选择日期查看该日头寸"
                  onchange="setPositionViewDate(this.value)">
         </div>
         <button class="toolbar-btn warning" onclick="exportPositionData()">
-          <span>⬇️</span> 导出数据
+          导出数据
         </button>
         <button class="toolbar-collapse-btn upload-zone-hide" onclick="toggleUploadArea()" title="收起/展开上传区">
           ${uploadAreaExpanded ? '▲ 收起' : '▼ 展开'}
@@ -7460,7 +7920,7 @@ function renderPositionPage() {
       <span class="progress-text">整理进度：<strong>${balancedCount}</strong> / ${totalCount} 只</span>
       <div class="progress-track"><div class="progress-fill" style="width:${progressPct}%;"></div></div>
       <span class="progress-text">待整理 <strong style="color:#9A3412;">${pendingCount}</strong> 只</span>
-      ${pendingCount > 0 ? `<button class="jump-btn" onclick="jumpToNextPending()">⏭ 跳转下一个待整理</button>` : ''}
+      ${pendingCount > 0 ? `<button class="jump-btn" onclick="jumpToNextPending()">跳转下一个待整理</button>` : ''}
       <div style="flex:1;"></div>
       ${filterBtns}
     </div>
@@ -7468,7 +7928,7 @@ function renderPositionPage() {
     <!-- 字段控制 + 搜索 + 专户分页 + 列切换（同一行，可随上传区一起收缩） -->
     ${uploadAreaExpanded ? `
     <div class="filter-bar" style="margin-top:0;">
-      <button class="expand-fields-btn" onclick="toggleAllColumns()">展示所有字段</button>
+      <button class="expand-fields-btn" onclick="toggleAllColumns()">展开产品字段</button>
       <span style="font-size:12px;color:var(--text-muted);">共计 <strong style="color:var(--text);">${totalCount}</strong> 个理财产品${(() => {
         // 调仓带入产品数：不在维护清单、当日有调仓数据的临时产品（已置顶展示）
         const tempProductCnt = allFiltered.filter(r => !onlineCodes.has(r.code) && hasRebalanceData(r)).length;
@@ -7486,10 +7946,10 @@ function renderPositionPage() {
         const tempCnt = showList.filter(a => isTempSpvCol(a)).length;
         const offlineHint = offlineCnt > 0 ? `<span style="color:#C2410C;margin-left:4px;" title="含已下线/已清仓专户，因当日仍有调仓数据需复核">(含${offlineCnt}个已下线)</span>` : '';
         const tempHint = tempCnt > 0 ? `<span style="color:#9A3412;margin-left:4px;" title="含不在「专户产品维护」清单、因当日有调仓数据临时展示的专户，已置顶">(含${tempCnt}个临时)</span>` : '';
-        return `<span style="font-size:12px;color:var(--text-muted);">持仓专户 <strong>${showList.length}</strong> 个${tempHint}${offlineHint}</span>
-          <button onclick="goSpvPage(-1)" ${spvPageIndex === 0 ? 'disabled' : ''} style="padding:2px 8px;border:1px solid var(--border);border-radius:4px;background:#fff;cursor:pointer;font-size:12px;" title="上一页">◀</button>
+        return `<span style="font-size:12px;color:var(--text-muted);">资管计划列（<strong>${showList.length}</strong>个）${tempHint}${offlineHint}</span>
+          <button onclick="goSpvPage(-1)" ${spvPageIndex === 0 ? 'disabled' : ''} style="padding:2px 8px;border:1px solid var(--border);border-radius:4px;background:#fff;cursor:pointer;font-size:12px;" title="上一页">上一页</button>
           <span style="font-size:12px;color:var(--text-secondary);">${spvPageIndex + 1}/${spvTotalPages}</span>
-          <button onclick="goSpvPage(1)" ${spvPageIndex >= spvTotalPages - 1 ? 'disabled' : ''} style="padding:2px 8px;border:1px solid var(--border);border-radius:4px;background:#fff;cursor:pointer;font-size:12px;" title="下一页">▶</button>`;
+          <button onclick="goSpvPage(1)" ${spvPageIndex >= spvTotalPages - 1 ? 'disabled' : ''} style="padding:2px 8px;border:1px solid var(--border);border-radius:4px;background:#fff;cursor:pointer;font-size:12px;" title="下一页">下一页</button>`;
       })()}
       <button class="col-toggle-toggle-btn" onclick="toggleColToggleArea()">${colToggleExpanded ? '收起字段 ▲' : '展开字段 ▼'}</button>
     </div>
