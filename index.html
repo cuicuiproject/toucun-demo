@@ -190,8 +190,17 @@
     line-height: 1.35;
   }
   .sidebar-add-option:hover { background: #EFF6FF; }
+  .sidebar-add-option.disabled {
+    cursor: not-allowed;
+    background: #F8FAFC;
+    color: #9CA3AF;
+  }
+  .sidebar-add-option.disabled:hover { background: #F8FAFC; }
+  .sidebar-add-option.disabled .code,
+  .sidebar-add-option.disabled .meta { color: #9CA3AF; }
   .sidebar-add-option .code { color: var(--primary); font-weight: 700; margin-left: 4px; }
   .sidebar-add-option .meta { color: var(--text-muted); font-size: 10px; margin-top: 2px; }
+  .sidebar-add-option .terminated-label { color: #9CA3AF; font-weight: 600; margin-left: 4px; }
   .sidebar-add-empty { padding: 10px 12px; color: var(--text-muted); font-size: 12px; text-align: center; }
   .sidebar-add-bar button {
     flex-shrink: 0;
@@ -3617,15 +3626,16 @@ function getAccountHoldingScale(acc) {
 function getSidebarAddCandidates() {
   const inLeftList = new Set(getSidebarItems().map(a => a.id));
   return spvMaintList
-    .filter(p => !p.terminated)
-    .sort((a, b) => a.sortOrder - b.sortOrder)
+    .slice()
+    .sort((a, b) => Number(a.terminated) - Number(b.terminated) || a.sortOrder - b.sortOrder)
     .map(p => allAccounts.find(a => a.id === p.id))
     .filter(Boolean)
-    .filter(a => getAccountHoldingScale(a) > 0)
+    // 正常专户仍要求当日有持仓；已清仓专户即使规模为0也保留展示，便于识别其终态。
+    .filter(a => getSpvStatusById(a.id).terminated || getAccountHoldingScale(a) > 0)
     .filter(a => !inLeftList.has(a.id));
 }
 
-// 顶部搜索框：列出未在左侧栏、非已清仓且当日持有规模大于0的专户
+// 顶部搜索框：列出未在左侧栏的候选；已清仓专户保留展示但禁止选择和添加
 function renderSidebarAddSelect() {
   const input = document.getElementById('sidebarAddSearchInput');
   const selected = document.getElementById('sidebarAddSelectedId');
@@ -3673,14 +3683,19 @@ function renderSidebarAddDropdown(value) {
   } else {
     dropdown.innerHTML = results.map(a => {
       const ms = getSpvStatusById(a.id);
-      const tempTag = ms.online ? '' : '<span style="color:#B45309;"> · 临时</span>';
+      const statusTag = ms.terminated
+        ? '<span class="terminated-label">（已清仓）</span>'
+        : (ms.online ? '' : '<span style="color:#B45309;"> · 临时</span>');
       const scaleTxt = getAccountHoldingScale(a).toLocaleString('zh-CN', { maximumFractionDigits: 2 });
       const label = escHtml(a.shortName || a.name || a.code);
       const name = escHtml(a.name || '');
       const code = escHtml(a.code || '');
-      return `<div class="sidebar-add-option" onclick="selectSidebarAddAccount('${a.id}')">
-        <div>${label}<span class="code">${code}</span>${tempTag}</div>
-        <div class="meta">${name} · 持有规模 ${scaleTxt} 元</div>
+      const optionAttrs = ms.terminated
+        ? ' aria-disabled="true" title="该专户已清仓，不可添加" onclick="showToast(\'该专户已清仓，不可添加\')"'
+        : ` onclick="selectSidebarAddAccount('${a.id}')"`;
+      return `<div class="sidebar-add-option${ms.terminated ? ' disabled' : ''}"${optionAttrs}>
+        <div>${label}<span class="code">${code}</span>${statusTag}</div>
+        <div class="meta">${name} · 持有规模 ${scaleTxt} 元${ms.terminated ? ' · 不可添加' : ''}</div>
       </div>`;
     }).join('');
   }
@@ -3690,6 +3705,10 @@ function renderSidebarAddDropdown(value) {
 function selectSidebarAddAccount(accountId) {
   const acc = getAccount(accountId);
   if (!acc) return;
+  if (getSpvStatusById(accountId).terminated) {
+    showToast('该专户已清仓，不可添加');
+    return;
+  }
   const input = document.getElementById('sidebarAddSearchInput');
   const selected = document.getElementById('sidebarAddSelectedId');
   const dropdown = document.getElementById('sidebarAddDropdown');
@@ -3711,6 +3730,10 @@ function onSidebarAddKeydown(event) {
     String(a.name || '').toLowerCase().includes(q)
   );
   if (matches.length === 1) {
+    if (getSpvStatusById(matches[0].id).terminated) {
+      showToast('该专户已清仓，不可添加');
+      return;
+    }
     selectSidebarAddAccount(matches[0].id);
     addAccountFromSelect();
   } else {
@@ -3724,6 +3747,11 @@ function addAccountFromSelect() {
   const selected = document.getElementById('sidebarAddSelectedId');
   const accountId = selected ? selected.value : '';
   if (!accountId) { showToast('请先搜索并选择要添加的专户'); return; }
+  if (getSpvStatusById(accountId).terminated) {
+    if (selected) selected.value = '';
+    showToast('该专户已清仓，不可添加');
+    return;
+  }
   // save current before switching
   if (currentAccountId && currentAccountId !== accountId) {
     saveCurrentState();
