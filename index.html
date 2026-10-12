@@ -3686,16 +3686,13 @@ function renderSidebarAddDropdown(value) {
       const statusTag = ms.terminated
         ? '<span class="terminated-label">（已清仓）</span>'
         : (ms.online ? '' : '<span style="color:#B45309;"> · 临时</span>');
-      const scaleTxt = getAccountHoldingScale(a).toLocaleString('zh-CN', { maximumFractionDigits: 2 });
       const label = escHtml(a.shortName || a.name || a.code);
-      const name = escHtml(a.name || '');
       const code = escHtml(a.code || '');
       const optionAttrs = ms.terminated
         ? ' aria-disabled="true" title="该专户已清仓，不可添加" onclick="showToast(\'该专户已清仓，不可添加\')"'
         : ` onclick="selectSidebarAddAccount('${a.id}')"`;
       return `<div class="sidebar-add-option${ms.terminated ? ' disabled' : ''}"${optionAttrs}>
         <div>${label}<span class="code">${code}</span>${statusTag}</div>
-        <div class="meta">${name} · 持有规模 ${scaleTxt} 元${ms.terminated ? ' · 不可添加' : ''}</div>
       </div>`;
     }).join('');
   }
