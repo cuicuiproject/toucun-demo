@@ -3208,9 +3208,8 @@ const allAccounts = [
     code: 'SGT2024003',
     name: '陕国投·鑫和18号',
     shortName: '鑫和18号',
-    // 注：该账户默认为正常在线状态；「已下线」/「已清仓」等维护状态由 spvMaintList 在线控制，
-    //   Demo 中不再默认把 other1 标为已下线，避免默认数据出现虚构下线专户。
-    //   如需验证已下线场景，可在控制台调整 spvMaintList 对应 online=false。
+    // Demo 已下线示例：用于验证左侧添加专户及右侧赎回来源的“（已下线）”状态展示。
+    // 实际系统由后台返回专户维护状态；已清仓数据由后台过滤，不下发前端。
     tVal: 'T+1',
     nature: '债券专户',
     totalBP: 15,
@@ -3220,6 +3219,8 @@ const allAccounts = [
       { code: 'EW4659', name: '阳光金增利稳健天天购16号（90天最低持有）', size: 8750000.00, defaultBP: 5, defaultSelected: true, feeRatio: 1.0033613 },
       { code: 'EW5208', name: '阳光金增利稳健天天购27号（7天最低持有）', size: 3750000.00, defaultBP: 3, defaultSelected: true, feeRatio: 1.0033613 },
       { code: 'EW0599', name: '阳光金私享增利稳健天天购（300天最低持有）', size: 5000000.00, defaultBP: 0, defaultSelected: false, feeRatio: 1.0033613 },
+      { code: 'EW7746', name: '阳光金增利稳健天天购46号（14天最低持有）', size: 24000000, defaultBP: 0, defaultSelected: false, feeRatio: 1.0034389 },
+      { code: 'EW7748', name: '阳光金增利稳健天天购52号（30天最低持有）', size: 24000000, defaultBP: 0, defaultSelected: false, feeRatio: 1.0033613 },
     ]
   },
   {
@@ -3253,6 +3254,62 @@ const allAccounts = [
       { code: 'EW5208', name: '阳光金增利稳健天天购27号（7天最低持有）', size: 2981651.38, defaultBP: 3, defaultSelected: true, feeRatio: 1.0033613 },
     ]
   },
+  // === 更多状态示例：用于左侧添加专户和右侧赎回来源下拉 ===
+  {
+    id: 'offline_demo2',
+    code: 'OFF2026002',
+    name: '中航信托·稳盈22号',
+    shortName: '稳盈22号',
+    tVal: 'T+0', nature: '债券专户', totalBP: 0, accountSize: 45000000,
+    holdings: [
+      { code: 'EW4659', name: '阳光金增利稳健天天购16号（90天最低持有）', size: 25000000, defaultBP: 0, defaultSelected: false, feeRatio: 1.0033613 },
+      { code: 'EW6287', name: '阳光金增利稳健乐享天天购49号（14天最低持有）', size: 20000000, defaultBP: 0, defaultSelected: false, feeRatio: 1.0033613 },
+      { code: 'EW7746', name: '阳光金增利稳健天天购46号（14天最低持有）', size: 24000000, defaultBP: 0, defaultSelected: false, feeRatio: 1.0034389 },
+      { code: 'EW7748', name: '阳光金增利稳健天天购52号（30天最低持有）', size: 24000000, defaultBP: 0, defaultSelected: false, feeRatio: 1.0033613 },
+    ]
+  },
+  {
+    id: 'offline_demo3',
+    code: 'OFF2026003',
+    name: '华润信托·安盈36号',
+    shortName: '安盈36号',
+    tVal: 'T+1', nature: '债券专户', totalBP: 0, accountSize: 40000000,
+    holdings: [
+      { code: 'EW4659', name: '阳光金增利稳健天天购16号（90天最低持有）', size: 22000000, defaultBP: 0, defaultSelected: false, feeRatio: 1.0033613 },
+      { code: 'EW7746', name: '阳光金增利稳健天天购46号（14天最低持有）', size: 18000000, defaultBP: 0, defaultSelected: false, feeRatio: 1.0034389 },
+      { code: 'EW7748', name: '阳光金增利稳健天天购52号（30天最低持有）', size: 24000000, defaultBP: 0, defaultSelected: false, feeRatio: 1.0033613 },
+    ]
+  },
+  {
+    id: 'unmaint_demo2',
+    code: 'UNM2026002',
+    name: '外贸信托·未维护8号',
+    shortName: '未维护8号',
+    tVal: 'T+0', nature: '债券专户', totalBP: 0, accountSize: 38000000,
+    holdings: [
+      { code: 'EW4659', name: '阳光金增利稳健天天购16号（90天最低持有）', size: 21000000, defaultBP: 0, defaultSelected: false, feeRatio: 1.0033613 },
+      { code: 'EW6287', name: '阳光金增利稳健乐享天天购49号（14天最低持有）', size: 17000000, defaultBP: 0, defaultSelected: false, feeRatio: 1.0033613 },
+      { code: 'EW7746', name: '阳光金增利稳健天天购46号（14天最低持有）', size: 24000000, defaultBP: 0, defaultSelected: false, feeRatio: 1.0034389 },
+      { code: 'EW7748', name: '阳光金增利稳健天天购52号（30天最低持有）', size: 24000000, defaultBP: 0, defaultSelected: false, feeRatio: 1.0033613 },
+    ],
+    _temp: true,
+    _tempReason: '未维护到专户产品维护页面，作为未维护专户候选展示',
+  },
+  {
+    id: 'unmaint_demo3',
+    code: 'UNM2026003',
+    name: '中粮信托·未维护12号',
+    shortName: '未维护12号',
+    tVal: 'T+1', nature: '多资产专户', totalBP: 0, accountSize: 36000000,
+    holdings: [
+      { code: 'EW4659', name: '阳光金增利稳健天天购16号（90天最低持有）', size: 20000000, defaultBP: 0, defaultSelected: false, feeRatio: 1.0033613 },
+      { code: 'EW7746', name: '阳光金增利稳健天天购46号（14天最低持有）', size: 16000000, defaultBP: 0, defaultSelected: false, feeRatio: 1.0034389 },
+      { code: 'EW7748', name: '阳光金增利稳健天天购52号（30天最低持有）', size: 24000000, defaultBP: 0, defaultSelected: false, feeRatio: 1.0033613 },
+    ],
+    _temp: true,
+    _tempReason: '未维护到专户产品维护页面，作为未维护专户候选展示',
+  },
+
   // === 演示：专户已上线但无理财产品持仓 → 头寸管理可见，调仓功能不可用 ===
   {
     id: 'fangxin1',
@@ -3275,13 +3332,18 @@ const allAccounts = [
   {
     id: 'tempspv02',
     code: 'LS2026002',
-    name: '某某信托·临时专户2号(临时)',
-    shortName: '临时专户2',
+    name: '某某信托·未维护专户2号',
+    shortName: '未维护专户2号',
     tVal: 'T+1',
     nature: '债券专户',
     totalBP: 0,
-    accountSize: 0,
-    holdings: [],
+    accountSize: 60000000,
+    holdings: [
+      { code: 'EW6287', name: '阳光金增利稳健乐享天天购49号（14天最低持有）', size: 30000000, defaultBP: 0, defaultSelected: false, feeRatio: 1.0033613 },
+      { code: 'EW4659', name: '阳光金增利稳健天天购16号（90天最低持有）', size: 30000000, defaultBP: 0, defaultSelected: false, feeRatio: 1.0033613 },
+      { code: 'EW7746', name: '阳光金增利稳健天天购46号（14天最低持有）', size: 24000000, defaultBP: 0, defaultSelected: false, feeRatio: 1.0034389 },
+      { code: 'EW7748', name: '阳光金增利稳健天天购52号（30天最低持有）', size: 24000000, defaultBP: 0, defaultSelected: false, feeRatio: 1.0033613 },
+    ],
     _temp: true,
     _tempReason: '不在专户产品维护清单，因当日有本专户的调仓数据临时展示；待维护确认，或无待处理调仓事项后退出临时展示（历史记录保留）',
   },
@@ -3528,10 +3590,10 @@ function getAccount(accountId) {
 //   已上线   → online=true,  terminated=false
 //   已下线   → online=false, terminated=false（过渡态：仍可作来源，需出清残留持仓，打「已下线」标）
 //   已清仓   → terminated=true（终态：禁止作为配对赎回来源，不出现在下拉）
-// 未在维护清单中的专户（如 SPV 底层专户/信托计划/资管计划）默认视为「可正常使用」，不拦截。
+// 未在维护清单中的专户标记为「未维护」，允许选择，但需在下拉文案中明确提示。
 function getSpvStatusById(accId) {
   const m = spvMaintList.find(p => p.id === accId);
-  if (!m) return { online: true, terminated: false, label: '', klass: '' };  // 非维护清单内（底层专户）→ 放行
+  if (!m) return { online: true, terminated: false, label: '未维护', klass: 'unmaintained' };
   if (m.terminated) return { online: false, terminated: true, label: '已清仓', klass: 'terminated' };
   if (!m.online) return { online: false, terminated: false, label: '已下线', klass: 'offline' };
   return { online: true, terminated: false, label: '', klass: '' };
@@ -3614,7 +3676,10 @@ function fmtFundSourceOption(o) {
   const wanTxt = wan >= 1000
     ? wan.toLocaleString('zh-CN', { maximumFractionDigits: 0 })
     : wan.toLocaleString('zh-CN', { maximumFractionDigits: 1 });
-  return `${o.name} · ${o.nature} · 持有${wanTxt}万`;
+  const statusTxt = o.spvStatusKlass === 'unmaintained'
+    ? '（未维护）'
+    : (o.spvOnline === false && !o.spvTerminated ? '（已下线）' : '');
+  return `${o.name} · ${o.nature} · 持有${wanTxt}万${statusTxt}`;
 }
 
 function getAccountHoldingScale(acc) {
@@ -3625,17 +3690,24 @@ function getAccountHoldingScale(acc) {
 
 function getSidebarAddCandidates() {
   const inLeftList = new Set(getSidebarItems().map(a => a.id));
-  return spvMaintList
-    .slice()
-    .sort((a, b) => Number(a.terminated) - Number(b.terminated) || a.sortOrder - b.sortOrder)
-    .map(p => allAccounts.find(a => a.id === p.id))
-    .filter(Boolean)
-    // 正常专户仍要求当日有持仓；已清仓专户即使规模为0也保留展示，便于识别其终态。
-    .filter(a => getSpvStatusById(a.id).terminated || getAccountHoldingScale(a) > 0)
-    .filter(a => !inLeftList.has(a.id));
+  const maintById = new Map(spvMaintList.map(p => [p.id, p]));
+  return allAccounts
+    // 实际接口由后台过滤已清仓数据；未维护专户没有维护记录，仍可作为候选返回。
+    .filter(a => {
+      const m = maintById.get(a.id);
+      return !m || !m.terminated;
+    })
+    .filter(a => getAccountHoldingScale(a) > 0)
+    .filter(a => !inLeftList.has(a.id))
+    .sort((a, b) => {
+      const ma = maintById.get(a.id);
+      const mb = maintById.get(b.id);
+      const rank = m => !m ? 2 : (m.online ? 0 : 1);
+      return rank(ma) - rank(mb) || (ma?.sortOrder || 9999) - (mb?.sortOrder || 9999);
+    });
 }
 
-// 顶部搜索框：列出未在左侧栏的候选；已清仓专户保留展示但禁止选择和添加
+// 顶部搜索框：列出后台返回且未在左侧栏的候选；已清仓专户不会下发到前端
 function renderSidebarAddSelect() {
   const input = document.getElementById('sidebarAddSearchInput');
   const selected = document.getElementById('sidebarAddSelectedId');
@@ -3683,9 +3755,9 @@ function renderSidebarAddDropdown(value) {
   } else {
     dropdown.innerHTML = results.map(a => {
       const ms = getSpvStatusById(a.id);
-      const statusTag = ms.terminated
-        ? '<span class="terminated-label">（已清仓）</span>'
-        : (ms.online ? '' : '<span style="color:#B45309;"> · 临时</span>');
+      const statusTag = ms.klass === 'unmaintained'
+        ? '<span style="color:#B45309;font-weight:600;">（未维护）</span>'
+        : (ms.online ? '' : '<span style="color:#B45309;font-weight:600;">（已下线）</span>');
       const label = escHtml(a.shortName || a.name || a.code);
       const code = escHtml(a.code || '');
       const optionAttrs = ms.terminated
@@ -3937,7 +4009,7 @@ function renderContent(acc, st) {
             oninput="onProductSearch(this.value)" onfocus="this.select()">
           <div id="productSearchDropdown" style="display:none;position:absolute;top:100%;left:0;z-index:100;background:#fff;border:1px solid var(--border);border-radius:6px;max-height:200px;overflow-y:auto;width:200px;box-shadow:0 4px 12px rgba(0,0,0,.1);"></div>
           <button onclick="addCustomProduct()" style="padding:4px 10px;font-size:11px;border:1px dashed var(--border);border-radius:4px;background:var(--bg);color:var(--primary);cursor:pointer;">+ 添加理财产品</button>
-          <span style="font-size:10px;color:var(--text-muted);margin-left:auto;" title="来源：SPV持仓查询，不含已下线产品。">持仓产品 <strong id="libTotalCount">${getAddableProducts().length}</strong> 只</span>
+          <span style="font-size:10px;color:var(--text-muted);margin-left:auto;" title="来源：SPV持仓查询；已下线产品保留展示并允许选择。">持仓产品 <strong id="libTotalCount">${getAddableProducts().length}</strong> 只</span>
         </div>
 
         <div class="table-container">
@@ -4025,12 +4097,12 @@ function renderContent(acc, st) {
         return `
           <tr data-code="${p.code}" class="${sel ? 'selected' : 'not-selected'}">
             <td class="chk-cell">
-              <span title="${subOccupied ? '已在申购端选中，不能同日反向交易。' : ''}" style="display:inline-block;">
+              <span title="${subOccupied ? '不能同日反向交易。' : ''}" style="display:inline-block;">
               <input type="checkbox" id="lossChk_${p.code}" ${sel ? 'checked' : ''} ${chkDisabled ? 'disabled' : ''} onchange="onLossToggleSelect('${p.code}', this.checked)">
               </span>
             </td>
             <td style="font-weight:500;width:80px;white-space:nowrap;">${p.code}</td>
-            <td style="max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding-right:4px;" title="${p.name}">${p.name}</td>
+            <td style="max-width:170px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding-right:4px;" title="${p.name}${getProductMaintStatus(p.code) === 'offline' ? '（已下线）' : ''}">${p.name}${getProductStatusTag(p.code)}</td>
             <td class="num" style="width:120px;padding-right:4px;">${sizeYuan}</td>
             <td style="white-space:nowrap;width:170px;padding-right:4px;">
               <div style="display:flex;align-items:center;justify-content:flex-end;gap:3px;">
@@ -4048,25 +4120,28 @@ function renderContent(acc, st) {
       // 顶部插入「无命中」提示条（有命中时不显示）
       const leftRowsFinal = redEmptyTip + leftRows;
 
-      // 申购端候选池 = 用户手动添加的申购产品清单（初始为空表，不包含本专户持仓）
-      // 左栏仍仅限持仓产品（监管互斥语义仅约束本专户既有产品）
+      // 申购端候选池 = 用户手动添加的申购产品清单；本专户持仓产品只要左侧未勾选也可加入。
+      // 左栏仍仅限持仓产品，左右两端按勾选状态互斥。
       const subProductPool = st.subExtraProducts || [];
       const rightRows = subProductPool.map(p => {
         const bp = st.bpData[p.code] || '';  // 未输入时显示空，由客户输入
         const adj = 0;
-        const subSel = (st.subSelectedMap && st.subSelectedMap[p.code] !== false);
+        // 左侧同产品已勾选时，右侧不能选择；取消左侧勾选后恢复可选。
+        const lossOccupied = isLossProductSelected(st, p.code);
+        const subSel = !lossOccupied && (st.subSelectedMap && st.subSelectedMap[p.code] !== false);
         const profitAllocation = st.profitAllocationMap?.[p.code] ?? 0;
         const subAmt = st.subMode === 'wan' ? profitAllocation : (st.subAmountMap?.[p.code] ?? 0);
-        // 右栏产品均为手动添加的非持仓产品，与左栏持仓天然不重叠，无需监管互斥禁用
-        const subChkDisabled = disabled;
+        const subChkDisabled = disabled || lossOccupied;
         const removeCell = `<td style="text-align:center;width:60px;"><button class="btn" onclick="removeSubExtraProduct('${p.code}')" ${disabled ? 'disabled' : ''} style="font-size:10px;padding:2px 6px;background:#FEE2E2;color:#DC2626;border:1px solid #FCA5A5;border-radius:3px;cursor:${disabled ? 'not-allowed' : 'pointer'};font-weight:600;" title="从申购端移除该产品">移除</button></td>`;
         return `
           <tr data-code="${p.code}" class="${subSel ? 'selected' : 'not-selected'}">
             <td class="chk-cell">
-              <input type="checkbox" ${subSel ? 'checked' : ''} ${subChkDisabled ? 'disabled' : ''} onchange="onSubToggleSelect('${p.code}', this.checked)">
+              <span title="${lossOccupied ? '不能同日反向交易。' : ''}" style="display:inline-block;">
+                <input type="checkbox" ${subSel ? 'checked' : ''} ${subChkDisabled ? 'disabled' : ''} onchange="onSubToggleSelect('${p.code}', this.checked)">
+              </span>
             </td>
             <td style="font-weight:500;width:74px;white-space:nowrap;">${p.code}</td>
-            <td style="max-width:96px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding-right:4px;" title="${p.name}">${p.name}</td>
+            <td style="max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding-right:4px;" title="${p.name}${getProductMaintStatus(p.code) === 'offline' ? '（已下线）' : ''}">${p.name}${getProductStatusTag(p.code)}</td>
             ${st.subMode === 'bp' ? `
             <td><input type="text" class="table-input" style="width:150px;background:#F8FAFC;color:#1E3A5F;font-weight:600;" value="${getBpProductScale(st, p.code) ? getBpProductScale(st, p.code).toLocaleString('zh-CN', {minimumFractionDigits:2, maximumFractionDigits:2}) : ''}" placeholder="头寸管理暂无规模" readonly title="默认取自头寸管理页对应产品的总规模（含今日申赎），与产品信息弹窗口径一致。"></td>
             <td class="col-bp">
@@ -4838,6 +4913,20 @@ function onAllRedeemOne(code) {
   recalcCurrent();
 }
 
+function isLossProductSelected(st, code) {
+  return !!(st && st.lossSelectedMap && st.lossSelectedMap[code] === true);
+}
+
+function canAddSubProduct(st, code) {
+  return !isLossProductSelected(st, code);
+}
+
+function getSubProductCandidateState(st, extraCodes, code) {
+  if (extraCodes && extraCodes.has(code)) return 'added';
+  if (isLossProductSelected(st, code)) return 'blocked';
+  return 'available';
+}
+
 // 调仓模式勾选产品（赎回端）
 function onLossToggleSelect(code, checked) {
   const st = getState(currentAccountId);
@@ -4868,12 +4957,12 @@ function onSubToggleSelect(code, checked) {
   if (!st.subSelectedMap) st.subSelectedMap = {};
   if (!st.lossRedeemAmt) st.lossRedeemAmt = {};
   st.subSelectedMap[code] = checked;
-  // 监管互斥：右栏勾选 → 左栏同产品取消勾选+清零赎回金额
+  // 右侧先选择时，以右侧操作为准：自动取消左侧同产品并清空赎回金额。
   if (checked) {
     st.lossSelectedMap[code] = false;
     st.lossRedeemAmt[code] = 0;
   }
-  // 重新渲染以更新左栏checkbox的disabled/title状态
+  // 重新渲染以更新左右栏checkbox的disabled/title状态
   const acc = getAccount(currentAccountId);
   if (acc) { saveCurrentState(); renderContent(acc, st); }
   recalcCurrent();
@@ -5792,6 +5881,12 @@ function initSpvMaintList() {
 }
 
 let spvMaintList = initSpvMaintList();
+// Demo 示例：将“鑫和18号”设为已下线，确保左侧添加下拉可直接验证状态标识。
+// 仅改变维护状态，不影响其作为调仓目标或赎回来源被选择。
+const demoOfflineSpvIds = ['other1', 'offline_demo2', 'offline_demo3'];
+spvMaintList.forEach(p => {
+  if (demoOfflineSpvIds.includes(p.id) && !p.terminated) p.online = false;
+});
 let spvMaintOnlineTab = 'online';
 let spvMaintFilter = '';
 let spvMaintPageIdx = 0;
@@ -6031,6 +6126,11 @@ function initProductMaintList() {
 }
 
 let productMaintList = initProductMaintList();
+// Demo 示例：多只理财产品设为已下线，用于验证调仓页各入口的状态提示；仍允许选择和操作。
+const demoOfflineProductCodes = ['EW0599', 'EW5231', 'EW2911', 'EW1390'];
+productMaintList.forEach(p => {
+  if (demoOfflineProductCodes.includes(p.code)) p.online = false;
+});
 
 function saveProductMaintList() {
   try {
@@ -6043,6 +6143,17 @@ function getOnlineProducts() {
   return productMaintList
     .filter(p => p.online)
     .sort((a, b) => a.sortOrder - b.sortOrder);
+}
+
+function getProductMaintStatus(code) {
+  const item = productMaintList.find(p => p.code === code);
+  return item ? (item.online ? 'online' : 'offline') : 'unmaint';
+}
+
+function getProductStatusTag(code) {
+  return getProductMaintStatus(code) === 'offline'
+    ? '<span style="color:#B45309;font-weight:600;margin-left:3px;">（已下线）</span>'
+    : '';
 }
 
 // 判断某产品是否计算活期（从 productMaintList 读取，未找到时默认 true）
@@ -6518,6 +6629,7 @@ function getPositionSpvColumns() {
     }
     const ms = getSpvStatusById(sid);
     if (ms.online && !ms.terminated) return;  // 状态正常则已在上线列表中
+    if (ms.terminated) return;                // 已清仓为终态，头寸管理页始终不展示
     extra.push({ ...acc, _offline: true, _spvStatusLabel: ms.label, _spvStatusKlass: ms.klass });
   });
   return temp.concat(base, extra);
@@ -7737,17 +7849,14 @@ function renderPositionPage() {
   // 专户列：每个专户 colspan=2（分页展示）
   const spvPage = getSpvPage();
   spvPage.forEach(spv => {
-    // 已下线/已清仓专户：列头追加状态标（灰底弱化），提示该列数据来自非在线专户
-    const spvStatusTag = spv._offline
-      ? `<span class="spv-offline-tag" title="该专户在「专户产品维护」中${spv._spvStatusLabel || '已下线'}，因当日仍有专户调仓数据临时展示，待残留持仓出清后自动隐藏">${spv._spvStatusLabel || '已下线'}</span>`
-      : '';
+    // 已下线专户若当日有调仓数据则临时展示，但列头不追加状态标识。
     // 临时专户：不在「专户产品维护」清单，因当日有本专户调仓数据临时展示（置顶于专户区第一列）
     const isTempSpv = isTempSpvCol(spv);
     const spvTempTag = isTempSpv
       ? `<span class="spv-temp-tag" title="${spv._tempReason || '该专户不在「专户产品维护」清单，因当日有本专户的调仓数据临时展示，待维护确认，或无待处理调仓事项后退出临时展示（历史记录保留）'}">临时</span>`
       : '';
-    const spvColCls = spv._offline ? ' spv-offline-col' : (isTempSpv ? ' spv-temp-col' : '');
-    headerRow1 += `<th class="spv-group-header${spvColCls}" colspan="2"><span class="spv-name">${spv.name}</span>${spvTempTag}${spvStatusTag}</th>`;
+    const spvColCls = isTempSpv ? ' spv-temp-col' : '';
+    headerRow1 += `<th class="spv-group-header${spvColCls}" colspan="2"><span class="spv-name">${spv.name}</span>${spvTempTag}</th>`;
     headerRow2 += `<th class="spv-sub-col">申购金额</th><th class="spv-red-col">赎回金额</th>`;
   });
 
@@ -7978,11 +8087,9 @@ function renderPositionPage() {
         // 展示列 = 临时专户（置顶） + 已上线专户 + 已下线/已清仓但当日有调仓数据的专户（保证同步数据可见）
         const showList = getPositionSpvColumns();
         const spvTotalPages = Math.ceil(showList.length / SPV_PAGE_SIZE);
-        const offlineCnt = showList.filter(a => a._offline).length;
         const tempCnt = showList.filter(a => isTempSpvCol(a)).length;
-        const offlineHint = offlineCnt > 0 ? `<span style="color:#C2410C;margin-left:4px;" title="含已下线/已清仓专户，因当日仍有调仓数据需复核">(含${offlineCnt}个已下线)</span>` : '';
         const tempHint = tempCnt > 0 ? `<span style="color:#9A3412;margin-left:4px;" title="含不在「专户产品维护」清单、因当日有调仓数据临时展示的专户，已置顶">(含${tempCnt}个临时)</span>` : '';
-        return `<span style="font-size:12px;color:var(--text-muted);">资管计划列（<strong>${showList.length}</strong>个）${tempHint}${offlineHint}</span>
+        return `<span style="font-size:12px;color:var(--text-muted);">资管计划列（<strong>${showList.length}</strong>个）${tempHint}</span>
           <button onclick="goSpvPage(-1)" ${spvPageIndex === 0 ? 'disabled' : ''} style="padding:2px 8px;border:1px solid var(--border);border-radius:4px;background:#fff;cursor:pointer;font-size:12px;" title="上一页">上一页</button>
           <span style="font-size:12px;color:var(--text-secondary);">${spvPageIndex + 1}/${spvTotalPages}</span>
           <button onclick="goSpvPage(1)" ${spvPageIndex >= spvTotalPages - 1 ? 'disabled' : ''} style="padding:2px 8px;border:1px solid var(--border);border-radius:4px;background:#fff;cursor:pointer;font-size:12px;" title="下一页">下一页</button>`;
@@ -8730,7 +8837,7 @@ function exportPositionData() {
 
 // ==================== 产品搜索添加 ====================
 // 候选来源：「SPV持仓查询」页数据（positionData），不再使用独立产品库
-// 已下线产品排除；未维护产品可添加（标注“临时”）；规模带出持有专户总规模（元）
+// 已下线产品允许添加并标注状态；未维护产品可添加（标注“临时”）；规模带出持有专户总规模（元）
 
 function getAddableProducts() {
   return positionData
@@ -8740,33 +8847,22 @@ function getAddableProducts() {
       const holdings = getSPVData(p.code);
       const totalScale = holdings.reduce((sum, h) => sum + (h.scale || (h.qty * h.nav) || 0), 0);
       return { code: p.code, name: p.name, status, totalScale, spvCount: holdings.length };
-    })
-    .filter(p => p.status !== 'offline');
+    });
 }
 function getAddProductEmptyText(query, existingCodes, options = {}) {
   const q = (query || '').trim().toLowerCase();
   const matches = positionData.filter(p => p.code.toLowerCase().includes(q) || p.name.toLowerCase().includes(q));
   if (matches.length === 0) return '该理财产品不在当日SPV持仓中，不可添加';
-  const offlineMatches = matches.filter(p => {
-    const m = productMaintList.find(x => x.code === p.code);
-    return m && !m.online;
-  });
-  if (offlineMatches.length > 0 && offlineMatches.length === matches.length) return '该理财产品已下线，不可作为新增申购目标';
-
-  const onlineMatches = matches.filter(p => {
-    const m = productMaintList.find(x => x.code === p.code);
-    return !(m && !m.online);
-  });
-  const holdingCodes = options.holdingCodes || new Set();
+  const selectedLossCodes = options.selectedLossCodes || new Set();
   const extraCodes = options.extraCodes || new Set();
-  const exactMatch = onlineMatches.find(p => p.code.toLowerCase() === q);
-  if (exactMatch && holdingCodes.has(exactMatch.code)) {
-    return '该理财产品已在本专户持仓中，不能作为右侧新增申购产品';
+  const exactMatch = matches.find(p => p.code.toLowerCase() === q);
+  if (exactMatch && selectedLossCodes.has(exactMatch.code)) {
+    return '该理财产品已在左侧赎回区选择，不能同时添加到右侧申购区';
   }
   if (exactMatch && extraCodes.has(exactMatch.code)) {
     return '该理财产品已在右侧申购列表中';
   }
-  if (existingCodes && onlineMatches.length > 0 && onlineMatches.every(p => existingCodes.has(p.code))) {
+  if (existingCodes && matches.length > 0 && matches.every(p => existingCodes.has(p.code))) {
     return '未找到可添加的理财产品，请输入更完整的产品代码或名称';
   }
   return '未找到可添加的理财产品，请更换代码或名称重试';
@@ -8787,9 +8883,11 @@ function onProductSearch(query) {
     dropdown.innerHTML = '<div style="padding:8px 12px;font-size:12px;color:var(--text-muted);">' + getAddProductEmptyText(q) + '</div>';
   } else {
     dropdown.innerHTML = results.map(p => {
-      const badge = p.status === 'unmaint'
-        ? '<span style="font-size:10px;padding:1px 5px;border-radius:3px;background:#FEF3C7;color:#B45309;">临时</span>'
-        : '';
+      const badge = p.status === 'offline'
+        ? '<span style="font-size:10px;color:#B45309;font-weight:600;">（已下线）</span>'
+        : (p.status === 'unmaint'
+          ? '<span style="font-size:10px;padding:1px 5px;border-radius:3px;background:#FEF3C7;color:#B45309;">临时</span>'
+          : '');
       const sizeYi = (p.totalScale / 100000000).toFixed(2);
       return `
       <div onclick="addProductFromSearch('${p.code}')" style="padding:8px 12px;font-size:12px;cursor:pointer;border-bottom:1px solid #f0f0f0;display:flex;justify-content:space-between;align-items:center;gap:6px;">
@@ -8845,7 +8943,7 @@ function addProductFromSearch(code) {
 // ==================== 申购端「非持仓产品」添加（2026-09-09 放开申购端候选池）====================
 // 业务背景：经客户确认，申购端可不限制必须持有当前专户——申购即代表"进入"该专户，是否预先持仓不影响申购能力。
 // 例如：投资经理临时决定让某理财产品新建仓持有本专户，调仓页面应支持录入这笔申购。
-// 添加的产品仅进入申购端候选池（st.subExtraProducts），不动左栏、不影响赎回端。
+// 添加的产品进入申购端候选池（st.subExtraProducts）；若左侧随后勾选同产品，右侧自动取消并禁用。
 
 function onSubExtraSearch(query) {
   if (isAdjustHistoryMode()) return;
@@ -8856,16 +8954,19 @@ function onSubExtraSearch(query) {
   const st = getState(currentAccountId);
   if (!acc || !st) return;
 
-  // 候选 = SPV 持仓查询页产品（已下线产品自动排除），且不在本专户持仓中、也不在已添加的额外产品中
-  const holdingCodes = new Set(acc.holdings.map(p => p.code));
+  // 候选包含本专户持仓产品；仅排除左侧已勾选赎回的产品和右侧已添加产品。
+  const selectedLossCodes = new Set(
+    acc.holdings.filter(p => isLossProductSelected(st, p.code)).map(p => p.code)
+  );
   const extraCodes = new Set((st.subExtraProducts || []).map(p => p.code));
-  const existing = new Set([...holdingCodes, ...extraCodes]);
-  const addable = getAddableProducts().filter(p => !existing.has(p.code));
+  const existing = new Set(extraCodes);
+  // 已添加产品不再重复展示；左侧已选产品继续展示，但在结果中置灰禁用。
+  const addable = getAddableProducts().filter(p => getSubProductCandidateState(st, extraCodes, p.code) !== 'added');
 
   const q = (query || '').trim().toLowerCase();
   // 无关键字 → 展示空白列表（提示用户输入关键字筛选）
   if (!q) {
-    dropdown.innerHTML = '<div style="padding:10px 12px;font-size:12px;color:var(--text-muted);text-align:center;">输入产品代码或名称关键字筛选（可申购未持有本专户的理财产品）</div>';
+    dropdown.innerHTML = '<div style="padding:10px 12px;font-size:12px;color:var(--text-muted);text-align:center;">输入产品代码或名称关键字筛选（左侧未勾选的持仓产品也可申购）</div>';
     dropdown.style.display = 'block';
     const rect = input.getBoundingClientRect();
     // fixed 定位直接用视口坐标（脱离 .loss-panel-body 的 overflow 裁剪链）
@@ -8879,16 +8980,22 @@ function onSubExtraSearch(query) {
   ).slice(0, 8);
 
   if (results.length === 0) {
-    dropdown.innerHTML = '<div style="padding:8px 12px;font-size:12px;color:var(--text-muted);">' + getAddProductEmptyText(q, existing, { holdingCodes, extraCodes }) + '</div>';
+    dropdown.innerHTML = '<div style="padding:8px 12px;font-size:12px;color:var(--text-muted);">' + getAddProductEmptyText(q, existing, { selectedLossCodes, extraCodes }) + '</div>';
   } else {
     dropdown.innerHTML = results.map(p => {
-      const badge = p.status === 'unmaint'
-        ? '<span style="font-size:10px;padding:1px 5px;border-radius:3px;background:#FEF3C7;color:#B45309;">临时</span>'
-        : '';
+      const badge = p.status === 'offline'
+        ? '<span style="font-size:10px;color:#B45309;font-weight:600;">（已下线）</span>'
+        : (p.status === 'unmaint'
+          ? '<span style="font-size:10px;padding:1px 5px;border-radius:3px;background:#FEF3C7;color:#B45309;">临时</span>'
+          : '');
       const sizeYi = (p.totalScale / 100000000).toFixed(2);
+      const candidateState = getSubProductCandidateState(st, extraCodes, p.code);
+      const blocked = candidateState === 'blocked';
+      const clickAction = blocked ? "showToast('不能同日反向交易。')" : `addSubExtraProductByCode('${p.code}')`;
       return `
-      <div onclick="addSubExtraProductByCode('${p.code}')" style="padding:8px 12px;font-size:12px;cursor:pointer;border-bottom:1px solid #f0f0f0;display:flex;justify-content:space-between;align-items:center;gap:6px;">
-        <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"><strong>${p.code}</strong> ${p.name.split('（')[0].split('(')[0]} ${badge}</span>
+      <div onclick="${clickAction}" title="${blocked ? '不能同日反向交易。' : ''}" aria-disabled="${blocked ? 'true' : 'false'}"
+        style="padding:8px 12px;font-size:12px;cursor:${blocked ? 'not-allowed' : 'pointer'};border-bottom:1px solid #f0f0f0;display:flex;justify-content:space-between;align-items:center;gap:6px;${blocked ? 'background:#F8FAFC;color:#9CA3AF;' : ''}">
+        <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"><strong>${p.code}</strong> ${p.name.split('（')[0].split('(')[0]} ${badge}${blocked ? '<span style="font-size:10px;color:#B45309;margin-left:4px;">不能同日反向交易</span>' : ''}</span>
         <span style="font-size:10px;color:var(--text-muted);white-space:nowrap;">${sizeYi}亿</span>
       </div>`;
     }).join('');
@@ -8909,12 +9016,11 @@ function addSubExtraProductByCode(code) {
   const st = getState(currentAccountId);
   if (!acc || !st) return;
 
-  // 去重：本专户持仓 + 已添加的额外产品
+  // 去重并校验左右互斥：持仓本身不阻断，只有左侧已勾选赎回才阻断。
   if (!st.subExtraProducts) st.subExtraProducts = [];
-  const inHoldings = acc.holdings.some(h => h.code === code);
   const inExtra = st.subExtraProducts.some(p => p.code === code);
-  if (inHoldings) {
-    alert('产品 ' + code + ' 已在本专户持仓列表中（无需通过添加入口添加）');
+  if (!canAddSubProduct(st, code)) {
+    showToast('不能同日反向交易。');
     return;
   }
   if (inExtra) {
@@ -8946,7 +9052,7 @@ function removeSubExtraProduct(code) {
   const st = getState(currentAccountId);
   if (!acc || !st || st.status === 'done' || !st.subExtraProducts) return;
   const product = st.subExtraProducts.find(p => p.code === code);
-  if (!product || acc.holdings.some(h => h.code === code)) return;
+  if (!product) return;
   showConfirmDialog({
     title: '移除申购产品',
     bodyHTML: '<p style="font-size:14px;color:var(--text);">移除“<strong>' + escHtml(product.name) + '（' + escHtml(code) + '）</strong>”将清除其本次调仓输入，不影响已有持仓，是否继续？</p>',
@@ -8999,7 +9105,9 @@ function renderChannelProductPicker(query) {
     const exists = acc && acc.holdings.find(h => h.code === p.code);
     const badge = p.status === 'online'
       ? '<span style="font-size:10px;padding:1px 5px;border-radius:3px;background:#DCFCE7;color:#15803D;">已上线</span>'
-      : '<span style="font-size:10px;padding:1px 5px;border-radius:3px;background:#FEF3C7;color:#B45309;">临时</span>';
+      : p.status === 'offline'
+        ? '<span style="font-size:10px;padding:1px 5px;border-radius:3px;background:#F3F4F6;color:#B45309;">已下线</span>'
+        : '<span style="font-size:10px;padding:1px 5px;border-radius:3px;background:#FEF3C7;color:#B45309;">临时</span>';
     const sizeYi = (p.totalScale / 100000000).toFixed(2);
     const btn = exists
       ? '<button disabled style="padding:4px 12px;font-size:11px;border:1px solid var(--border);border-radius:4px;background:#F1F5F9;color:#94A3B8;cursor:not-allowed;">已存在</button>'
