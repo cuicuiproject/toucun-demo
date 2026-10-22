@@ -89,6 +89,8 @@
     min-width: 36px;
   }
   .sidebar-collapse-btn {
+    appearance: none;
+    padding: 0;
     position: absolute;
     top: 50%;
     transform: translateY(-50%);
@@ -3039,7 +3041,7 @@
 <div class="layout" id="tabAdjust" style="display:none;">
   <!-- 左侧专户导航 -->
   <div class="sidebar" id="sidebar">
-    <div class="sidebar-collapse-btn" id="sidebarCollapseBtn" onclick="toggleSidebar()" title="收起专户列表">◀</div>
+    <button type="button" class="sidebar-collapse-btn" id="sidebarCollapseBtn" onclick="toggleSidebar()" title="收起专户列表" aria-label="收起专户列表" aria-expanded="true">◀</button>
     <div class="sidebar-inner">
       <div class="adjust-date-bar">
         <div class="adjust-date-row">
@@ -3874,6 +3876,18 @@ function switchAccount(accountId) {
   renderSidebar();
   renderContent(acc, st);
 }
+
+function toggleSidebar() {
+  const sidebar = document.getElementById('sidebar');
+  const btn = document.getElementById('sidebarCollapseBtn');
+  if (!sidebar || !btn) return;
+  const collapsed = sidebar.classList.toggle('collapsed');
+  btn.textContent = collapsed ? '▶' : '◀';
+  btn.title = collapsed ? '展开专户列表' : '收起专户列表';
+  btn.setAttribute('aria-label', btn.title);
+  btn.setAttribute('aria-expanded', String(!collapsed));
+}
+
 function getSidebarItems() {
   return Array.from(leftListIds)
     .map(id => getAccount(id))
