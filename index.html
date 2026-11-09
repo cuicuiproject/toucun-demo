@@ -3402,7 +3402,7 @@ function getState(accountId) {
       subSelectedMap: {},          // 调仓右栏（申购端）勾选状态 { productCode: boolean }
       lossRedeemAmt: {},           // 调仓左栏赎回金额 { productCode: amount }
       profitAllocationMap: {},     // 收益分配模式：各产品分得的收益金额（用户输入）
-      subAmountMap: {},            // 系统生成的申购金额；收益分配模式下等于 profitAllocationMap
+      subAmountMap: {},            // 系统生成的申购金额；收益分配模式下=分配占比×本次赎回总规模
       fundSourceMap: {},           // 调仓右栏资金来源 { productCode: 来源专户id }，有效申购行必选
       redSearchKw: '',             // 调仓左栏（赎回端）产品搜索关键字（按代码/名称过滤，仅影响显示）
       subExtraProducts: [],        // 调仓右栏申购端手动添加的「非本专户持仓」产品 [{code, name}]，
@@ -3466,14 +3466,17 @@ function getState(accountId) {
         { code: 'EW0515', name: '阳光金私享增利周开(182天最低持有)', size: 0 },
       ];
       // 收益分配模式：专户总收益50万，逐产品输入分配收益3万、5万、8万。
-      // 分配合计16万，剩余34万留存；系统按「分配收益÷总收益×专户总规模」生成申购金额。
+      // 分配合计16万，占总收益32%；系统按「分配收益÷总收益×本次赎回总规模」生成申购金额。
       state.totalProfit = 500000;
       state.profitAllocationMap['EW0580'] = 30000;
       state.profitAllocationMap['EW1340'] = 50000;
       state.profitAllocationMap['EW0515'] = 80000;
-      state.subAmountMap['EW0580'] = calcProfitBasedSubscription(acc.accountSize, 30000, state.totalProfit);
-      state.subAmountMap['EW1340'] = calcProfitBasedSubscription(acc.accountSize, 50000, state.totalProfit);
-      state.subAmountMap['EW0515'] = calcProfitBasedSubscription(acc.accountSize, 80000, state.totalProfit);
+      const demoRedeemTotal = Object.keys(state.lossRedeemAmt).reduce((sum, code) => {
+        return sum + (state.lossSelectedMap[code] ? (state.lossRedeemAmt[code] || 0) : 0);
+      }, 0);
+      state.subAmountMap['EW0580'] = calcProfitBasedSubscription(demoRedeemTotal, 30000, state.totalProfit);
+      state.subAmountMap['EW1340'] = calcProfitBasedSubscription(demoRedeemTotal, 50000, state.totalProfit);
+      state.subAmountMap['EW0515'] = calcProfitBasedSubscription(demoRedeemTotal, 80000, state.totalProfit);
       state.subSelectedMap['EW0580'] = true;
       state.subSelectedMap['EW1340'] = true;
       state.subSelectedMap['EW0515'] = true;
@@ -3990,7 +3993,7 @@ function renderContent(acc, st) {
         ${disabled}
         oninput="onTotalProfitChange(this.value)" onfocus="this.select()"
         style="font-weight:700;font-size:13px;color:#6D28D9;background:#fff;border:1.5px solid #C4B5FD;border-radius:5px;padding:4px 10px;width:140px;text-align:center;">
-      <span style="font-size:11px;color:#7C3AED;">元 · 剩余 <strong id="remainProfit" style="color:#6D28D9;">0</strong> 元</span>
+      <span style="font-size:11px;color:#7C3AED;">元 · 剩余收益 <strong id="remainProfit" style="color:#6D28D9;">0</strong> 元</span>
       <span id="profitWarn" style="display:none;font-size:11px;font-weight:700;color:#B91C1C;background:#FEF2F2;border:1px solid #FECACA;border-radius:4px;padding:2px 6px;"></span>
       <span style="color:var(--border);margin:0 4px;">|</span>
       ` : ''}
@@ -4274,7 +4277,14 @@ function renderContent(acc, st) {
                   oninput="onSubExtraSearch(this.value)" onfocus="onSubExtraSearch(this.value);this.select()" ${disabled}>
                 <div id="subExtraSearchDropdown" style="display:none;position:fixed;z-index:1000;background:#fff;border:1px solid var(--border);border-radius:6px;max-height:200px;overflow-y:auto;width:200px;box-shadow:0 4px 12px rgba(0,0,0,.1);box-sizing:border-box;"></div>
               </div>
-
+              ${st.subMode === 'wan' ? `<div style="display:flex;align-items:center;gap:5px;min-width:310px;flex:1;white-space:nowrap;">
+                <span style="font-size:11px;color:#6D28D9;font-weight:600;">Excel粘贴：</span>
+                <input type="text" id="profitPasteInline" aria-label="粘贴Excel分配数据"
+                  placeholder="直接粘贴：产品代码、产品名称、分配金额"
+                  onpaste="onProfitPaste(event)" ${disabled}
+                  style="width:260px;min-width:220px;padding:4px 8px;font-size:11px;border:1px solid #C4B5FD;border-radius:4px;background:#FAFAFF;color:#5B21B6;box-sizing:border-box;">
+                <span id="profitPasteInlineHint" style="display:none;max-width:180px;overflow:hidden;text-overflow:ellipsis;font-size:10px;font-weight:600;white-space:nowrap;"></span>
+              </div>` : ''}
             </div>
             <table>
               <thead>
@@ -4285,7 +4295,7 @@ function renderContent(acc, st) {
                   ${st.subMode === 'bp' ? '<th style="min-width:160px;">产品总规模（元）<i class="th-help" data-tip="根据SPV文件数据，取该理财产品总规模。">i</i></th><th style="text-align:center;width:60px;">目标BP<i class="th-help" data-tip="该产品分配的BP。">i</i></th>' : ''}
                   <th style="text-align:right;width:80px;">占比<i class="th-help" data-tip="${st.subMode === 'bp' ? '目标BP ÷ 调整BP。' : '分配收益 ÷ 总收益。'}">i</i></th>
                   <th style="text-align:right;width:120px;">${st.subMode === 'bp' ? '申购金额（元）' : '分配收益金额（元）'}<i class="th-help" data-tip="${st.subMode === 'bp' ? '理财产品总规模 × 目标BP ÷ 调整BP。' : '输入该产品分配的收益金额。'}">i</i></th>
-                  ${st.subMode === 'wan' ? '<th style="text-align:right;width:120px;">自动申购金额（元）<i class="th-help" data-tip="分配占比 × 专户总规模。">i</i></th>' : ''}
+                  ${st.subMode === 'wan' ? '<th style="text-align:right;width:120px;">自动申购金额（元）<i class="th-help" data-tip="分配占比 × 本次已选赎回总规模。">i</i></th>' : ''}
                   <th style="width:180px;">赎回来源<i class="th-help" data-tip="选择本笔申购对应的配套赎回专户。">i</i></th>
                   <th style="width:60px;">操作</th>
                 </tr>
@@ -4380,10 +4390,10 @@ function calcBpRatioPct(bp, totalBP) {
   return totalBP > 0 ? (bp || 0) / totalBP * 100 : 0;
 }
 
-// 收益分配金额决定分配占比，申购金额按该占比作用于专户总规模。
-function calcProfitBasedSubscription(accountSize, allocationAmount, totalProfit) {
-  if (!(accountSize > 0) || !(allocationAmount > 0) || !(totalProfit > 0)) return 0;
-  return Math.round(accountSize * allocationAmount / totalProfit * 100) / 100;
+// 收益分配金额决定分配占比，申购金额按该占比作用于本次已选赎回总规模。
+function calcProfitBasedSubscription(totalRedeemAmount, allocationAmount, totalProfit) {
+  if (!(totalRedeemAmount > 0) || !(allocationAmount > 0) || !(totalProfit > 0)) return 0;
+  return Math.round(totalRedeemAmount * allocationAmount / totalProfit * 100) / 100;
 }
 
 function recalcCurrent() {
@@ -4466,10 +4476,10 @@ function recalcLossMode(acc, st) {
       const subInputEl = document.getElementById('subAmtInput_' + code);
       if (subInputEl) subInputEl.value = subAmt ? subAmt.toLocaleString('zh-CN') : '';
     } else {
-      // 收益分配模式：分配收益决定占比，系统按占比 × 专户总规模生成申购金额。
+      // 收益分配模式：分配收益决定占比，系统按占比 × 本次已选赎回总规模生成申购金额。
       const allocationAmt = st.profitAllocationMap?.[code] || 0;
       const totalProfit = st.totalProfit || 0;
-      subAmt = calcProfitBasedSubscription(acc.accountSize || 0, allocationAmt, totalProfit);
+      subAmt = calcProfitBasedSubscription(totalRedeemAmt, allocationAmt, totalProfit);
       sumAllocation += allocationAmt;
       if (!st.subAmountMap) st.subAmountMap = {};
       st.subAmountMap[code] = subAmt;
@@ -4593,7 +4603,7 @@ function recalcLossMode(acc, st) {
   if (balSubEl) balSubEl.textContent = sumSub.toLocaleString('zh-CN', {minimumFractionDigits: 2, maximumFractionDigits: 2});
   if (balStatusEl) {
     if (st.subMode === 'wan') {
-      // 收益分配模式：申购金额由收益分配额决定，与左栏赎回额不做守恒约束（赎回额仅为参考）
+      // 收益分配模式：申购金额按分配占比从本次赎回总规模中生成；允许少分，未申购部分留存。
       const totalProfit = st.totalProfit || 0;
       const remain = totalProfit - sumAllocation;
       const diff = totalRedeemAmt - sumSub;
@@ -4606,6 +4616,8 @@ function recalcLossMode(acc, st) {
         : '<span style="color:#DC2626;">' + diffText + '</span>';
       const allocatedPct = totalProfit > 0 ? (sumAllocation / totalProfit * 100) : 0;
       const remainingPct = 100 - allocatedPct;
+      const retainedFunds = Math.max(0, totalRedeemAmt - sumSub);
+      const retainedText = retainedFunds.toLocaleString('zh-CN', {minimumFractionDigits: 2, maximumFractionDigits: 2});
       if (totalProfit <= 0) {
         balStatusEl.textContent = '待输入总收益';
         balStatusEl.style.color = '#64748B';
@@ -4613,11 +4625,11 @@ function recalcLossMode(acc, st) {
       } else if (remain < 0) {
         balStatusEl.innerHTML = '⚠️ 已分配 ' + allocatedPct.toFixed(2) + '% · 超出 ' + Math.abs(remainingPct).toFixed(2) + '% · ' + diffHtml;
         balStatusEl.style.color = '#DC2626';
-        balStatusEl.title = '收益分配模式下申购金额由分配收益决定，申赎差额仅提示，不阻断同步。';
+        balStatusEl.title = '收益分配模式下，申购金额=分配占比×本次赎回总规模；超分配仍会阻断同步。';
       } else {
-        balStatusEl.innerHTML = '✅ 已分配 ' + allocatedPct.toFixed(2) + '% · 剩余 ' + remainingPct.toFixed(2) + '% · ' + diffHtml;
+        balStatusEl.innerHTML = '✅ 已分配 ' + allocatedPct.toFixed(2) + '% · 剩余 ' + remainingPct.toFixed(2) + '% · 留存资金 ' + retainedText + '元';
         balStatusEl.style.color = diffCents === 0 ? '#16A34A' : '#6D28D9';
-        balStatusEl.title = '收益分配模式下申购金额由分配收益决定，申赎差额仅提示，不阻断同步。';
+        balStatusEl.title = '收益分配模式下，申购金额=分配占比×本次赎回总规模；允许少分，未申购的赎回资金留存，不阻断同步。';
       }
     } else if (st.subMode === 'bp') {
       const detailBpTotal = subSelectedCodes.reduce((sum, code) => sum + (st.bpData[code] || 0), 0);
@@ -4892,7 +4904,7 @@ function onLossRedeemAmtChange(code, value) {
   recalcCurrent();
 }
 
-// 收益分配模式：用户逐行输入分配收益；系统按其占总收益比例生成只读申购金额。
+// 收益分配模式：用户逐行输入分配收益；系统按其占总收益比例分配本次已选赎回总规模。
 function onSubAmountChange(code, value) {
   const st = getState(currentAccountId);
   if (!st) return;
@@ -5335,6 +5347,12 @@ function closeReverseTradeModal(e) {
   if (modal) modal.remove();
 }
 
+// 调仓申购同步头寸时，按每条产品明细向下取整到万元；计算页仍保留原始精确金额。
+function floorToWan(amount) {
+  const value = Number(amount) || 0;
+  return value > 0 ? Math.floor(value / 10000) * 10000 : 0;
+}
+
 let pendingSyncData = null; // 待确认的同步数据
 
 function syncToSystem() {
@@ -5384,7 +5402,7 @@ function syncToSystem() {
       if (Number.isFinite(st.totalLoss) && st.totalLoss > 0 && Number.isFinite(st.bpData[p.code]) && st.bpData[p.code] > st.totalLoss) errors.push(p.code + '：目标BP不得大于调整BP，单行占比不能超过100%。');
     });
   } else {
-    // 收益分配模式：校验总收益是否已填、是否有勾选产品且分配收益>0、分配额是否超出总收益
+  // 收益分配模式：校验总收益是否已填、是否有勾选产品且分配收益>0、分配额是否超出总收益；允许少分。
     const totalProfit = st.totalProfit || 0;
     if (totalProfit <= 0) {
       errors.push('请输入大于0的总收益金额。');
@@ -5462,7 +5480,7 @@ function syncToSystem() {
     const srcSize = srcInfo.size;
     const subAmt = st.subAmountMap?.[p.code] || 0;
     const adj = 0; // BP按公式生成最终金额，不允许调减
-    const actual = subAmt - adj;
+    const actual = floorToWan(subAmt - adj);
     if (actual > srcSize) {
       errors.push(p.code + '：配套赎回金额超过来源专户当前可用规模' + srcSize.toLocaleString('zh-CN') + '元，请调整。');
     }
@@ -5514,7 +5532,7 @@ function syncToSystem() {
   let subscribeProducts = [];
   let redeemProducts = [];
 
-  // 申购侧（右栏）：BP模式读取计算金额；收益分配模式读取系统按分配收益生成的金额。
+  // 申购侧（右栏）：BP模式读取计算金额；收益分配模式读取系统按分配占比×赎回总规模生成的金额。
   subProductPool.forEach(p => {
     const sel = (st.subSelectedMap && st.subSelectedMap[p.code] !== undefined) ? st.subSelectedMap[p.code] : true;
     if (!sel) return;
@@ -5523,13 +5541,14 @@ function syncToSystem() {
     const bp = st.bpData[p.code] || 0;
     const adj = 0; // BP按公式生成最终金额，不允许调减
     const I_val = subAmt - adj;
+    const syncAmt = floorToWan(I_val);
     // 资金来源：指定来源的申购，同步时自动生成同产品、同金额的配套赎回流水
     // 名称从统一来源列表取（管理专户镜像 + SPV底层专户），与下拉选项同源
     const fundSrcId = (st.fundSourceMap && st.fundSourceMap[p.code]) || '';
     const fundSrcInfo = fundSrcId ? getOtherAccounts(p.code, acc.id).find(o => o.id === fundSrcId) : null;
-    sumSub += subAmt; sumI += I_val;
+    sumSub += subAmt; sumI += syncAmt;
     const allocationAmt = st.subMode === 'wan' ? (st.profitAllocationMap?.[p.code] || 0) : 0;
-    subscribeProducts.push({ productScale: getBpProductScale(st, p.code), code: p.code, name: p.name.split('（')[0], bp, allocationAmt, subAmt, adj, I_val,
+    subscribeProducts.push({ productScale: getBpProductScale(st, p.code), code: p.code, name: p.name.split('（')[0], bp, allocationAmt, subAmt, adj, I_val, syncAmt,
       fundSrcId, fundSrcName: fundSrcInfo ? fundSrcInfo.name : '' });
   });
 
@@ -5561,13 +5580,14 @@ function showSyncModal() {
     tableHTML += '<div style="font-size:13px;font-weight:600;color:var(--primary);margin:12px 0 6px;">申购侧（申购进当前专户：' + acc.name + '）</div>';
     tableHTML += '<table class="spv-table"><thead><tr>';
     tableHTML += isBP
-      ? `<th>产品代码</th><th class="pname">产品名称</th><th style="text-align:right;">目标BP / 产品规模（元）</th><th style="text-align:right;">申购金额</th><th>赎回来源</th>`
-      : `<th>产品代码</th><th class="pname">产品名称</th><th style="text-align:right;">分配收益金额</th><th style="text-align:right;">申购金额</th><th>赎回来源</th>`;
+      ? `<th>产品代码</th><th class="pname">产品名称</th><th style="text-align:right;">目标BP / 产品规模（元）</th><th style="text-align:right;">申购金额（元）</th><th style="text-align:right;">同步申购金额（按万元取整）</th><th>赎回来源</th>`
+      : `<th>产品代码</th><th class="pname">产品名称</th><th style="text-align:right;">分配收益金额</th><th style="text-align:right;">申购金额（元）</th><th style="text-align:right;">同步申购金额（按万元取整）</th><th>赎回来源</th>`;
     tableHTML += '</tr></thead><tbody>';
     subscribeProducts.forEach(p => {
       tableHTML += '<tr>';
       tableHTML += `<td style="font-weight:500;">${p.code}</td><td class="pname">${p.name}</td>${isBP ? `<td class="num">${p.bp} BP / ${p.productScale.toLocaleString('zh-CN')}</td>` : `<td class="num" style="font-weight:600;color:#6D28D9;">${(p.allocationAmt/10000).toLocaleString()}万</td>`}`;
-      tableHTML += `<td class="num" style="font-weight:600;">${(p.subAmt/10000).toLocaleString()}万</td>`;
+      tableHTML += `<td class="num">${p.subAmt.toLocaleString('zh-CN')}元</td>`;
+      tableHTML += `<td class="num" style="font-weight:600;">${(p.syncAmt/10000).toLocaleString()}万</td>`;
       tableHTML += `<td class="src-cell" style="font-size:12px;${p.fundSrcName ? 'color:#C2410C;font-weight:600;' : 'color:#94A3B8;'}">${p.fundSrcName || '未指定'}</td>`;
       tableHTML += '</tr>';
     });
@@ -5582,11 +5602,11 @@ function showSyncModal() {
       pairedRedeems.forEach(p => {
         tableHTML += '<tr>';
         tableHTML += `<td style="font-weight:500;">${p.code}</td><td class="pname">${p.name}</td><td class="src-cell" style="font-weight:600;color:#C2410C;">${p.fundSrcName}</td>`;
-        tableHTML += `<td class="num" style="font-weight:600;color:#C2410C;">${(p.I_val/10000).toLocaleString()}万</td>`;
+        tableHTML += `<td class="num" style="font-weight:600;color:#C2410C;">${(p.syncAmt/10000).toLocaleString()}万</td>`;
         tableHTML += '</tr>';
       });
       tableHTML += '</tbody></table>';
-      tableHTML += '<div style="font-size:11px;color:#64748B;margin-top:4px;">注：系统自动生成同金额配套赎回（一申配一赎、同产品同金额）；当日资金影响按到账时效计算</div>';
+      tableHTML += '<div style="font-size:11px;color:#64748B;margin-top:4px;">注：申购逐行向下取整到万元，并自动生成同金额配套赎回；不足1万元的单条同步金额为0，不写入头寸。</div>';
     }
   }
   if (redeemProducts.length > 0) {
@@ -5651,22 +5671,23 @@ function confirmSync() {
 
   // 2) 申购侧：写实际金额到当前操作专户
   subscribeProducts.forEach(p => {
+    if (p.syncAmt <= 0) return;
     const posRow = ensureRow(p.code, p.name);
     if (!posRow._spv[acc.id]) posRow._spv[acc.id] = { sub: null, red: null, subManual: 0, subRebalance: 0, redManual: 0, redRebalance: 0 };
     const curSpv = posRow._spv[acc.id];
-    curSpv.subRebalance += p.I_val;
-    curSpv.sub = (curSpv.sub || 0) - p.I_val;
+    curSpv.subRebalance += p.syncAmt;
+    curSpv.sub = (curSpv.sub || 0) - p.syncAmt;
   });
 
   // 3) 配套赎回：指定资金来源的申购，自动生成同产品、同金额的赎回流水（写入来源专户），
   //    使该产品当日头寸净变动为 0（申购流出 = 赎回流入），头寸表自动平衡
   subscribeProducts.forEach(p => {
-    if (!p.fundSrcId) return;  // 未指定来源不生成配套赎回；提交校验会阻断有效申购
+    if (!p.fundSrcId || p.syncAmt <= 0) return;  // 未指定来源或取整后为0，不生成配套赎回
     const posRow = ensureRow(p.code, p.name);
     if (!posRow._spv[p.fundSrcId]) posRow._spv[p.fundSrcId] = { sub: null, red: null, subManual: 0, subRebalance: 0, redManual: 0, redRebalance: 0 };
     const srcSpv = posRow._spv[p.fundSrcId];
-    srcSpv.redRebalance += p.I_val;
-    srcSpv.red = (srcSpv.red || 0) + p.I_val;
+    srcSpv.redRebalance += p.syncAmt;
+    srcSpv.red = (srcSpv.red || 0) + p.syncAmt;
   });
 
   savePositionData();
@@ -8958,6 +8979,175 @@ function addProductFromSearch(code) {
 // 业务背景：经客户确认，申购端可不限制必须持有当前专户——申购即代表"进入"该专户，是否预先持仓不影响申购能力。
 // 例如：投资经理临时决定让某理财产品新建仓持有本专户，调仓页面应支持录入这笔申购。
 // 添加的产品进入申购端候选池（st.subExtraProducts）；若左侧随后勾选同产品，右侧自动取消并禁用。
+
+// 收益分配模式：解析从Excel复制的三列文本（产品代码、产品名称、分配金额）。
+function parseProfitAllocationPaste(text) {
+  const rows = [];
+  const errors = [];
+  const seenCodes = new Set();
+  const lines = String(text || '').replace(/\r/g, '').split('\n');
+  let firstDataSeen = false;
+
+  lines.forEach((rawLine, index) => {
+    if (!rawLine.trim()) return;
+    const lineNo = index + 1;
+    const cells = rawLine.split('\t').map(v => v.trim());
+    if (!firstDataSeen) {
+      firstDataSeen = true;
+      const first = (cells[0] || '').replace(/\s/g, '');
+      const third = (cells[2] || '').replace(/\s/g, '');
+      if (/产品代码|代码/.test(first) && /分配金额|金额/.test(third)) return;
+    }
+    if (cells.length !== 3) {
+      errors.push('第' + lineNo + '行：应包含3列（产品代码、产品名称、分配金额）。');
+      return;
+    }
+    const code = cells[0].toUpperCase();
+    const name = cells[1];
+    if (!code || !name) {
+      errors.push('第' + lineNo + '行：产品代码和产品名称不能为空。');
+      return;
+    }
+    if (seenCodes.has(code)) {
+      errors.push('第' + lineNo + '行：产品代码重复（' + code + '）。');
+      return;
+    }
+    seenCodes.add(code);
+    const amountText = cells[2].replace(/[,，\s￥¥元]/g, '');
+    const amount = Number(amountText);
+    if (!Number.isFinite(amount) || amount <= 0) {
+      errors.push('第' + lineNo + '行：分配金额必须大于0。');
+      return;
+    }
+    rows.push({ line: lineNo, code, name, amount: Math.round(amount * 100) / 100 });
+  });
+
+  if (rows.length === 0 && errors.length === 0) errors.push('请粘贴Excel中的产品数据。');
+  return { rows, errors };
+}
+
+function showProfitPasteErrors() {
+  const errors = window.__profitPasteErrors || [];
+  if (!errors.length) return;
+  const old = document.getElementById('profitPasteErrorModal');
+  if (old) old.remove();
+  const items = errors.map(error => '<li style="margin-bottom:8px;line-height:1.6;">' + escHtml(error) + '</li>').join('');
+  document.body.insertAdjacentHTML('beforeend', `
+    <div class="modal-overlay show" id="profitPasteErrorModal" onclick="closeProfitPasteErrorModal(event)">
+      <div class="modal" style="width:560px;max-width:92vw;" onclick="event.stopPropagation()">
+        <div class="modal-header">
+          <h3>Excel识别失败原因</h3>
+          <button class="modal-close" onclick="closeProfitPasteErrorModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div style="margin-bottom:10px;padding:8px 10px;border-radius:5px;background:#FEF2F2;color:#B91C1C;font-size:12px;font-weight:600;">
+            共 ${errors.length} 条数据识别失败，成功数据已正常导入。
+          </div>
+          <ol style="margin:0;padding-left:24px;color:#334155;font-size:13px;">${items}</ol>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-primary" onclick="closeProfitPasteErrorModal()">知道了</button>
+        </div>
+      </div>
+    </div>`);
+}
+
+function closeProfitPasteErrorModal(event) {
+  if (event && event.target && event.target.id !== 'profitPasteErrorModal') return;
+  const modal = document.getElementById('profitPasteErrorModal');
+  if (modal) modal.remove();
+}
+
+function importProfitAllocationText(text) {
+  const acc = getAccount(currentAccountId);
+  const st = getState(currentAccountId);
+  const hint = document.getElementById('profitPasteInlineHint');
+  if (!acc || !st || st.status === 'done' || st.subMode !== 'wan') return;
+
+  const parsed = parseProfitAllocationPaste(text);
+  const errors = parsed.errors.slice();
+  const warnings = [];
+  const resolved = [];
+
+  parsed.rows.forEach(row => {
+    const prod = positionData.find(p => String(p.code).toUpperCase() === row.code);
+    if (!prod) {
+      errors.push('第' + row.line + '行：未找到产品代码 ' + row.code + '，请核对。');
+      return;
+    }
+    if (isLossProductSelected(st, prod.code)) {
+      errors.push('第' + row.line + '行：' + prod.code + ' 已在左侧赎回区选择，不能同时申购。');
+      return;
+    }
+    const pastedName = row.name.replace(/[\s（）()·]/g, '');
+    const systemName = String(prod.name || '').replace(/[\s（）()·]/g, '');
+    if (pastedName !== systemName) {
+      warnings.push(prod.code + ' 名称已按系统记录“' + prod.name + '”导入');
+    }
+    resolved.push({ prod, amount: row.amount });
+  });
+
+  if (resolved.length > 0) {
+    if (!st.subExtraProducts) st.subExtraProducts = [];
+    if (!st.subSelectedMap) st.subSelectedMap = {};
+    if (!st.profitAllocationMap) st.profitAllocationMap = {};
+    if (!st.subAmountMap) st.subAmountMap = {};
+    if (!st.bpData) st.bpData = {};
+    if (!st.lossAdjData) st.lossAdjData = {};
+
+    resolved.forEach(({ prod, amount }) => {
+      if (!st.subExtraProducts.some(p => p.code === prod.code)) {
+        st.subExtraProducts.push({ code: prod.code, name: prod.name, size: 0 });
+      }
+      st.subSelectedMap[prod.code] = true;
+      st.profitAllocationMap[prod.code] = amount;
+      st.subAmountMap[prod.code] = 0;
+      if (st.bpData[prod.code] === undefined) st.bpData[prod.code] = 0;
+      if (st.lossAdjData[prod.code] === undefined) st.lossAdjData[prod.code] = 0;
+    });
+
+    renderContent(acc, st);
+    recalcCurrent();
+  }
+
+  // renderContent会重建右侧工具栏，因此结果提示必须在刷新后重新获取。
+  const resultHint = document.getElementById('profitPasteInlineHint') || hint;
+  resultHint.style.display = 'inline';
+  if (errors.length > 0) {
+    const failedLines = [...new Set(errors.map(e => {
+      const match = e.match(/第(\d+)行/);
+      return match ? Number(match[1]) : null;
+    }).filter(v => v !== null))];
+    resultHint.style.color = '#B91C1C';
+    resultHint.textContent = '识别失败' + errors.length + '个' + (failedLines.length ? '：' + failedLines.map(n => '第' + n + '行').join('、') : '');
+    resultHint.title = '点击查看失败原因';
+    resultHint.style.cursor = 'pointer';
+    resultHint.style.textDecoration = 'underline';
+    resultHint.onclick = showProfitPasteErrors;
+    window.__profitPasteErrors = errors.slice();
+    showToast((resolved.length ? '已导入' + resolved.length + '条，' : '') + '识别失败' + errors.length + '条，请查看行号提示');
+  } else {
+    resultHint.style.color = '#15803D';
+    resultHint.textContent = '识别成功' + resolved.length + '个';
+    resultHint.title = warnings.join('\n');
+    resultHint.style.cursor = 'default';
+    resultHint.style.textDecoration = 'none';
+    resultHint.onclick = null;
+    window.__profitPasteErrors = [];
+    showToast('已从Excel识别并导入 ' + resolved.length + ' 条分配数据' + (warnings.length ? '；' + warnings.join('；') : ''));
+  }
+  return errors.length === 0;
+}
+
+function onProfitPaste(event) {
+  if (isAdjustHistoryMode()) { event.preventDefault(); showToast('历史日期为只读，不支持批量导入'); return; }
+  const clipboard = event.clipboardData || window.clipboardData;
+  const text = clipboard ? clipboard.getData('text') : '';
+  event.preventDefault();
+  const input = document.getElementById('profitPasteInline');
+  if (input) input.value = '';
+  importProfitAllocationText(text);
+}
 
 function onSubExtraSearch(query) {
   if (isAdjustHistoryMode()) return;
