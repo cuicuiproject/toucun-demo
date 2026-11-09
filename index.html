@@ -4277,6 +4277,14 @@ function renderContent(acc, st) {
                   oninput="onSubExtraSearch(this.value)" onfocus="onSubExtraSearch(this.value);this.select()" ${disabled}>
                 <div id="subExtraSearchDropdown" style="display:none;position:fixed;z-index:1000;background:#fff;border:1px solid var(--border);border-radius:6px;max-height:200px;overflow-y:auto;width:200px;box-shadow:0 4px 12px rgba(0,0,0,.1);box-sizing:border-box;"></div>
               </div>
+              ${st.subMode === 'bp' ? `<div style="display:flex;align-items:center;gap:5px;min-width:310px;flex:1;white-space:nowrap;">
+                <span style="font-size:11px;color:#1D4ED8;font-weight:600;">Excel粘贴：</span>
+                <input type="text" id="bpPasteInline" aria-label="粘贴Excel目标BP数据"
+                  placeholder="直接粘贴：产品代码、产品名称、目标BP"
+                  onpaste="onBpPaste(event)" ${disabled}
+                  style="width:260px;min-width:220px;padding:4px 8px;font-size:11px;border:1px solid #93C5FD;border-radius:4px;background:#F0F9FF;color:#1D4ED8;box-sizing:border-box;">
+                <span id="bpPasteInlineHint" style="display:none;max-width:180px;overflow:hidden;text-overflow:ellipsis;font-size:10px;font-weight:600;white-space:nowrap;"></span>
+              </div>` : ''}
               ${st.subMode === 'wan' ? `<div style="display:flex;align-items:center;gap:5px;min-width:310px;flex:1;white-space:nowrap;">
                 <span style="font-size:11px;color:#6D28D9;font-weight:600;">Excel粘贴：</span>
                 <input type="text" id="profitPasteInline" aria-label="粘贴Excel分配数据"
@@ -8981,6 +8989,199 @@ function addProductFromSearch(code) {
 // 添加的产品进入申购端候选池（st.subExtraProducts）；若左侧随后勾选同产品，右侧自动取消并禁用。
 
 // 收益分配模式：解析从Excel复制的三列文本（产品代码、产品名称、分配金额）。
+// BP模式：解析从Excel复制的三列文本（产品代码、产品名称、目标BP）。
+function parseBpAllocationPaste(text) {
+  const rows = [];
+  const errors = [];
+  const failures = [];
+  const seenCodes = new Set();
+  const lines = String(text || '').replace(/\r/g, '').split('\n');
+  let firstDataSeen = false;
+
+  const addFailure = (line, cells, reason) => {
+    errors.push('第' + line + '行：' + reason);
+    failures.push({
+      line,
+      code: cells[0] || '',
+      name: cells[1] || '',
+      bp: cells[2] || '',
+      reason
+    });
+  };
+
+  lines.forEach((rawLine, index) => {
+    if (!rawLine.trim()) return;
+    const lineNo = index + 1;
+    const cells = rawLine.split('\t').map(v => v.trim());
+    if (!firstDataSeen) {
+      firstDataSeen = true;
+      const first = (cells[0] || '').replace(/\s/g, '');
+      const third = (cells[2] || '').replace(/\s/g, '').toUpperCase();
+      if (/产品代码|代码/.test(first) && /目标BP|BP/.test(third)) return;
+    }
+    if (cells.length !== 3) {
+      addFailure(lineNo, cells, '应包含3列（产品代码、产品名称、目标BP）。');
+      return;
+    }
+    const code = cells[0].toUpperCase();
+    const name = cells[1];
+    if (!code || !name) {
+      addFailure(lineNo, cells, '产品代码和产品名称不能为空。');
+      return;
+    }
+    if (seenCodes.has(code)) {
+      addFailure(lineNo, cells, '产品代码重复（' + code + '）。');
+      return;
+    }
+    seenCodes.add(code);
+    const bpText = cells[2].replace(/[,，\s]/g, '').replace(/BP$/i, '');
+    if (!/^\d+$/.test(bpText) || Number(bpText) <= 0) {
+      addFailure(lineNo, cells, '目标BP必须为正整数。');
+      return;
+    }
+    rows.push({ line: lineNo, code, name, bp: Number(bpText) });
+  });
+
+  if (rows.length === 0 && errors.length === 0) addFailure(1, [], '请粘贴Excel中的产品数据。');
+  return { rows, errors, failures };
+}
+
+function showBpPasteFailures() {
+  const failures = window.__bpPasteFailures || [];
+  if (!failures.length) return;
+  const old = document.getElementById('bpPasteFailureModal');
+  if (old) old.remove();
+  const rows = failures.map(item => `
+    <tr>
+      <td style="text-align:center;color:#64748B;white-space:nowrap;">${item.line}</td>
+      <td style="font-weight:600;white-space:nowrap;">${escHtml(item.code) || '--'}</td>
+      <td style="min-width:180px;word-break:break-all;">${escHtml(item.name) || '--'}</td>
+      <td style="text-align:right;white-space:nowrap;">${escHtml(item.bp) || '--'}</td>
+      <td style="min-width:240px;color:#B91C1C;word-break:break-all;">${escHtml(item.reason)}</td>
+    </tr>`).join('');
+  document.body.insertAdjacentHTML('beforeend', `
+    <div class="modal-overlay show" id="bpPasteFailureModal" onclick="closeBpPasteFailureModal(event)">
+      <div class="modal" style="width:900px;max-width:94vw;" onclick="event.stopPropagation()">
+        <div class="modal-header">
+          <h3>Excel识别失败明细</h3>
+          <button class="modal-close" onclick="closeBpPasteFailureModal()">&times;</button>
+        </div>
+        <div class="modal-body" style="padding:0;overflow:auto;max-height:62vh;">
+          <div style="margin:12px;padding:8px 10px;border-radius:5px;background:#FEF2F2;color:#B91C1C;font-size:12px;font-weight:600;">
+            以下 ${failures.length} 行识别失败，成功数据已正常导入。
+          </div>
+          <table class="spv-table" style="width:calc(100% - 24px);margin:0 12px 12px;">
+            <thead><tr><th style="width:52px;">行号</th><th>产品代码</th><th>产品名称</th><th style="text-align:right;">目标BP</th><th>失败原因</th></tr></thead>
+            <tbody>${rows}</tbody>
+          </table>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-primary" onclick="closeBpPasteFailureModal()">知道了</button>
+        </div>
+      </div>
+    </div>`);
+}
+
+function closeBpPasteFailureModal(event) {
+  if (event && event.target && event.target.id !== 'bpPasteFailureModal') return;
+  const modal = document.getElementById('bpPasteFailureModal');
+  if (modal) modal.remove();
+}
+
+function importBpAllocationText(text) {
+  const acc = getAccount(currentAccountId);
+  const st = getState(currentAccountId);
+  const hint = document.getElementById('bpPasteInlineHint');
+  if (!acc || !st || st.status === 'done' || st.subMode !== 'bp') return;
+
+  const parsed = parseBpAllocationPaste(text);
+  const errors = parsed.errors.slice();
+  const failures = parsed.failures.slice();
+  const warnings = [];
+  const resolved = [];
+
+  parsed.rows.forEach(row => {
+    const prod = positionData.find(p => String(p.code).toUpperCase() === row.code);
+    if (!prod) {
+      const reason = '未找到产品代码 ' + row.code + '，请核对。';
+      errors.push('第' + row.line + '行：' + reason);
+      failures.push({ line: row.line, code: row.code, name: row.name, bp: row.bp, reason });
+      return;
+    }
+    if (isLossProductSelected(st, prod.code)) {
+      const reason = prod.code + ' 已在左侧赎回区选择，不能同时申购。';
+      errors.push('第' + row.line + '行：' + reason);
+      failures.push({ line: row.line, code: row.code, name: row.name, bp: row.bp, reason });
+      return;
+    }
+    const pastedName = row.name.replace(/[\s（）()·]/g, '');
+    const systemName = String(prod.name || '').replace(/[\s（）()·]/g, '');
+    if (pastedName !== systemName) warnings.push(prod.code + ' 名称已按系统记录“' + prod.name + '”导入');
+    resolved.push({ prod, bp: row.bp });
+  });
+
+  if (resolved.length > 0) {
+    if (!st.subExtraProducts) st.subExtraProducts = [];
+    if (!st.subSelectedMap) st.subSelectedMap = {};
+    if (!st.bpData) st.bpData = {};
+    if (!st.profitAllocationMap) st.profitAllocationMap = {};
+    if (!st.subAmountMap) st.subAmountMap = {};
+    if (!st.lossAdjData) st.lossAdjData = {};
+
+    resolved.forEach(({ prod, bp }) => {
+      if (!st.subExtraProducts.some(p => p.code === prod.code)) {
+        st.subExtraProducts.push({ code: prod.code, name: prod.name, size: 0 });
+      }
+      st.subSelectedMap[prod.code] = true;
+      st.bpData[prod.code] = bp;
+      if (st.profitAllocationMap[prod.code] === undefined) st.profitAllocationMap[prod.code] = 0;
+      if (st.subAmountMap[prod.code] === undefined) st.subAmountMap[prod.code] = 0;
+      if (st.lossAdjData[prod.code] === undefined) st.lossAdjData[prod.code] = 0;
+    });
+
+    renderContent(acc, st);
+    recalcCurrent();
+  }
+
+  const resultHint = document.getElementById('bpPasteInlineHint') || hint;
+  if (!resultHint) return errors.length === 0;
+  resultHint.style.display = 'inline';
+  if (errors.length > 0) {
+    const failedLines = [...new Set(errors.map(e => {
+      const match = e.match(/第(\d+)行/);
+      return match ? Number(match[1]) : null;
+    }).filter(v => v !== null))];
+    resultHint.style.color = '#B91C1C';
+    resultHint.textContent = '识别失败' + errors.length + '个' + (failedLines.length ? '：' + failedLines.map(n => '第' + n + '行').join('、') : '');
+    resultHint.title = '点击查看失败原因';
+    resultHint.style.cursor = 'pointer';
+    resultHint.style.textDecoration = 'underline';
+    resultHint.onclick = showBpPasteFailures;
+    window.__bpPasteFailures = failures.slice();
+    showToast((resolved.length ? '已导入' + resolved.length + '条，' : '') + '识别失败' + errors.length + '条，请查看行号提示');
+  } else {
+    resultHint.style.color = '#15803D';
+    resultHint.textContent = '识别成功' + resolved.length + '个';
+    resultHint.title = warnings.join('\n');
+    resultHint.style.cursor = 'default';
+    resultHint.style.textDecoration = 'none';
+    resultHint.onclick = null;
+    window.__bpPasteFailures = [];
+    showToast('已从Excel识别并导入 ' + resolved.length + ' 条目标BP数据' + (warnings.length ? '；' + warnings.join('；') : ''));
+  }
+  return errors.length === 0;
+}
+
+function onBpPaste(event) {
+  if (isAdjustHistoryMode()) { event.preventDefault(); showToast('历史日期为只读，不支持批量导入'); return; }
+  const clipboard = event.clipboardData || window.clipboardData;
+  const text = clipboard ? clipboard.getData('text') : '';
+  event.preventDefault();
+  const input = document.getElementById('bpPasteInline');
+  if (input) input.value = '';
+  importBpAllocationText(text);
+}
+
 function parseProfitAllocationPaste(text) {
   const rows = [];
   const errors = [];
