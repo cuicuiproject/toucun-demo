@@ -4966,6 +4966,7 @@ function onLossToggleSelect(code, checked) {
   const st = getState(currentAccountId);
   if (!st) return;
   if (!st.lossSelectedMap) st.lossSelectedMap = {};
+  if (!st.lossRedeemAmt) st.lossRedeemAmt = {};
   if (!st.subSelectedMap) st.subSelectedMap = {};
   if (!st.subAmountMap) st.subAmountMap = {};
   if (!st.profitAllocationMap) st.profitAllocationMap = {};
@@ -5038,6 +5039,7 @@ function onHeaderCheck(checked) {
   const st = getState(currentAccountId);
   if (!acc || !st) return;
   if (!st.lossSelectedMap) st.lossSelectedMap = {};
+  if (!st.lossRedeemAmt) st.lossRedeemAmt = {};
   if (!st.subSelectedMap) st.subSelectedMap = {};
   if (!st.subAmountMap) st.subAmountMap = {};
   if (!st.profitAllocationMap) st.profitAllocationMap = {};
@@ -5045,6 +5047,8 @@ function onHeaderCheck(checked) {
     st.lossSelectedMap[p.code] = checked;
     // 监管互斥：左栏勾选 → 右栏同产品取消+清零
     if (checked) {
+      // 赎回端全选默认按“全赎”处理，带入各产品持有当前专户的全部规模；仍可逐行二次修改。
+      st.lossRedeemAmt[p.code] = p.size || 0;
       st.subSelectedMap[p.code] = false;
       st.subAmountMap[p.code] = 0;
       st.profitAllocationMap[p.code] = 0;
